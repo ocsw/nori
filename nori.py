@@ -1,6 +1,18 @@
 #!/usr/bin/env python
 
+
+# TODO:
+#
+# repo
+#
+# module docstring
+# comments/docstrings to 72
+
+
 """
+ABOUT NORI:
+-----------
+
 This is the Nori library for wrapping scripts.  It provides tools such as
 powerful lockfile checking, logging, command-line processing, and config
 setting validation, and is particularly helpful for scripts that need
@@ -10,11 +22,24 @@ to be run from cron with minimal intervention and maximal stability
 It was originally factored out of the Aeolus backup script, then ported
 to Python; the original and the port are by Daniel Malament.
 
-See the usage() function and the USAGE and CONFIG.SAMPLE files for
-usage notes.
-See the LICENSE constant or the LICENSE file for license info.
+The module requires Python 2.7/3.2, and will exit the script upon import
+(with an error message) if this requirement is not met.
 
-Exit values:
+
+GENERAL INFORMATION:
+--------------------
+
+For command-line usage information, run the module with '--help'.
+
+For config setting information, run the module with '-n create' or
+'-n createall'.
+
+For license information, run the module with 'license'.
+
+These will also work by default in scripts that use this module, and will
+include script-specific changes.
+
+Built-in exit values:
 
   0   = no error (e.g., runevery hasn't expired, or invocation was
         completed without errors)
@@ -30,17 +55,467 @@ Exit values:
 
   250 = internal error; should never happen
 
-"""
 
-# TODO:
+API VARIABLES:
+--------------
+
 #
-# repo
+# see the comments, below, for more information
 #
-# module docstring, incl. funcs, config, hooks, cl, str_to_bool,
+
+# exit values
+NO_ERROR_EXITVAL
+ARGPARSE_EXITVAL
+STARTUP_EXITVAL
+LOCKFILE_EXITVAL
+SSHTUNNEL_EXITVAL
+INTERNAL_EXITVAL
+
+# names of tempfiles stored in the lockfile directory
+LF_ALERTS_SILENCED
+SCRIPT_DISABLED
+
+# for printing timestamps
+FULL_DATE_FORMAT
+
+# available script modes; see create_arg_parser()
+SCRIPT_MODES
+SCRIPT_MODES_DESCR
+
+# the license message; this constant is what is printed by the 'license'
+# mode of the script, so it SHOULD be changed by scripts that use this
+# module (the text below is the license for this library)
+LICENSE
+
+# what the script does, used in various messages;
+TASK_ARTICLE
+TASK_NAME
+TASKS_NAME
+
+# for pps() pretty-printer; initialize to the defaults
+PPS_INDENT
+PPS_WIDTH
+PPS_DEPTH
+
+# internal, see variable/value functions
+_NUMBER_TYPES
+_STRING_TYPES
+_STRINGISH_TYPES
+_CONTAINER_TYPES
+
+# internal, see file/path functions
+# set third tuple value to False for lookup-only
+# (i.e., use for going from character to tuple, but not the reverse)
+_FILE_TYPE_FUNCS
+
+# internal, see file rotation functions
+_ZIP_SUFFIXES
+
+# see logging functions
+status_logger
+alert_logger
+email_logger
+output_logger
+output_log_fo
+
+# internal, see logging functions
+_syslog_handler
+_stdout_handler
+_stderr_handler
+
+# get the name and the script from the invocation;
+# this isn't 100% reliable, so it should really be (re)set
+# by scripts that use this module
+script_name
+
+# remove .py, etc. from the script name for use in messages and filenames
+script_shortname
+
+# get the user's local email address
+running_as_email
+
+# starting timestamp (see run_mode(); listed here for centralization)
+start_time
+
+# used by create_blank_config_files(full=True)
+config_file_header
+
+# default config-file path(s), in case none are specified;
+# scripts that use this module way want to change this
+default_config_files
+
+# paths to the user-supplied config file(s), if any;
+# see process_command_line()
+config_file_paths
+
+# module objects for the config file(s); see import_config_by_name()
+config_modules
+
+# names of config settings that were supplied on the command line;
+# see process_config()
+cl_config
+
+# the config settings dict itself; see import_config_by_name()
+cfg
+
+# config-setting defaults that are applied to more than one setting
+config_defaults_multiple
+
+# what config settings does this script accept?
+config_settings
+
+# non-existent settings that the end-user might set by accident,
+# e.g. because they are similar to other settings, or because
+# they exist for some DBMSes and not others
+bogus_config
+
+
+API FUNCTIONS:
+--------------
+
+  Version check:
+  -------------
+
+  pyversion_check
+    Exit if we don't have a recent enough Python.
+
+
+  Configuration and status:
+  -------------------------
+
+  config_settings_no_print_outputlog
+    Turn self-documentation of the outputlog feature on or off.
+
+
+  Variable and value manipulations:
+  ---------------------------------
+
+  char_name
+    Return the name of a character.
+
+  type_list_string
+    Return a string containing the types listed in a tuple.
+
+  scalar_to_tuple
+    If a value is a scalar (non-container), convert it to a tuple.
+
+  re_repl_escape
+    Escape backreferences in a string, for the second arg of re.sub.
+
+  str_to_bool
+    Convert a string representing a boolean to an actual boolean.
+
+
+  File tests and path manipulations:
+  ----------------------------------
+
+  file_access_const
+    Return the os.*_OK constant that corresponds to a character.
+
+  file_type_info
+    Return the stat.IS* function and name for a file type character.
+
+  file_error_handler
+    Handle OSError/IOError exceptions with various options.
+
+  check_file_type
+    Check if a file has the correct type.
+
+  check_file_access
+    Check if a file is accessible.
+
+  check_filedir_create
+    Check if we can create a file or directory.
+
+  fix_path
+    Alter a file path, e.g. by expanding or rewriting.
+
+  filemode
+    Reimplementation of Python 3.3's stat.filemode().
+
+  get_file_metadata
+    Get a string with the metadata for a file.
+
+  file_newer_than
+    Check if a file is less than num_min old.
+
+  parentdir
+    Get the parent directory of a file or directory.
+
+  touch_file
+    Update a file's timestamp, or create it if it doesn't exist.
+
+  rm_rf
+    Remove a file or directory, recursively if necessary.
+
+
+  File rotation and pruning:
+  --------------------------
+
+  rotate_num_files
+    Rotate numbered files or directories.
+
+  prune_num_files
+    Prune numbered files or directories by number and date.
+
+  prune_date_files
+    Prune dated files or directories by number and date.
+
+  prune_files
+    Wrapper: prune numbered or dated files/directories by number and date.
+
+  rotate_prune_output_logs
+    Rotate and prune the output logs.
+
+
+  Logging and alerts:
+  -------------------
+
+  pps
+    Pretty-print a value and return it as a string.
+
+  err_exit
+    Print a nicely-formatted message and exit.
+
+  email_diagnostics
+    Return a string containing diagnostics suitable for alert/error emails.
+
+  init_syslog
+    Set up a syslog handler and return it.
+
+  init_logging_main
+    Initialize most of the logging.
+
+  logging_stop_syslog
+    Turn off syslog in the loggers.
+
+  logging_start_syslog
+    Turn on syslog in the loggers.
+
+  logging_stop_stdouterr
+    Turn off stdout/stderr printing in the loggers.
+
+  logging_start_stdouterr
+    Turn on stdout/stderr printing in the loggers.
+
+  logging_email_stop_logging
+    Turn off propagation in the email logger (i.e., no actual logging).
+
+  logging_email_start_logging
+    Turn on propagation in the email logger (i.e., actual logging).
+
+  init_logging_output
+    Initialize output logging, including both logger and file objects.
+
+  end_logging_output
+    Close the output log file object.
+
+  run_with_logging
+    Run a command and log its output to the output log and stdout.
+
+
+  Config setting checks and manipulations:
+  ----------------------------------------
+
+  setting_walk
+    Get the configuration (sub-)object indicated by setting_name.
+
+  setting_is_set
+    Readability wrapper for setting_walk() to test if a setting is set.
+
+  setting_is_unset
+    Readbility wrapper for setting_walk() to test if a setting is unset.
+
+  setting_check_is_set
+    If a config setting is not set, exit with an error.
+
+  setting_check_one_is_set
+    At least one of a group of settings must be set, else error/exit.
+
+  setting_check_type
+    If a config setting is not an allowed type, exit with an error.
+
+  setting_check_not_empty
+    If a container-typed config setting is empty, exit with an error.
+
+  setting_check_not_all_empty
+    At least one of a group of settings must be non-empty, else error/exit.
+
+  setting_check_len
+    If a config setting has an invalid length, exit with an error.
+
+  setting_check_not_blank
+    If a string-typed config setting is empty, exit with an error.
+
+  setting_check_not_all_blank
+    At least one of a group of settings must be non-blank, else error/exit.
+
+  setting_check_no_blanks
+    If a container config setting contains any blanks, exit with an error.
+
+  setting_check_no_char
+    If a config setting contains particular character(s), error/exit.
+
+  setting_check_list
+    If a config setting's value is not in a list, exit with an error.
+
+  setting_check_num
+    If a number-typed config setting is invalid, exit with an error.
+
+  setting_check_file_type
+    If a file setting does not have the correct file type, error/exit.
+
+  setting_check_file_access
+    If a file indicated by a setting is not accessible, exit with an error.
+
+  setting_check_file_read
+    Wrapper to check the common case of a file we need to read.
+
+  setting_check_file_rw
+    Wrapper to check the common case of a file we need to read and write.
+
+  setting_check_dir_rwx
+    Wrapper: check a dir in which we need to create and/or rotate files.
+
+  setting_check_filedir_create
+    If we can't create a file or directory, exit with an error.
+
+
+  Status checks and modifications:
+  --------------------------------
+
+  lockfile_cleanup
+    Exit callback: clean up the lockfile.
+
+  check_status
+    Check if the script proper should actually start running.
+
+  render_status_messages
+    Return a string with status messages about the script.
+
+  render_status_metadata
+    Return a string with metadata about lockfiles, semaphores, etc.
+
+  render_status
+    Return the complete status string.
+
+  silence_lf_alerts
+    Silence lockfile-exists alerts.
+
+  unsilence_lf_alerts
+    Unsilence lockfile-exists alerts.
+
+  disable_script
+    Disable the script.
+
+  enable_script
+    (Re)-enable the script.
+
+  clear_lockfile
+    Forcibly remove the lockfile directory.
+
+
+  Startup and config file processing:
+  -----------------------------------
+
+  import_by_name
+    Import a file as a module and add it to sys.modules.
+
+  import_config_by_name
+    Import a config file (module).
+
+  warn_bogus_config
+    Warn about non-existent settings that might have been set by accident.
+
+  apply_config_defaults
+    Apply defaults to the config settings, as necessary.
+
+  apply_config_defaults_extra
+    Apply configuration defaults that are last-minute/complicated.
+
+  validate_config
+    Validate the configuration settings.
+
+  process_config
+    Process the config file and the settings supplied on the command line.
+
+  render_config
+    Return a string containing the current config settings.
+
+  log_cl_config
+    Log the config file paths, CWD, and settings given on the command line.
+
+  create_blank_config_files
+    Create blank config files, or print blank config to stdout.
+
+  create_arg_parser
+    Create and return the command-line-argument parser.
+
+  license_mode
+    Print a license message to stderr.
+
+  config_mode
+    Wrapper for render_config() to add blank lines.
+
+  status_mode
+    Wrapper for render_status() to add blank lines.
+
+  statusall_mode
+    Wrapper for render_status(True) to add blank lines.
+
+  createfull_mode
+    Wrapper for create_blank_config_files(True).
+
+  run_mode
+    Do the actual business of the script.
+
+  process_command_line
+    Process the command-line arguments and do mode-dependent actions.
+
+
+API CLASSES:
+------------
+
+  SMTPDiagHandler(logging.handlers.SMTPHandler)
+    Override SMTPHandler to add diagnostics to the email.
+
+
+API HOOKS:
+----------
+
+  render_status_messages_hook
+    Change/add to status messages returned by render_status_messages().
+
+  render_status_metadata_hook
+    Change/add to metadata returned by render_status_metadata().
+
+  apply_config_defaults_hook
+    Override/add to last-minute defaults applied by apply_config_defaults().
+
+  validate_config_hook
+    Add config-setting validations to validate_config().
+
+  process_config_hook
+    Override/add to process_config() initializations.
+
+  create_arg_parser_hook
+    Override/add to command-line parser returned by create_arg_parser().
+
+  run_mode_hook
+    Supply a task for the script, as performed by run_mode().
+
+  mode_callbacks_hook
+    Change/add to mode_callbacks dictionary used by process_command_line().
+
+
+USAGE IN SCRIPTS:
+-----------------
+
 #   config_settings_no_print_outputlog(),
 #   global var setup for use, incl. all with aeolus, task*,
-#     default_config_files
-# comments/docstrings to 72
+#     default_config_files, logging types
+
+"""
 
 
 ############################################################################
@@ -330,7 +805,7 @@ def pyversion_check(two_ver, three_ver):
       or
       (three_ver >= 0 and sys.version_info[0] == 3 and
        sys.version_info[1] < three_ver)  # 3.x < three_ver
-     ):# blank config file header?
+     ):
     print(ver_string, file=sys.stderr)
     sys.exit(STARTUP_EXITVAL)
 
@@ -409,7 +884,7 @@ cfg = {}
 # database connections; you can centralize it here as something like
 # config_defaults_multiple['database_timeout'] and then use it below, in
 # config_settings
-## blank config file header?
+#
 config_defaults_multiple = dict(
 )
 
@@ -445,7 +920,8 @@ config_defaults_multiple = dict(
 #               notes:
 #                 - conversion is safest with scalar (non-container)
 #                   values, so this is usually str, int, etc.
-#                 - see also str_to_bool()
+#                 - see also str_to_bool(), which should be used for
+#                   boolean values
 #                 - to refer to functions that haven't been defined yet,
 #                   use this trick: cl_coercer=lambda x: str_to_bool(x)
 #
@@ -1020,7 +1496,7 @@ config_settings_extra()
 
 def config_settings_no_print_outputlog(no_print):
   """
-  Convenient shorthand to adjust printing of the outputlog settings.
+  Turn self-documentation of the outputlog feature on or off.
   Parameters:
     no_print: desired value of the no_print attribute of the outputlog
               settings (see notes on config_settings, above)
@@ -1094,7 +1570,7 @@ def scalar_to_tuple(v):
 
 def re_repl_escape(s):
   """
-  Escape backreferences in a string, for the second arg of re.sub.
+  Escape backreferences in a string, for the second arg of re.sub().
   Parameters:
     s: the string to escape
   Dependencies:
@@ -2232,7 +2708,7 @@ def email_diagnostics():
 
 class SMTPDiagHandler(logging.handlers.SMTPHandler):
 
-  """Override SMTPHandler so we can add diagnostics to the email."""
+  """Override SMTPHandler to add diagnostics to the email."""
 
   def emit(self, record):
     """
@@ -2286,7 +2762,7 @@ def init_syslog():
 def init_logging_main():
 
   """
-  Initialize most of our logging.
+  Initialize most of the logging.
 
   Includes email, stdout/err, syslog, and/or status log.  See
   init_logging_output() for the output log.
@@ -2736,7 +3212,7 @@ def setting_check_is_set(setting_name):
 def setting_check_one_is_set(setting_name_list):
 
   """
-  At least one of a group of settings must be set, else exit with an error.
+  At least one of a group of settings must be set, else error/exit.
 
   Otherwise, returns a tuple containing the first setting object found
   and the full path to the object (see setting_walk()).
@@ -3082,8 +3558,8 @@ def setting_check_no_blanks(setting_name, ish=False):
 def setting_check_no_char(setting_name, char, ish=False):
 
   """
-  If a string-typed config setting contains particular character(s),
-  exit with an error.
+  If a config setting contains particular character(s), error/exit.
+  (Setting must be string-typed.)
 
   Otherwise, returns a tuple containing the setting object and the full
   path to the object (see setting_walk()).
@@ -3128,8 +3604,7 @@ def setting_check_no_char(setting_name, char, ish=False):
 def setting_check_list(setting_name, list_vals):
 
   """
-  If a config setting is not set to one of the members of a list, 
-  exit with an error.
+  If a config setting's value is not in a list, exit with an error.
 
   Otherwise, returns a tuple containing the setting object and the full
   path to the object (see setting_walk()).
@@ -3203,7 +3678,7 @@ def setting_check_num(setting_name, min_val=None, max_val=None):
 def setting_check_file_type(setting_name, type_char='f', follow_links=True):
 
   """
-  If a file setting does not have the correct file type, exit with an error.
+  If a file setting does not have the correct file type, error/exit.
 
   Otherwise, returns a tuple containing the setting object and the full
   path to the object (see setting_walk()).
@@ -3297,7 +3772,7 @@ def setting_check_file_rw(setting_name):
 
 def setting_check_dir_rwx(setting_name):
   """
-  Wrapper: check a directory in which we need to create and/or rotate files.
+  Wrapper: check a dir in which we need to create and/or rotate files.
   Setting must be a non-blank string.  Directory must exist, be a directory
   or a symlink to one, and have full permissions (r for rotation, wx for
   creating files).
@@ -3380,7 +3855,7 @@ def lockfile_cleanup():
 def check_status():
 
   """
-  Check if we should actually start running.
+  Check if the script proper should actually start running.
 
   * Has cfg['runevery'] passed?
   * Does cfg['lockfile'] already exist?
@@ -3557,6 +4032,7 @@ def render_status_messages(full=False):
 
   Dependencies:
     config settings: startedfile, lockfile, alertfile
+    hooks: render_status_messages_hook
     globals: cfg, LF_ALERTS_SILENCED, SCRIPT_DISABLED, TASK_NAME, TASKS_NAME
     functions: fix_path()
     modules: os
@@ -3621,6 +4097,7 @@ def render_status_metadata(full=False):
 
   Dependencies:
     config settings: startedfile, lockfile, alertfile
+    hooks: render_status_metadata_hook
     globals: cfg, LF_ALERTS_SILENCED, SCRIPT_DISABLED
     functions: get_file_metadata()
     modules: os
@@ -4007,7 +4484,7 @@ def import_config_by_name(file_path):
 
 def warn_bogus_config():
   """
-  Warn about non-existent settings that the user might have set by accident.
+  Warn about non-existent settings that might have been set by accident.
   Dependencies:
     globals: bogus_config, email_logger
     functions: setting_walk(), pps()
@@ -4324,7 +4801,7 @@ CWD: {1}
 def log_cl_config():
 
   """
-  Log the config file paths, CWD, and settings supplied on the command line.
+  Log the config file paths, CWD, and settings given on the command line.
 
   Dependencies:
     config settings: (any that can be passed on the command line)
@@ -4500,17 +4977,17 @@ def license_mode():
 
 
 def config_mode():
-  """Wrapper for render_config() to add blank lines"""
+  """Wrapper for render_config() to add blank lines."""
   print('\n' + render_config() + '\n')
 
 
 def status_mode():
-  """Wrapper for render_status() to add blank lines"""
+  """Wrapper for render_status() to add blank lines."""
   print('\n' + render_status() + '\n')
 
 
 def statusall_mode():
-  """Wrapper for render_status(True) to add blank lines"""
+  """Wrapper for render_status(True) to add blank lines."""
   print('\n' + render_status(True) + '\n')
 
 
