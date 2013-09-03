@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 """
-test
 Nori library (originally factored out of the Aeolus backup script),
 ported to Python; original and port by Daniel Malament.
 
