@@ -3700,7 +3700,7 @@ def silence_lf_alerts():
 
   # lockfile exists?
   if not os.path.exists(fix_path(cfg['lockfile'])):
-    print('\nLockfile directory doesn't exist; nothing to silence.\n')
+    print("\nLockfile directory doesn't exist; nothing to silence.\n")
     sys.exit(STARTUP_EXITVAL)
 
   # alerts already silenced?
@@ -3895,9 +3895,9 @@ def clear_lockfile():
     sys.exit(STARTUP_EXITVAL)
 
   # are you sure?
-  yn = raw_input('\nWARNING: the lockfile directory should only be removed '
-                 'if you're sure that\n{0} {1} is not currently running.\n'
-                 'Continue (y/n)? '
+  yn = raw_input("\nWARNING: the lockfile directory should only be removed "
+                 "if you're sure that\n{0} {1} is not currently running.\n"
+                 "Continue (y/n)? " .
                  format(TASK_ARTICLE, TASK_NAME))
   if yn.lower() != 'y':
     print('\nExiting.\n')
@@ -4381,7 +4381,7 @@ def create_blank_config_files(full=False):
   def output_blank_settings(cf_obj, full=False):
     """Actually output the settings."""
     if not full:
-      for s_name in config_settings:
+      for s_name, s_dict in config_settings.items():
         if 'no_print' in s_dict and s_dict['no_print']:
           continue
         print("#cfg['" + s_name + "'] = ", file=cf_obj)
