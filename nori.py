@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 
 """
-Nori library (originally factored out of the Aeolus backup script),
-ported to Python; original and port by Daniel Malament.
+This is the Nori library for wrapping scripts.  It provides tools such as
+powerful lockfile checking, logging, command-line processing, and config
+setting validation, and is particularly helpful for scripts that need
+to be run from cron with minimal intervention and maximal stability
+(although it can also be helpful in other cases.)
+
+It was originally factored out of the Aeolus backup script, then ported
+to Python; the original and the port are by Daniel Malament.
 
 See the usage() function and the USAGE and CONFIG.SAMPLE files for
 usage notes.
