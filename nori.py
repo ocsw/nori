@@ -4020,8 +4020,8 @@ def render_status_messages(full=False):
   Return a string with status messages about the script.
 
   The messages can be changed or added to by redefining this function or
-  by defining render_status_messages_hook(), which must take and return
-  the message string.
+  by defining render_status_messages_hook(), which must take the message
+  string and the full flag, and return a message string.
 
   Parameters:
     full: if true, include less-useful (e.g., debugging) info
@@ -4074,7 +4074,7 @@ Status:
   # hook for adding more messages
   if ('render_status_messages_hook' in globals() and
       callable(render_status_messages_hook)):
-    msg = render_status_messages_hook(msg)
+    msg = render_status_messages_hook(msg, full)
 
   return msg
 
@@ -4085,8 +4085,8 @@ def render_status_metadata(full=False):
   Return a string with metadata about lockfiles, semaphores, etc.
 
   The metadata can be changed or added to by redefining this function or
-  by defining render_status_metadata_hook(), which must take and return
-  the message string.
+  by defining render_status_metadata_hook(), which must take the message
+  string and the full flag, and return a message string.
 
   Parameters:
     full: if true, include less-useful (e.g., debugging) info
@@ -4133,7 +4133,7 @@ scriptdisabled:
   # hook for adding more metadata
   if ('render_status_metadata_hook' in globals() and
       callable(render_status_metadata_hook)):
-    msg = render_status_metadata_hook(msg)
+    msg = render_status_metadata_hook(msg, full)
 
   return msg
 
