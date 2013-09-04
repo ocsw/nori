@@ -946,6 +946,7 @@ If unset, the system default will be used.
                                          ),
                                    # no default
                                    cl_coercer=str,
+                                   no_print=True,  # only needed w/ext cmds
                                   )
 config_settings['umask'] = dict(
                                 descr=(
