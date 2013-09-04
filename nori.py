@@ -50,7 +50,7 @@ EXIT VALUES:
   10  = problem with the script invocation, the config file, or a setting
         (also used in command modes like 'disable' as a generic error
         value)
-  11  = previous lockfile still exists (possibly because backups were
+  11  = previous lockfile still exists (possibly because the script was
         manually disabled)
 
   20  = error opening SSH tunnel
@@ -361,7 +361,7 @@ API FUNCTIONS:
     If a file indicated by a setting is not accessible, exit with an error.
 
   setting_check_file_read
-    Wrapper to check the common case of a file we need to read.
+    Wrapper to check the common case of a file we just need to read.
 
   setting_check_file_rw
     Wrapper to check the common case of a file we need to read and write.
@@ -370,7 +370,7 @@ API FUNCTIONS:
     Wrapper: check a dir in which we need to create and/or rotate files.
 
   setting_check_filedir_create
-    If we can't create a file or directory, exit with an error.
+    If we won't be able to create a file or directory, exit with an error.
 
 
   Status checks and modifications:
@@ -575,7 +575,7 @@ except ImportError:
 # exit values; see the module's docstring for details
 # (when modifying: keep the numbers in sync with the docstring)
 NO_ERROR_EXITVAL = 0
-ARGPARSE_EXITVAL = 2
+ARGPARSE_EXITVAL = 2  # hardcoded in the argparse module
 STARTUP_EXITVAL = 10
 LOCKFILE_EXITVAL = 11
 SSHTUNNEL_EXITVAL = 20
@@ -829,7 +829,7 @@ import importlib  # requires 2.7/3.1
 # variables
 ############
 
-# get the name and the script from the invocation;
+# get the name of the script from the invocation;
 # this isn't 100% reliable, so it should really be (re)set
 # by scripts that use this module
 script_name = os.path.basename(sys.argv[0])
@@ -999,7 +999,7 @@ of time has passed since the last {1} was started
 config_settings['startedfile'] = dict(
                                       descr=(
 """
-Path to the backup-started timestamp file.
+Path to the last-started timestamp file.
 
 The timestamp is updated when {0} {1} actually starts.
 
@@ -2199,7 +2199,7 @@ def file_newer_than(file_path, num_min):
   May raise an OSError.
   Parameters:
     file_path: path to the file
-    num_min: number of minutes, can be a float
+    num_min: number of minutes; can be a float
   Dependencies:
     functions: fix_path()
     modules: os, time
@@ -3739,7 +3739,7 @@ def setting_check_file_access(setting_name, file_rwx='r'):
 
 def setting_check_file_read(setting_name):
   """
-  Wrapper to check the common case of a file we need to read.
+  Wrapper to check the common case of a file we just need to read.
   Setting must be a non-blank string.  File must exist, be a regular file
   or a symlink to one, and be readable.
   Dependencies:
@@ -3784,7 +3784,7 @@ def setting_check_filedir_create(setting_name, create_type='f',
                                  need_rotation=False):
 
   """
-  If we can't create a file or directory, exit with an error.
+  If we won't be able to create a file or directory, exit with an error.
 
   Otherwise, returns a tuple containing the setting object and the full
   path to the object (see setting_walk()).
@@ -3909,6 +3909,7 @@ def check_status():
       # not LOCKFILE_EXITVAL because it's not about locking, it's about
       # the path or the filesystem or whatever 
       sys.exit(STARTUP_EXITVAL)
+
     else:  # lockfile exists already
       # is it because we disabled the script?
       if os.path.exists(fix_path(os.path.join(cfg['lockfile'],
@@ -4838,6 +4839,8 @@ def create_blank_config_files(full=False):
 
   """
   Create blank config files, or print blank config to stdout.
+
+  Files must not exist already.
 
   Parameters:
     full: if true, include a description of each setting, as well as the
