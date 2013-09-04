@@ -39,7 +39,9 @@ For license information, run the module with 'license'.
 These will also work by default in scripts that use this module, and will
 include script-specific changes.
 
-Built-in exit values:
+
+EXIT VALUES:
+------------
 
   0   = no error (e.g., runevery hasn't expired, or invocation was
         completed without errors)
@@ -59,115 +61,105 @@ Built-in exit values:
 API VARIABLES:
 --------------
 
-#
-# see the comments, below, for more information
-#
+  (Pseudo-)Constants:
+  -------------------
 
-# exit values
-NO_ERROR_EXITVAL
-ARGPARSE_EXITVAL
-STARTUP_EXITVAL
-LOCKFILE_EXITVAL
-SSHTUNNEL_EXITVAL
-INTERNAL_EXITVAL
+  exit values
+    NO_ERROR_EXITVAL
+    ARGPARSE_EXITVAL
+    STARTUP_EXITVAL
+    LOCKFILE_EXITVAL
+    SSHTUNNEL_EXITVAL
+    INTERNAL_EXITVAL
 
-# names of tempfiles stored in the lockfile directory
-LF_ALERTS_SILENCED
-SCRIPT_DISABLED
+  names of tempfiles stored in the lockfile directory
+    LF_ALERTS_SILENCED
+    SCRIPT_DISABLED
 
-# for printing timestamps
-FULL_DATE_FORMAT
+  format for printing certain timestamps
+    FULL_DATE_FORMAT
 
-# available script modes; see create_arg_parser()
-SCRIPT_MODES
-SCRIPT_MODES_DESCR
+  available script modes
+    SCRIPT_MODES
+    SCRIPT_MODES_DESCR
 
-# the license message; this constant is what is printed by the 'license'
-# mode of the script, so it SHOULD be changed by scripts that use this
-# module (the text below is the license for this library)
-LICENSE
+  license message
+    LICENSE
 
-# what the script does, used in various messages;
-TASK_ARTICLE
-TASK_NAME
-TASKS_NAME
+  what the script does
+    TASK_ARTICLE
+    TASK_NAME
+    TASKS_NAME
 
-# for pps() pretty-printer; initialize to the defaults
-PPS_INDENT
-PPS_WIDTH
-PPS_DEPTH
+  pretty-printer settings
+    PPS_INDENT
+    PPS_WIDTH
+    PPS_DEPTH
 
-# internal, see variable/value functions
-_NUMBER_TYPES
-_STRING_TYPES
-_STRINGISH_TYPES
-_CONTAINER_TYPES
+  type tuples
+    NUMBER_TYPES
+    STRING_TYPES
+    STRINGISH_TYPES
+    CONTAINER_TYPES
 
-# internal, see file/path functions
-# set third tuple value to False for lookup-only
-# (i.e., use for going from character to tuple, but not the reverse)
-_FILE_TYPE_FUNCS
+  allowed suffixes for file rotation
+    ZIP_SUFFIXES
 
-# internal, see file rotation functions
-_ZIP_SUFFIXES
 
-# see logging functions
-status_logger
-alert_logger
-email_logger
-output_logger
-output_log_fo
+  Resources:
+  ----------
 
-# internal, see logging functions
-_syslog_handler
-_stdout_handler
-_stderr_handler
+  logger objects
+    status_logger
+    alert_logger
+    email_logger
+    output_logger
 
-# get the name and the script from the invocation;
-# this isn't 100% reliable, so it should really be (re)set
-# by scripts that use this module
-script_name
+  output file object
+    output_log_fo
 
-# remove .py, etc. from the script name for use in messages and filenames
-script_shortname
 
-# get the user's local email address
-running_as_email
+  Configuration and status:
+  -------------------------
 
-# starting timestamp (see run_mode(); listed here for centralization)
-start_time
+  name of the script
+    script_name
 
-# used by create_blank_config_files(full=True)
-config_file_header
+  name of the script without suffixes
+    script_shortname
 
-# default config-file path(s), in case none are specified;
-# scripts that use this module way want to change this
-default_config_files
+  user's local email address
+    running_as_email
 
-# paths to the user-supplied config file(s), if any;
-# see process_command_line()
-config_file_paths
+  starting timestamp
+    start_time
 
-# module objects for the config file(s); see import_config_by_name()
-config_modules
+  header for blank config files
+    config_file_header
 
-# names of config settings that were supplied on the command line;
-# see process_config()
-cl_config
+  default config-file path(s)
+    default_config_files
 
-# the config settings dict itself; see import_config_by_name()
-cfg
+  paths to the user-supplied config file(s)
+    config_file_paths
 
-# config-setting defaults that are applied to more than one setting
-config_defaults_multiple
+  module objects for the config file(s)
+    config_modules
 
-# what config settings does this script accept?
-config_settings
+  names of config settings that were supplied on the command line
+    cl_config
 
-# non-existent settings that the end-user might set by accident,
-# e.g. because they are similar to other settings, or because
-# they exist for some DBMSes and not others
-bogus_config
+  the config settings dictionary
+    cfg
+
+  config-setting defaults that are applied to more than one setting
+    config_defaults_multiple
+
+  what config settings does this script accept?
+    config_settings
+
+  non-existent settings that the end-user might set by accident
+    bogus_config
 
 
 API FUNCTIONS:
@@ -510,6 +502,8 @@ API HOOKS:
 
 USAGE IN SCRIPTS:
 -----------------
+
+
 
 #   config_settings_no_print_outputlog(),
 #   global var setup for use, incl. all with aeolus, task*,
