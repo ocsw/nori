@@ -2952,19 +2952,15 @@ def init_logging_output():
 
   """
 
-  global output_logger, output_log_fo
+  global output_logger, output_log_fo, _stdout_handler
 
   # assemble the complete path, including datestring if applicable
   if cfg['outputlog']:
     outputlog_path = cfg['outputlog']
     if cfg['outputlog_layout'] == 'date':
-      if cfg['outputlog_date']:
-        outputlog_datestring = time.strftime(cfg['outputlog_date'],
-                                             time.localtime(start_time))
-      else:
-        outputlog_datestring = time.strftime(FULL_DATE_FORMAT,
-                                             time.localtime(start_time))
-      outputlog_path += cfg['outputlog_sep'] + outputlog_datestring
+      outputlog_path += (cfg['outputlog_sep'] +
+                         time.strftime(cfg['outputlog_date'],
+                                       time.localtime(start_time)))
     # needed for prune_date_files(), for pruning by number
     touch_file(outputlog_path, 'the output log', None, use_logger=True,
                warn_only=False, exit_val=STARTUP_EXITVAL)
@@ -2977,7 +2973,9 @@ def init_logging_output():
   # output logger object
   # the actual output will be sent with the file object (below);
   # this is for adding things like pre- and post-run status messages
-  output_logger = logging.getLogger(__name__ + '.status.output')
+  output_logger = logging.getLogger(__name__ + '.output')
+  output_logger.propagate = False
+  output_logger.addHandler(_stdout_handler)
   if cfg['outputlog']:
     try:
       output_handler = logging.FileHandler(cfg['outputlog'])
@@ -2986,7 +2984,7 @@ def init_logging_output():
                          'exiting.\nDetails: [Errno {1}] {2}' .
                          format(pps(cfg['outputlog']), e.errno, e.strerror))
       sys.exit(STARTUP_EXITVAL)
-  output_logger.addHandler(output_handler)
+    output_logger.addHandler(output_handler)
 
   # output log file object, for use by (e.g.) run_with_logging()
   try:
