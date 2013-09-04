@@ -4624,19 +4624,19 @@ def validate_config():
                                      'local7', sl_class.LOG_LOCAL7,
                                     ])
     setting_check_type('syslogtag', STRING_TYPES)
-    setting_check_type('statuslog', STRING_TYPES + (None,))
-    if cfg['statuslog']:
-      setting_check_filedir_create('statuslog', 'f')
-    setting_check_type('outputlog', STRING_TYPES + (None,))
-    if cfg['outputlog']:
-      setting_check_filedir_create('outputlog', 'f', True)
-      setting_check_list('outputlog_layout', ['append', 'number', 'date'])
-      setting_check_no_char('outputlog_sep', os.sep)
-      setting_check_not_blank('outputlog_date', os.sep)
-      setting_check_no_char('outputlog_date', os.sep)
-      if cfg['outputlog_layout'] != 'append':
-        setting_check_num('outputlog_num', 0)
-        setting_check_num('outputlog_days', 0)
+  setting_check_type('statuslog', STRING_TYPES + (None,))
+  if cfg['statuslog']:
+    setting_check_filedir_create('statuslog', 'f')
+  setting_check_type('outputlog', STRING_TYPES + (None,))
+  if cfg['outputlog']:
+    setting_check_filedir_create('outputlog', 'f', True)
+    setting_check_list('outputlog_layout', ['append', 'number', 'date'])
+    setting_check_no_char('outputlog_sep', os.sep)
+    setting_check_not_blank('outputlog_date', os.sep)
+    setting_check_no_char('outputlog_date', os.sep)
+    if cfg['outputlog_layout'] != 'append':
+      setting_check_num('outputlog_num', 0)
+      setting_check_num('outputlog_days', 0)
 
   # hook for adding more validation
   if ('validate_config_hook' in globals() and
