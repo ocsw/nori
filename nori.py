@@ -840,7 +840,7 @@ script_shortname = re.sub('\.py.?$', '', script_name)
 # get the user's local email address
 # uses environment variables, so it's not totally safe;
 # better to set the address explicitly whereever it's needed
-# (e.g., don't use the default emailfrom/alertmailto settings)
+# (e.g., don't use the default alertmailfrom/alertmailto settings)
 running_as_email = getpass.getuser() + '@' + socket.getfqdn()
 
 # starting timestamp (see run_mode(); listed here for centralization)
@@ -1081,24 +1081,24 @@ Don't send email alerts/errors?  (True/False)
                                         default=False,
                                         cl_coercer=lambda x: str_to_bool(x),
                                        )
-config_settings['emailfrom'] = dict(
-                                    descr=(
+config_settings['alertmailfrom'] = dict(
+                                        descr=(
 """
 Address to send email alerts/errors from.
 
 Ignored if suppressemail is True.
 """
-                                          ),
-                                    default=running_as_email,
-                                    default_descr=(
+                                              ),
+                                        default=running_as_email,
+                                        default_descr=(
 """
 the local email address of the user running the script
 (i.e., [user]@[hostname], where [user] is the current user and [hostname]
 is the local hostname)
 """
-                                                  ),
-                                    cl_coercer=str,
-                                   )
+                                                      ),
+                                        cl_coercer=str,
+                                       )
 config_settings['alertmailto'] = dict(
                                       descr=(
 """
@@ -2775,7 +2775,7 @@ def init_logging_main():
   (e.g., newline -> #012).
 
   Dependencies:
-    config settings: debug, suppressemail, emailfrom, alertmailto,
+    config settings: debug, suppressemail, alertmailfrom, alertmailto,
                      alertsubject, emailhost, emailcred, emailsec, quiet,
                      usesyslog, statuslog
     globals: cfg, status_logger, alert_logger, email_logger,
@@ -2835,7 +2835,7 @@ def init_logging_main():
   # email; use this for most alerts/errors
   email_logger = logging.getLogger(__name__ + '.alert.email')
   if not cfg['suppressemail']:
-    email_handler = SMTPDiagHandler(cfg['emailhost'], cfg['emailfrom'],
+    email_handler = SMTPDiagHandler(cfg['emailhost'], cfg['alertmailfrom'],
                                     cfg['alertmailto'], cfg['alertsubject'],
                                     cfg['emailcred'], cfg['emailsec'])
   else:
@@ -4574,7 +4574,7 @@ def validate_config():
   setting_check_filedir_create('alertfile', 'f')
   setting_check_type('suppressemail', bool)
   if cfg['suppressemail']:
-    setting_check_not_blank('emailfrom')
+    setting_check_not_blank('alertmailfrom')
     setting_check_type('alertmailto', list)
     setting_check_no_blanks('alertmailto')
     setting_check_type('alertsubject', STRING_TYPES)
