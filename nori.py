@@ -712,9 +712,9 @@ _FILE_TYPE_FUNCS = {
                    }
 if sys.hexversion >= 0x03040000:
   _FILE_TYPE_FUNCS += {
-                        'w': (stat.S_ISWHT, 'whiteout'),
-                        'D': (stat.S_ISDOOR, 'door'),
-                        'P': (stat.S_ISPORT, 'event port'),
+                        'w': (stat.S_ISWHT, 'whiteout', True),
+                        'D': (stat.S_ISDOOR, 'door', True),
+                        'P': (stat.S_ISPORT, 'event port', True),
                       }
 
 # see file rotation functions
