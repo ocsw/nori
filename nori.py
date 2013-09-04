@@ -588,12 +588,24 @@ SCRIPT_DISABLED = 'script_disabled'
 # for printing timestamps
 FULL_DATE_FORMAT = '%a %b %d %H:%M:%S %Z %Y'
 
+# what the script does, used in various messages;
+# these SHOULD be changed by scripts that use this module
+#   TASK_ARTICLE: the article to use with TASK_NAME, such as 'a' or 'an';
+#            this is used in messages like 'a backup is probably running'
+#   TASK_NAME: a description of the script's purpose, such as 'backup'; this
+#              is used in messages like 'after the current backup finishes'
+#   TASKS_NAME: the plural of TASK_NAME, used in messages like 'backups
+#               have been disabled'
+TASK_ARTICLE = 'a'
+TASK_NAME = 'script invocation'
+TASKS_NAME = 'script invocations'
+
 # available script modes; see create_arg_parser()
 SCRIPT_MODES = ['license', 'config', 'settings', 'status', 'statusall',
                 'silence', 'unsilence', 'stop', 'disable', 'start',
                 'enable', 'clearlock', 'unlock', 'create', 'createfull',
                 'run',]
-SCRIPT_MODES_DESCR = '''
+SCRIPT_MODES_DESCR = ('''
 available modes:
   'license': a license message is printed
 
@@ -601,19 +613,20 @@ available modes:
 
   'status': the current status, including timestamps, is printed
   'statusall': temp files mainly relevant for debugging are also included
+  (if applicable)
 
   'silence': alerts about the lockfile existing are silenced until
   either they are unsilenced, or the lockfile is no longer present
 
   'unsilence': alerts about the lockfile existing are re-enabled
 
-  'stop' or 'disable': backups are disabled until 'start' or 'enable'
+  'stop' or 'disable': {2} are disabled until 'start' or 'enable'
   is used
 
-  'start' or 'enable': backups are re-enabled
+  'start' or 'enable': {2} are re-enabled
 
   'clearlock' or 'unlock': the lockfile is forcibly removed; only use this
-  if you're sure a backup isn't currently running!
+  if you're sure {0} {1} isn't currently running!
 
   'create': a config file template is printed (all settings, in logical
   order, commented out so that the default values will be used unless
@@ -629,7 +642,8 @@ available modes:
   'createfull': like 'create', but includes a description of each setting,
    as well as the default (if any)
 
-  'run': run normally (the default)'''
+  'run': run normally (the default)''' .
+                     format(TASK_ARTICLE, TASK_NAME, TASKS_NAME))
 
 # the license message; this constant is what is printed by the 'license'
 # mode of the script, so it SHOULD be changed by scripts that use this
@@ -662,18 +676,6 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
 '''
-
-# what the script does, used in various messages;
-# these SHOULD be changed by scripts that use this module
-#   TASK_ARTICLE: the article to use with TASK_NAME, such as 'a' or 'an';
-#            this is used in messages like 'a backup is probably running'
-#   TASK_NAME: a description of the script's purpose, such as 'backup'; this
-#              is used in messages like 'after the current backup finishes'
-#   TASKS_NAME: the plural of TASK_NAME, used in messages like 'backups
-#               have been disabled'
-TASK_ARTICLE = 'a'
-TASK_NAME = 'script invocation'
-TASKS_NAME = 'script invocations'
 
 # for pps() pretty-printer
 PPS_INDENT = 1
