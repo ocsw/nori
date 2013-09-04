@@ -4151,8 +4151,7 @@ def render_status(full=False):
 
 #
 # Note: the functions below are meant to be run from manual command line
-# modes, not autonomous operation; they only log actual status changes, and
-# they exit when finished.
+# modes, not autonomous operation; they only log actual status changes.
 #
 
 
@@ -4196,7 +4195,6 @@ def silence_lf_alerts():
   status_logger.info('Lockfile alerts have been silenced for '
                      'lockfile {0}.'.format(pps(cfg['lockfile'])))
   logging_start_stdouterr()
-  sys.exit(NO_ERROR_EXITVAL)
 
 
 def unsilence_lf_alerts():
@@ -4241,7 +4239,6 @@ def unsilence_lf_alerts():
   status_logger.info('Lockfile alerts have been unsilenced for '
                      'lockfile {0}.'.format(pps(cfg['lockfile'])))
   logging_start_stdouterr()
-  sys.exit(NO_ERROR_EXITVAL)
 
 
 def disable_script():
@@ -4295,7 +4292,6 @@ def disable_script():
   status_logger.info('{0} have been disabled; lockfile is {1}.' .
                      format(TASKS_NAME.capitalize(), pps(cfg['lockfile'])))
   logging_start_stdouterr()
-  sys.exit(NO_ERROR_EXITVAL)
 
 
 def enable_script():
@@ -4343,7 +4339,6 @@ def enable_script():
   status_logger.info('{0} have been re-enabled; lockfile is {1}.' .
                      format(TASKS_NAME.capitalize(), pps(cfg['lockfile'])))
   logging_start_stdouterr()
-  sys.exit(NO_ERROR_EXITVAL)
 
 
 def clear_lockfile():
@@ -4396,7 +4391,6 @@ def clear_lockfile():
   status_logger.info('Lockfile directory {0} has been manually removed.' .
                      format(pps(cfg['lockfile'])))
   logging_start_stdouterr()
-  sys.exit(NO_ERROR_EXITVAL)
 
 
 #####################################
