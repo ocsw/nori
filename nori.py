@@ -675,24 +675,24 @@ TASK_ARTICLE = 'a'
 TASK_NAME = 'script invocation'
 TASKS_NAME = 'script invocations'
 
-# for pps() pretty-printer; initialize to the defaults
+# for pps() pretty-printer
 PPS_INDENT = 1
-PPS_WIDTH = 80
+PPS_WIDTH = 76
 PPS_DEPTH = None
 
-# internal, see variable/value functions
+# see variable/value and config setting functions
 if sys.hexversion < 0x03000000:
-  _NUMBER_TYPES = (int, float, long)  # not complex
-  _STRING_TYPES = (basestring,)  # tuple so we can add to it
-  _STRINGISH_TYPES = (basestring, bytearray, buffer)
-  _CONTAINER_TYPES = (list, tuple, xrange, set, frozenset, dict,
+  NUMBER_TYPES = (int, float, long)  # not complex
+  STRING_TYPES = (basestring,)  # tuple so we can add to it
+  STRINGISH_TYPES = (basestring, bytearray, buffer)
+  CONTAINER_TYPES = (list, tuple, xrange, set, frozenset, dict,
                       collections.ItemsView, collections.KeysView,
                       collections.ValuesView)
 else:
-  _NUMBER_TYPES = (int, float)  # not complex
-  _STRING_TYPES = (str,)  # tuple so we can add to it
-  _STRINGISH_TYPES = (str, bytes, bytearray)
-  _CONTAINER_TYPES = (list, tuple, range, set, frozenset, dict,
+  NUMBER_TYPES = (int, float)  # not complex
+  STRING_TYPES = (str,)  # tuple so we can add to it
+  STRINGISH_TYPES = (str, bytes, bytearray)
+  CONTAINER_TYPES = (list, tuple, range, set, frozenset, dict,
                       collections.ItemsView, collections.KeysView,
                       collections.ValuesView)
 
@@ -717,8 +717,8 @@ if sys.hexversion >= 0x03040000:
                         'P': (stat.S_ISPORT, 'event port'),
                       }
 
-# internal, see file rotation functions
-_ZIP_SUFFIXES = ['.gz', '.bz2', '.lz', '.xz',]
+# see file rotation functions
+ZIP_SUFFIXES = ['.gz', '.bz2', '.lz', '.xz',]
 
 
 ############
@@ -1308,7 +1308,7 @@ the following suffixes, without disrupting the script:
 {0}
 
 If set to None, no output log will be used.
-""".format(_ZIP_SUFFIXES)
+""".format(ZIP_SUFFIXES)
                                           ),
                                     default=('/var/log/' +
                                              script_shortname +
@@ -1541,7 +1541,7 @@ def char_name(c):
 def type_list_string(tt):
   """
   Return a string containing the types listed in a tuple.
-  See _*_TYPES, under constants.
+  See *_TYPES, under constants.
   Parameters:
     tt: the tuple of types to stringify
   Dependencies:
@@ -1557,9 +1557,9 @@ def scalar_to_tuple(v):
   Parameters:
     v: the value to check
   Dependencies:
-    globals: _CONTAINER_TYPES
+    globals: CONTAINER_TYPES
   """
-  return v if isinstance(v, _CONTAINER_TYPES) else (v,)
+  return v if isinstance(v, CONTAINER_TYPES) else (v,)
 
 
 def re_repl_escape(s):
@@ -2346,7 +2346,7 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
   """
   Rotate numbered files or directories.
 
-  Files/directories can optionally have any of the suffixes in _ZIP_SUFFIXES
+  Files/directories can optionally have any of the suffixes in ZIP_SUFFIXES
   following the suffix parameter.
 
   Parameters:
@@ -2360,7 +2360,7 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
     exit_val: value to exit the script with on error
 
   Dependencies:
-    globals: email_logger, STARTUP_EXITVAL, _ZIP_SUFFIXES
+    globals: email_logger, STARTUP_EXITVAL, ZIP_SUFFIXES
     functions: fix_path(), pps()
     modules: re, os, sys
 
@@ -2371,7 +2371,7 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
   f_list = []
   r = re.compile('^' +
                  re.escape(prefix + sep) + '([0-9]+)' + re.escape(suffix) +
-                 '(|' + '|'.join(map(re.escape, _ZIP_SUFFIXES)) + ')' +
+                 '(|' + '|'.join(map(re.escape, ZIP_SUFFIXES)) + ')' +
                  '$')
   try:
     for f in os.listdir(fix_path(dir_path)):
@@ -2404,7 +2404,7 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
   f_list = []
   r = re.compile('^' +
                  re.escape(prefix + suffix) +
-                 '(|' + '|'.join(map(re.escape, _ZIP_SUFFIXES)) + ')' +
+                 '(|' + '|'.join(map(re.escape, ZIP_SUFFIXES)) + ')' +
                  '$')
   try:
     f_list = [f for f in os.listdir(fix_path(dir_path))
@@ -2435,7 +2435,7 @@ def prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
   """
   Prune numbered files or directories by number and date.
 
-  Files/directories can optionally have any of the suffixes in _ZIP_SUFFIXES
+  Files/directories can optionally have any of the suffixes in ZIP_SUFFIXES
   following the suffix parameter.
 
   Parameters:
@@ -2452,7 +2452,7 @@ def prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
     exit_val: value to exit the script with on error
 
   Dependencies:
-    globals: email_logger, STARTUP_EXITVAL, _ZIP_SUFFIXES
+    globals: email_logger, STARTUP_EXITVAL, ZIP_SUFFIXES
     functions: fix_path(), pps(), file_newer_than(), rm_rf()
     modules: re, os, sys
 
@@ -2466,7 +2466,7 @@ def prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
   f_list = []
   r = re.compile('^' +
                  re.escape(prefix + sep) + '([0-9]+)' + re.escape(suffix) +
-                 '(|' + '|'.join(map(re.escape, _ZIP_SUFFIXES)) + ')' +
+                 '(|' + '|'.join(map(re.escape, ZIP_SUFFIXES)) + ')' +
                  '$')
   try:
     for f in os.listdir(fix_path(dir_path)):
@@ -2511,7 +2511,7 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
   """
   Prune dated files or directories by number and date.
 
-  Files/directories can optionally have any of the suffixes in _ZIP_SUFFIXES
+  Files/directories can optionally have any of the suffixes in ZIP_SUFFIXES
   following the suffix parameter.
 
   Note: the 'current' file must exist before calling this function, so that
@@ -2534,7 +2534,7 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
     exit_val: value to exit the script with on error
 
   Dependencies:
-    globals: email_logger, STARTUP_EXITVAL, _ZIP_SUFFIXES
+    globals: email_logger, STARTUP_EXITVAL, ZIP_SUFFIXES
     functions: fix_path(), pps(), rm_rf()
     modules: re, os, time, sys
 
@@ -2548,7 +2548,7 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
   f_list = []
   r = re.compile('^' +
                  re.escape(prefix + sep) + '.*' + re.escape(suffix) +
-                 '(|' + '|'.join(map(re.escape, _ZIP_SUFFIXES)) + ')' +
+                 '(|' + '|'.join(map(re.escape, ZIP_SUFFIXES)) + ')' +
                  '$')
   try:
     f_list = [(f, 0) for f in os.listdir(fix_path(dir_path))
@@ -2591,7 +2591,7 @@ def prune_files(layout, dir_path, prefix, sep, suffix, num_f, days_f,
                 exit_val=STARTUP_EXITVAL):
   """
   Wrapper: prune numbered or dated files/directories by number and date.
-  Files/directories can optionally have any of the suffixes in _ZIP_SUFFIXES
+  Files/directories can optionally have any of the suffixes in ZIP_SUFFIXES
   following the suffix parameter.
   Parameters:
     layout: the layout type (see below)
@@ -2613,7 +2613,7 @@ def rotate_prune_output_logs():
   """
   Rotate and prune the output logs.
 
-  Files can optionally have any of the suffixes in _ZIP_SUFFIXES
+  Files can optionally have any of the suffixes in ZIP_SUFFIXES
   following the suffix parameter.
 
   Dependencies:
@@ -3301,14 +3301,14 @@ def setting_check_not_empty(setting_name):
 
   The existence and type of the setting are checked.
 
-  See _CONTAINER_TYPES, under constants.
+  See CONTAINER_TYPES, under constants.
 
   Parameters:
     setting_name: see note above
 
   Dependencies:
     config settings: (contents of setting_name)
-    globals: cfg, _CONTAINER_TYPES, STARTUP_EXITVAL
+    globals: cfg, CONTAINER_TYPES, STARTUP_EXITVAL
     functions: setting_check_is_set(), setting_check_type(), err_exit()
 
   """
@@ -3317,7 +3317,7 @@ def setting_check_not_empty(setting_name):
   obj, obj_path = setting_check_is_set(setting_name)
 
   # check the type
-  setting_check_type(setting_name, _CONTAINER_TYPES)
+  setting_check_type(setting_name, CONTAINER_TYPES)
 
   # empty?
   if not obj:
@@ -3339,14 +3339,14 @@ def setting_check_not_all_empty(setting_name_list):
   Non-existent settings do not cause an error, but non-container-typed
   settings do.
 
-  See _CONTAINER_TYPES, under constants.
+  See CONTAINER_TYPES, under constants.
 
   Parameters:
     setting_name_list: a list or tuple of setting_names; see note above
 
   Dependencies:
     config settings: (contents of setting_name)
-    globals: cfg, _CONTAINER_TYPES, STARTUP_EXITVAL
+    globals: cfg, CONTAINER_TYPES, STARTUP_EXITVAL
     functions: setting_walk(), setting_check_type(), err_exit()
 
   """
@@ -3358,7 +3358,7 @@ def setting_check_not_all_empty(setting_name_list):
     ret, obj, full_path, real_path = setting_walk(setting_name)
     setting_paths.append(full_path)
     if ret:
-      setting_check_type(setting_name, _CONTAINER_TYPES)
+      setting_check_type(setting_name, CONTAINER_TYPES)
       if (not found_one) and obj:
         to_return = (obj, full_path)
         found_one = True
@@ -3383,7 +3383,7 @@ def setting_check_len(setting_name, min_len, max_len):
   Works on container- or stringish-typed settings.  The existence and type
   of the setting are checked.
 
-  See _CONTAINER_TYPES and _STRINGISH_TYPES, under constants.
+  See CONTAINER_TYPES and STRINGISH_TYPES, under constants.
 
   Parameters:
     setting_name: see note above
@@ -3392,7 +3392,7 @@ def setting_check_len(setting_name, min_len, max_len):
 
   Dependencies:
     config settings: (contents of setting_name)
-    globals: cfg, _CONTAINER_TYPES, _STRINGISH_TYPES, STARTUP_EXITVAL
+    globals: cfg, CONTAINER_TYPES, STRINGISH_TYPES, STARTUP_EXITVAL
     functions: setting_check_is_set(), setting_check_type(), pps(),
                err_exit()
 
@@ -3402,12 +3402,12 @@ def setting_check_len(setting_name, min_len, max_len):
   obj, obj_path = setting_check_is_set(setting_name)
 
   # check the type
-  t = setting_check_type(setting_name, _CONTAINER_TYPES + _STRINGISH_TYPES)
+  t = setting_check_type(setting_name, CONTAINER_TYPES + STRINGISH_TYPES)
 
   # len(obj) < min_len?  len(obj) > max_len?
   if ((min_len is not None and len(obj) < min_len) or
       (max_len is not None and len(obj) > max_len)):
-    if t in _CONTAINER_TYPES:
+    if t in CONTAINER_TYPES:
       err_exit('Error: {0} contains an invalid number of elements ({1}); '
                'exiting.'.format(obj_path, pps(len(obj))),
                STARTUP_EXITVAL)
@@ -3432,11 +3432,11 @@ def setting_check_not_blank(setting_name, ish=False):
   Parameters:
     setting_name: see note above
     ish: if true, string-like but non-string types are allowed
-         (see _STRINGISH_TYPES, under constants)
+         (see STRINGISH_TYPES, under constants)
 
   Dependencies:
     config settings: (contents of setting_name)
-    globals: cfg, _STRING_TYPES, _STRINGISH_TYPES, STARTUP_EXITVAL
+    globals: cfg, STRING_TYPES, STRINGISH_TYPES, STARTUP_EXITVAL
     functions: setting_check_is_set(), setting_check_type(), err_exit()
 
   """
@@ -3445,8 +3445,8 @@ def setting_check_not_blank(setting_name, ish=False):
   obj, obj_path = setting_check_is_set(setting_name)
 
   # check the type
-  setting_check_type(setting_name, _STRINGISH_TYPES
-                                   if ish else _STRING_TYPES)
+  setting_check_type(setting_name, STRINGISH_TYPES
+                                   if ish else STRING_TYPES)
 
   # blank?
   if not obj:
@@ -3471,11 +3471,11 @@ def setting_check_not_all_blank(setting_name_list, ish=False):
   Parameters:
     setting_name_list: a list or tuple of setting_names; see note above
     ish: if true, string-like but non-string types are allowed
-         (see _STRINGISH_TYPES, under constants)
+         (see STRINGISH_TYPES, under constants)
 
   Dependencies:
     config settings: (contents of setting_name)
-    globals: cfg, _STRING_TYPES, _STRINGISH_TYPES, STARTUP_EXITVAL
+    globals: cfg, STRING_TYPES, STRINGISH_TYPES, STARTUP_EXITVAL
     functions: setting_walk(), setting_check_type(), err_exit()
 
   """
@@ -3487,8 +3487,8 @@ def setting_check_not_all_blank(setting_name_list, ish=False):
     ret, obj, full_path, real_path = setting_walk(setting_name)
     setting_paths.append(full_path)
     if ret:
-      setting_check_type(setting_name, _STRINGISH_TYPES
-                                       if ish else _STRING_TYPES)
+      setting_check_type(setting_name, STRINGISH_TYPES
+                                       if ish else STRING_TYPES)
       if (not found_one) and obj:
         to_return = (obj, full_path)
         found_one = True
@@ -3514,16 +3514,16 @@ def setting_check_no_blanks(setting_name, ish=False):
   of the container's contents are checked.  If the container can't be empty,
   see setting_check_not_empty().
 
-  See _CONTAINER_TYPES, under constants.
+  See CONTAINER_TYPES, under constants.
 
   Parameters:
     setting_name: see note above
     ish: if true, string-like but non-string types are allowed
-         (see _STRINGISH_TYPES, under constants)
+         (see STRINGISH_TYPES, under constants)
 
   Dependencies:
     config settings: (contents of setting_name)
-    globals: cfg, _CONTAINER_TYPES, _STRING_TYPES, _STRINGISH_TYPES,
+    globals: cfg, CONTAINER_TYPES, STRING_TYPES, STRINGISH_TYPES,
              STARTUP_EXITVAL
     functions: setting_check_is_set(), setting_check_type(), err_exit()
 
@@ -3533,11 +3533,11 @@ def setting_check_no_blanks(setting_name, ish=False):
   obj, obj_path = setting_check_is_set(setting_name)
 
   # check the container type
-  setting_check_type(setting_name, _CONTAINER_TYPES)
+  setting_check_type(setting_name, CONTAINER_TYPES)
 
   # blanks?
   for subobj in obj:
-    if not isinstance(subobj, _STRINGISH_TYPES if ish else _STRING_TYPES):
+    if not isinstance(subobj, STRINGISH_TYPES if ish else STRING_TYPES):
       err_exit('Error: {0} contains a non-string; Exiting.' .
                format(obj_path),
                STARTUP_EXITVAL)
@@ -3565,11 +3565,11 @@ def setting_check_no_char(setting_name, char, ish=False):
     char: a string containing the illegal character, or a tuple of
           such strings
     ish: if true, string-like but non-string types are allowed
-         (see _STRINGISH_TYPES, under constants)
+         (see STRINGISH_TYPES, under constants)
 
   Dependencies:
     config settings: (contents of setting_name)
-    globals: cfg, _STRING_TYPES, _STRINGISH_TYPES, STARTUP_EXITVAL
+    globals: cfg, STRING_TYPES, STRINGISH_TYPES, STARTUP_EXITVAL
     functions: setting_check_is_set(), setting_check_type(),
                scalar_to_tuple(), char_name(), err_exit()
 
@@ -3579,8 +3579,8 @@ def setting_check_no_char(setting_name, char, ish=False):
   obj, obj_path = setting_check_is_set(setting_name)
 
   # check the type
-  setting_check_type(setting_name, _STRINGISH_TYPES
-                                   if ish else _STRING_TYPES)
+  setting_check_type(setting_name, STRINGISH_TYPES
+                                   if ish else STRING_TYPES)
 
   # if char isn't a tuple, make it one
   char = scalar_to_tuple(char)
@@ -3639,7 +3639,7 @@ def setting_check_num(setting_name, min_val=None, max_val=None):
 
   The existence and type of the setting are checked.
 
-  See _NUMBER_TYPES, under constants.
+  See NUMBER_TYPES, under constants.
 
   Parameters:
     setting_name: see note above
@@ -3648,7 +3648,7 @@ def setting_check_num(setting_name, min_val=None, max_val=None):
 
   Dependencies:
     config settings: (contents of setting_name)
-    globals: cfg, _NUMBER_TYPES
+    globals: cfg, NUMBER_TYPES
     functions: setting_check_is_set(), setting_check_type()
 
   """
@@ -3657,7 +3657,7 @@ def setting_check_num(setting_name, min_val=None, max_val=None):
   obj, obj_path = setting_check_is_set(setting_name)
 
   # check the type
-  setting_check_type(setting_name, _NUMBER_TYPES)
+  setting_check_type(setting_name, NUMBER_TYPES)
 
   # obj < min_val?  obj > max_val?
   if ((min_val is not None and obj < min_val) or
@@ -4551,7 +4551,7 @@ def validate_config():
   Dependencies:
     config settings: (all of them)
     hooks: validate_config_hook()
-    globals: cfg, _STRING_TYPES
+    globals: cfg, STRING_TYPES
     functions: setting_check_type(), setting_check_num(),
                setting_check_filedir_create(), setting_check_not_blank(),
                setting_check_no_blanks(), setting_check_len(),
@@ -4563,7 +4563,7 @@ def validate_config():
 
   # validate the settings that are already available
   if 'execpath' in cfg:
-    setting_check_type('execpath', _STRING_TYPES)
+    setting_check_type('execpath', STRING_TYPES)
   if 'umask' in cfg:
     setting_check_num('umask', 0, 511)  # 511 = 0o777
   setting_check_type('debug', bool)
@@ -4577,8 +4577,8 @@ def validate_config():
     setting_check_not_blank('emailfrom')
     setting_check_type('alertmailto', list)
     setting_check_no_blanks('alertmailto')
-    setting_check_type('alertsubject', _STRING_TYPES)
-    if setting_check_type('emailhost', _STRING_TYPES + (tuple,)) == tuple:
+    setting_check_type('alertsubject', STRING_TYPES)
+    if setting_check_type('emailhost', STRING_TYPES + (tuple,)) == tuple:
       setting_check_len('emailhost', 2, 2)
       setting_check_not_blank(('emailhost', 0))
       setting_check_num(('emailhost', 1), 1, 65535)
@@ -4594,7 +4594,7 @@ def validate_config():
   setting_check_type('quiet', bool)
   setting_check_type('usesyslog', bool)
   if cfg['usesyslog']:
-    if setting_check_type('syslogaddr', _STRING_TYPES + (tuple,)) == tuple:
+    if setting_check_type('syslogaddr', STRING_TYPES + (tuple,)) == tuple:
       setting_check_len('syslogaddr', 2, 2)
       setting_check_not_blank(('syslogaddr', 0))
       setting_check_num(('syslogaddr', 1), 1, 65535)
@@ -4627,11 +4627,11 @@ def validate_config():
                                      'local6', sl_class.LOG_LOCAL6,
                                      'local7', sl_class.LOG_LOCAL7,
                                     ])
-    setting_check_type('syslogtag', _STRING_TYPES)
-    setting_check_type('statuslog', _STRING_TYPES + (None,))
+    setting_check_type('syslogtag', STRING_TYPES)
+    setting_check_type('statuslog', STRING_TYPES + (None,))
     if cfg['statuslog']:
       setting_check_filedir_create('statuslog', 'f')
-    setting_check_type('outputlog', _STRING_TYPES + (None,))
+    setting_check_type('outputlog', STRING_TYPES + (None,))
     if cfg['outputlog']:
       setting_check_filedir_create('outputlog', 'f', True)
       setting_check_list('outputlog_layout', ['append', 'number', 'date'])
