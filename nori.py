@@ -7,6 +7,11 @@
 #
 # module docstring
 # comments/docstrings to 72
+#
+# '/' characters -> os.sep
+# rename suppressemail
+# setting names
+# setting section names
 
 
 """
