@@ -1036,13 +1036,13 @@ If the script has passed the runevery check, but the previous
 {0} is still running or was interrupted
 (i.e., the lockfile is still present):
 
--= it will send an alert to the alertmailto address(es)
--= it will send further alerts every ifrunning minutes, unless
-   ifrunning is 0 or the alerts are silenced
+-= It will send an alert to the alertmailto address(es).
+-= It will send further alerts every ifrunning minutes, unless
+   ifrunning is 0 or the alerts are silenced.
    (run '{1} --help' for more information on silencing alerts)
--= either way, it will send an alert when it next successfully starts,
+-= Either way, it will send an alert when it next successfully starts,
    so you know that the previous {0} finally finished, and the
-   next one has begun
+   next one has begun.
 """.format(TASK_NAME, script_name)
                                           ),
                                     default=120,
@@ -1122,7 +1122,7 @@ and [hostname] is the local hostname)
 config_settings['alertsubject'] = dict(
                                        descr=(
 """
-The subject of alert/error emails.
+The subject line of alert/error emails.
 
 Ignored if suppressemail is True.
 """
