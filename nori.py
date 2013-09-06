@@ -7,8 +7,6 @@
 #
 # module docstring
 # comments/docstrings to 72
-#
-# '/' characters -> os.sep
 
 
 """
@@ -700,6 +698,9 @@ else:
                       collections.ItemsView, collections.KeysView,
                       collections.ValuesView)
 
+# see config setting functions
+PATH_SEP = os.sep + ('/' if os.name=='nt' else '')
+
 # internal, see file/path functions
 # set third tuple value to False for lookup-only
 # (i.e., use for going from character to tuple, but not the reverse)
@@ -1380,12 +1381,12 @@ config_settings['output_log_sep'] = dict(
 """
 The separator to use before number/date suffixes in output log names.
 
-This may not include '/' characters (all directories in the path must be
-in the output_log setting).  However, it may be more than one character,
-or blank.
+This may not include path-separator characters ('{0}'; all directories
+in the path must be in the output_log setting).  However, it may be more
+than one character, or blank.
 
 Ignored if output_log is None or output_log_layout is 'append'.
-"""
+""".format(PATH_SEP)
     ),
     default='.',
     cl_coercer=str,
@@ -1406,11 +1407,11 @@ for the format of this value.)
 Dates refer to when the script starts; all files created during a given
 run of the script will have the same date suffix.
 
-This may not include '/' characters (all directories in the path must be
-in the output_log setting).  However, it may be blank.
+This may not include path-separator characters ('{1}'; all directories
+in the path must be in the output_log setting).  However, it may be blank.
 
 Ignored if output_log is None or output_log_layout is not 'date'.
-""".format(TASKS_NAME)
+""".format(TASKS_NAME, PATH_SEP)
     ),
     default='%Y%m%d',
     cl_coercer=str,
@@ -4607,7 +4608,7 @@ def validate_config():
   Dependencies:
     config settings: (all of them)
     hooks: validate_config_hook()
-    globals: cfg, STRING_TYPES
+    globals: cfg, STRING_TYPES, PATH_SEP
     functions: setting_check_type(), setting_check_num(),
                setting_check_filedir_create(), setting_check_not_blank(),
                setting_check_no_blanks(), setting_check_len(),
@@ -4692,9 +4693,9 @@ def validate_config():
   if cfg['output_log']:
     setting_check_filedir_create('output_log', 'f', True)
     setting_check_list('output_log_layout', ['append', 'number', 'date'])
-    setting_check_no_char('output_log_sep', os.sep)
-    setting_check_not_blank('output_log_date', os.sep)
-    setting_check_no_char('output_log_date', os.sep)
+    setting_check_no_char('output_log_sep', PATH_SEP)
+    setting_check_not_blank('output_log_date', PATH_SEP)
+    setting_check_no_char('output_log_date', PATH_SEP)
     if cfg['output_log_layout'] != 'append':
       setting_check_num('output_log_num', 0)
       setting_check_num('output_log_days', 0)
