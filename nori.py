@@ -4642,10 +4642,12 @@ def validate_config():
       setting_check_num(('alert_emails_host', 1), 1, 65535)
     else:
       setting_check_not_blank('alert_emails_host')
-    if setting_check_type('alert_emails_cred', (None, tuple)) is not None:
+    if (setting_check_type('alert_emails_cred', (NoneType, tuple))
+        is not NoneType):
       setting_check_len('alert_emails_cred', 2, 2)
       setting_check_no_blanks('alert_emails_cred')
-    if setting_check_type('alert_emails_sec', (None, tuple)) is not None:
+    if (setting_check_type('alert_emails_sec', (NoneType, tuple))
+        is not NoneType):
       setting_check_len('alert_emails_sec', 0, 2)
       for i, f in enumerate(cfg['alert_emails_sec']):
         setting_check_file_access(('alert_emails_sec', i), 'r')
@@ -4686,10 +4688,10 @@ def validate_config():
                                       'local7', sl_class.LOG_LOCAL7,
                                      ])
     setting_check_type('syslog_tag', STRING_TYPES)
-  setting_check_type('status_log', STRING_TYPES + (None,))
+  setting_check_type('status_log', STRING_TYPES + (NoneType,))
   if cfg['status_log']:
     setting_check_filedir_create('status_log', 'f')
-  setting_check_type('output_log', STRING_TYPES + (None,))
+  setting_check_type('output_log', STRING_TYPES + (NoneType,))
   if cfg['output_log']:
     setting_check_filedir_create('output_log', 'f', True)
     setting_check_list('output_log_layout', ['append', 'number', 'date'])
@@ -5103,7 +5105,7 @@ def run_mode():
   # log that we're starting the task
   status_logger.info('Starting {0}.'.format(TASK_NAME))
   touch_file(cfg['last_started_file'], "cfg['last_started_file']", None,
-             use_logger=True, warn_only=False, exitval=STARTUP_EXITVAL)
+             use_logger=True, warn_only=False, exit_val=STARTUP_EXITVAL)
   output_logger.info('{0} started {1}.' .
                      format(TASK_NAME.capitalize(),
                             time.strftime(FULL_DATE_FORMAT,
