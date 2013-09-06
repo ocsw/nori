@@ -4591,7 +4591,7 @@ def validate_config():
     if setting_check_type('emailsec', (None, tuple)) is not None:
       setting_check_len('emailsec', 0, 2)
       for i, f in enumerate(cfg['emailsec']):
-        setting_check_file_access(('emailsec', i), 'r', True)
+        setting_check_file_access(('emailsec', i), 'r')
   setting_check_type('quiet', bool)
   setting_check_type('usesyslog', bool)
   if cfg['usesyslog']:
@@ -4600,7 +4600,7 @@ def validate_config():
       setting_check_not_blank(('syslogaddr', 0))
       setting_check_num(('syslogaddr', 1), 1, 65535)
     else:
-      setting_check_file_access('syslogaddr', 'w', True)
+      setting_check_file_access('syslogaddr', 'w')
     setting_check_list('syslogsocktype', [socket.SOCK_DGRAM,
                                           socket.SOCK_STREAM])
     sl_class = logging.handlers.SysLogHandler  # for readability
