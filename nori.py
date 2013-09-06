@@ -853,7 +853,7 @@ running_as_email = getpass.getuser() + '@' + socket.getfqdn()
 # starting timestamp (see run_mode(); listed here for centralization)
 start_time = None
 
-# used by create_blank_config_files(full=True)
+# used by create_blank_config_files()
 config_file_header = ('# {0} config settings' .
                       format(script_shortname))
 config_file_header = ('{0}\n{1}\n{0}\n' .
@@ -937,9 +937,16 @@ config_defaults_multiple = dict(
 #             the case with outputlog*, so those settings have this set
 #             by default; see also config_settings_no_print_outputlog())
 #
+#   heading: if this is present, the element represents a section heading
+#            for render_config() and create_blank_config_files(), not an
+#            actual setting; the value of this key is the heading string
+#
 config_settings = collections.OrderedDict()
 # if we put the values in the constructor, they are added to kwargs and
 # lose their order, so we have to be more verbose
+config_settings['housekeeping_heading'] = dict(
+                                               heading='Housekeeping',
+                                              )
 config_settings['execpath'] = dict(
                                    descr=(
 """
@@ -983,6 +990,9 @@ if False, only INFO or above.
                                 default=False,
                                 cl_coercer=lambda x: str_to_bool(x),
                                )
+config_settings['status_heading'] = dict(
+                                         heading='Status checks',
+                                        )
 config_settings['runevery'] = dict(
                                    descr=(
 """
@@ -1080,6 +1090,9 @@ will default to '/var/run/{0}.lock.alert'
                                                   ),
                                     cl_coercer=str,
                                    )
+config_settings['logging_heading'] = dict(
+                                          heading='Alerts and logging',
+                                         )
 config_settings['suppressemail'] = dict(
                                         descr=(
 """
@@ -4506,7 +4519,8 @@ def apply_config_defaults():
 
   # first do the straightforward ones
   for s_name, s_dict in config_settings.items():
-    if s_name not in cfg and 'default' in s_dict:
+    if (s_name not in cfg and 'default' in s_dict and
+        'heading' not in s_dict):
       cfg[s_name] = s_dict['default']
 
   # then do the last-minute/complicated ones
@@ -4698,7 +4712,8 @@ def process_config(arg_ns):
   # be defensive in case the args were changed
   if hasattr(arg_ns, 'o') and arg_ns.o is not None:
     for [s_name, s_val] in arg_ns.o:
-      if s_name not in config_settings:
+      if (s_name not in config_settings or
+          'heading' in config_settings[s_name]):
         err_exit('Error: non-existent setting {0} was supplied on the '
                  'command line.\nExiting.'.format(pps(s_name)),
                  STARTUP_EXITVAL)
@@ -4767,6 +4782,9 @@ def render_config():
     for s_name, s_dict in config_settings.items():
       if 'no_print' in s_dict and s_dict['no_print']:
         continue
+      if 'heading' in s_dict:
+        msg += '\n' + s_dict['heading'] + ':\n'
+        continue
       if s_name in cfg:
         if 'renderer' in s_dict and callable(s_dict['renderer']):
           msg += ("cfg['" + s_name + "'] = " +
@@ -4826,7 +4844,7 @@ def log_cl_config():
   else:
     status_logger.info('Settings passed on the command line:')
     for s_name, s_dict in config_settings.items():
-      if s_name in cl_config and s_name in cfg:
+      if s_name in cl_config and s_name in cfg and 'heading' not in s_dict:
         if 'renderer' in s_dict and callable(s_dict['renderer']):
           status_logger.info("cfg['" + s_name + "'] = " +
                              s_dict['renderer'](cfg[s_name]))
@@ -4852,38 +4870,48 @@ def create_blank_config_files(full=False):
 
   """
 
-  def output_blank_settings(cf_obj, full=False):
-    """Actually output the settings."""
-    if not full:
-      for s_name, s_dict in config_settings.items():
-        if 'no_print' in s_dict and s_dict['no_print']:
-          continue
-        print("#cfg['" + s_name + "'] = ", file=cf_obj)
-    else:
-      print(config_file_header, file=cf_obj)
-      for s_name, s_dict in config_settings.items():
-        if 'no_print' in s_dict and s_dict['no_print']:
-          continue
-        print('#', file=cf_obj)
-        if 'descr' in s_dict and s_dict['descr'].strip():
-          print(re.sub('^', '# ', s_dict['descr'].strip(),
-                       flags=re.MULTILINE), file=cf_obj)
-          print('#', file=cf_obj)
-        if 'default_descr' in s_dict:
-          print(re.sub('^', '# ',
-                       'Default: ' + s_dict['default_descr'].strip(),
-                       flags=re.MULTILINE), file=cf_obj)
-        elif 'default' in s_dict:
-          print('# Default: ' + pps(s_dict['default']), file=cf_obj)
-        else:
-          print('# No default.', file=cf_obj)
-        print('#', file=cf_obj)
-        print("###cfg['" + s_name + "'] = ", file=cf_obj)
-        print('', file=cf_obj)
+  msg = ''
+
+  if not full:
+    for s_name, s_dict in config_settings.items():
+      if 'no_print' in s_dict and s_dict['no_print']:
+        continue
+      if 'heading' in s_dict:
+        msg += '\n\n### {0} ###\n\n'.format(s_dict['heading'])
+        continue
+      msg += "#cfg['" + s_name + "'] = \n"
+
+  else:  # full=True
+    for s_name, s_dict in config_settings.items():
+      if 'no_print' in s_dict and s_dict['no_print']:
+        continue
+      if 'heading' in s_dict:
+        msg += ('\n{0}\n{1}\n{0}\n\n' .
+                      format('#' * (len(s_dict['heading']) + 3),
+                             '# ' + s_dict['heading']))
+        continue
+      msg += '#\n'
+      if 'descr' in s_dict and s_dict['descr'].strip():
+        msg += re.sub('^', '# ', s_dict['descr'].strip(),
+                      flags=re.MULTILINE) + '\n'
+        msg += '#\n'
+      if 'default_descr' in s_dict:
+        msg += re.sub('^', '# ',
+                      'Default: ' + s_dict['default_descr'].strip(),
+                      flags=re.MULTILINE) + '\n'
+      elif 'default' in s_dict:
+        msg += '# Default: ' + pps(s_dict['default']) + '\n'
+      else:
+        msg += '# No default.\n'
+      msg += '#\n'
+      msg += "###cfg['" + s_name + "'] = \n"
+      msg += '\n'
+
+  msg = config_file_header + '\n' + msg.strip()
 
   try:
     if config_file_paths is None:
-      output_blank_settings(sys.stdout, full)
+      print(msg, file=sys.stdout)
     else:
       for cfp in config_file_paths:
         # use os.open() to avoid a race condition, but this means we can't
@@ -4892,7 +4920,7 @@ def create_blank_config_files(full=False):
         # and SCRIPT_MODES_DESCR
         with os.fdopen(os.open(fix_path(cfp),
                                os.O_CREAT | os.O_EXCL | os.O_WRONLY)) as cf_obj:
-          output_blank_settings(cf_obj, full)
+          print(msg, file=cf_obj)
   except (OSError, IOError) as e:
     if (e.errno == errno.EEXIST):
         err_exit('Error: specified config file {0} already exists; '
