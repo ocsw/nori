@@ -9,9 +9,6 @@
 # comments/docstrings to 72
 #
 # '/' characters -> os.sep
-# rename suppressemail
-# setting names
-# setting section names
 
 
 """
@@ -910,7 +907,8 @@ config_defaults_multiple = dict(
 #
 #   default_descr: a string description of the default; if this is present,
 #                  it will be used by create_blank_config_files(full=True)
-#                  in place of the actual default
+#                  (with leading and trailing whitespace removed) in place
+#                  of the actual default
 #                  note: this will have '# Default: ' prepended to the
 #                  first line, and '# ' to the rest; format accordingly
 #
