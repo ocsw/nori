@@ -1464,7 +1464,8 @@ Ignored if output_log is None or output_log_layout is 'append'.
 # e.g. because they are similar to other settings, or because
 # they exist for some DBMSes and not others
 #
-# entries can be tuples matching recursive entries in config_settings;
+# top-level settings are already handled, so this should contain only
+# tuples matching sub-settings (e.g., ('alert_emails_sec', 3));
 # see the note about setting_names in the config functions section
 #
 # see also warn_bogus_config()
@@ -4518,12 +4519,25 @@ def import_config_by_name(file_path):
 
 
 def warn_bogus_config():
+
   """
   Warn about non-existent settings that might have been set by accident.
+
   Dependencies:
-    globals: bogus_config, email_logger
+    globals: cfg, config_settings, bogus_config, email_logger
     functions: setting_walk(), pps()
+
   """
+
+  # check for bogus top-level settings
+  for setting in cfg:
+    if setting not in config_settings or
+       'heading' in config_settings[setting]:
+      email_logger.warn("Warning: cfg['{0}'] is set (to {1}), "
+                        "but there is no such setting." .
+                        format(setting, pps(obj)))
+
+  # look for specific sub-settings
   for bogus in bogus_config:
     ret, obj, full_path, real_path = setting_walk(bogus)
     if ret:
