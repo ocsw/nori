@@ -48,7 +48,7 @@ include script-specific changes.
 EXIT VALUES:
 ------------
 
-  0   = no error (e.g., runevery hasn't expired, or invocation was
+  0   = no error (e.g., run_every hasn't expired, or invocation was
         completed without errors)
 
   2   = error parsing the command line
@@ -180,8 +180,8 @@ API FUNCTIONS:
   Configuration and status:
   -------------------------
 
-  config_settings_no_print_outputlog
-    Turn self-documentation of the outputlog feature on or off.
+  config_settings_no_print_output_log
+    Turn self-documentation of the output log feature on or off.
 
 
   Variable and value manipulations:
@@ -510,7 +510,7 @@ USAGE IN SCRIPTS:
 
 
 
-#   config_settings_no_print_outputlog(),
+#   config_settings_no_print_output_log(),
 #   global var setup for use, incl. all with aeolus, task*,
 #     default_config_files, logging types
 
@@ -847,7 +847,7 @@ script_shortname = re.sub('\.py.?$', '', script_name)
 # get the user's local email address
 # uses environment variables, so it's not totally safe;
 # better to set the address explicitly whereever it's needed
-# (e.g., don't use the default alertmailfrom/alertmailto settings)
+# (e.g., don't use the default alert_emails_from/alert_emails_to settings)
 running_as_email = getpass.getuser() + '@' + socket.getfqdn()
 
 # starting timestamp (see run_mode(); listed here for centralization)
@@ -934,8 +934,8 @@ config_defaults_multiple = dict(
 #             this is especially useful for settings that don't apply
 #             to a particular script, but need to be left in the code
 #             so as not to break anything (for example, this is often
-#             the case with outputlog*, so those settings have this set
-#             by default; see also config_settings_no_print_outputlog())
+#             the case with output_log*, so those settings have this set
+#             by default; see also config_settings_no_print_output_log())
 #
 #   heading: if this is present, the element represents a section heading
 #            for render_config() and create_blank_config_files(), not an
@@ -947,7 +947,7 @@ config_settings = collections.OrderedDict()
 config_settings['housekeeping_heading'] = dict(
                                                heading='Housekeeping',
                                               )
-config_settings['execpath'] = dict(
+config_settings['exec_path'] = dict(
                                    descr=(
 """
 Search path for executables.
@@ -993,7 +993,7 @@ if False, only INFO or above.
 config_settings['status_heading'] = dict(
                                          heading='Status checks',
                                         )
-config_settings['runevery'] = dict(
+config_settings['run_every'] = dict(
                                    descr=(
 """
 How often to allow the script to run {0} {1}, in minutes.
@@ -1007,24 +1007,24 @@ Alternatively, if this is set to 0, no check will be performed, and
 {0} {1} will be attempted every time the script is run.
 Otherwise, {0} {1} will only be attempted if this amount
 of time has passed since the last {1} was started
-(see startedfile, below).
+(see last_started_file, below).
 """.format(TASK_ARTICLE, TASK_NAME, TASKS_NAME)
                                          ),
                                    default=0,
                                    cl_coercer=int,
                                   )
-config_settings['startedfile'] = dict(
+config_settings['last_started_file'] = dict(
                                       descr=(
 """
 Path to the last-started timestamp file.
 
 The timestamp is updated when {0} {1} actually starts.
 
-The script uses this for the runevery check, and it can also be used
+The script uses this for the run_every check, and it can also be used
 by other scripts (e.g., to check if {2} haven't been run
 for a while)
 
-_Not_ ignored, even if runevery is 0.
+_Not_ ignored, even if run_every is 0.
 """.format(TASK_ARTICLE, TASK_NAME, TASKS_NAME)
                                             ),
                                       default=('/var/log/' +
@@ -1046,16 +1046,16 @@ we can put temp files in it.)
                                             '.lock'),
                                    cl_coercer=str,
                                   )
-config_settings['ifrunning'] = dict(
+config_settings['if_running'] = dict(
                                     descr=(
 """
-If the script has passed the runevery check, but the previous
+If the script has passed the run_every check, but the previous
 {0} is still running or was interrupted
 (i.e., the lockfile is still present):
 
--= It will send an alert to the alertmailto address(es).
--= It will send further alerts every ifrunning minutes, unless
-   ifrunning is 0 or the alerts are silenced.
+-= It will send an alert to the alert_emails_to address(es).
+-= It will send further alerts every if_running minutes, unless
+   if_running is 0 or the alerts are silenced.
    (run '{1} --help' for more information on silencing alerts)
 -= Either way, it will send an alert when it next successfully starts,
    so you know that the previous {0} finally finished, and the
@@ -1070,12 +1070,12 @@ If the script has passed the runevery check, but the previous
                                                   ),
                                     cl_coercer=int,
                                    )
-config_settings['alertfile'] = dict(
+config_settings['lockfile_alert_file'] = dict(
                                     descr=(
 """
-Path to the alert-timestamp file (used to track ifrunning).
+Path to the alert-timestamp file (used to track if_running).
 
-_Not_ ignored, even if ifrunning is 0.
+_Not_ ignored, even if if_running is 0.
 """
                                           ),
                                     # default is cfg['lockfile'] + '.alert',
@@ -1084,7 +1084,7 @@ _Not_ ignored, even if ifrunning is 0.
                                     default_descr=(
 """
 cfg['lockfile'] + '.alert'
-(e.g., if lockfile is set to '/var/run/{0}.lock', alertfile
+(e.g., if lockfile is set to '/var/run/{0}.lock', lockfile_alert_file
 will default to '/var/run/{0}.lock.alert'
 """.format(script_shortname)
                                                   ),
@@ -1093,21 +1093,21 @@ will default to '/var/run/{0}.lock.alert'
 config_settings['logging_heading'] = dict(
                                           heading='Alerts and logging',
                                          )
-config_settings['suppressemail'] = dict(
+config_settings['send_alert_emails'] = dict(
                                         descr=(
 """
-Don't send email alerts/errors?  (True/False)
+Send email for alerts/errors?  (True/False)
 """
                                               ),
-                                        default=False,
+                                        default=True,
                                         cl_coercer=lambda x: str_to_bool(x),
                                        )
-config_settings['alertmailfrom'] = dict(
+config_settings['alert_emails_from'] = dict(
                                         descr=(
 """
 Address to send email alerts/errors from.
 
-Ignored if suppressemail is True.
+Ignored if send_alert_emails is False.
 """
                                               ),
                                         default=running_as_email,
@@ -1120,14 +1120,14 @@ is the local hostname)
                                                       ),
                                         cl_coercer=str,
                                        )
-config_settings['alertmailto'] = dict(
+config_settings['alert_emails_to'] = dict(
                                       descr=(
 """
 Where to send email alerts/errors.
 
 This must be a list of strings (even if there is only one address).
 
-Ignored if suppressemail is True.
+Ignored if send_alert_emails is False.
 """
                                             ),
                                       default=[running_as_email],
@@ -1139,12 +1139,12 @@ and [hostname] is the local hostname)
 """
                                                     ),
                                      )
-config_settings['alertsubject'] = dict(
+config_settings['alert_emails_subject'] = dict(
                                        descr=(
 """
 The subject line of alert/error emails.
 
-Ignored if suppressemail is True.
+Ignored if send_alert_emails is False.
 """
                                              ),
                                        default=(script_shortname +
@@ -1158,7 +1158,7 @@ hostname
                                                      ),
                                        cl_coercer=str,
                                       )
-config_settings['emailhost'] = dict(
+config_settings['alert_emails_host'] = dict(
                                     descr=(
 """
 The SMTP server via which email alerts will be sent.
@@ -1166,33 +1166,33 @@ The SMTP server via which email alerts will be sent.
 This can be a string containing the hostname, or a tuple of the
 hostname and the port number.
 
-Ignored if suppressemail is True.
+Ignored if send_alert_emails is False.
 """
                                           ),
                                     default='localhost',
                                    )
-config_settings['emailcred'] = dict(
+config_settings['alert_emails_cred'] = dict(
                                     descr=(
 """
-The credentials to be used with the emailhost.
+The credentials to be used with the alert_emails_host.
 
 This can be None or a tuple containing the username and password.
 
-Ignored if suppressemail is True.
+Ignored if send_alert_emails is False.
 """
                                           ),
                                     default=None,
                                    )
-config_settings['emailsec'] = dict(
+config_settings['alert_emails_sec'] = dict(
                                    descr=(
 """
-The SSL/TLS options to be used with the emailhost.
+The SSL/TLS options to be used with the alert_emails_host.
 
 This can be None, () for plain SSL/TLS, a tuple containing only
 the path to a key file, or a tuple containing the paths to the key
 and certificate files.
 
-Ignored if suppressemail is True.
+Ignored if send_alert_emails is False.
 """
                                          ),
                                    default=None,
@@ -1214,7 +1214,7 @@ Can be True or False.
                                 default=False,
                                 cl_coercer=lambda x: str_to_bool(x),
                                )
-config_settings['usesyslog'] = dict(
+config_settings['use_syslog'] = dict(
                                     descr=(
 """
 Log messages to syslog?
@@ -1225,7 +1225,7 @@ Can be True or False.
                                     default=True,
                                     cl_coercer=lambda x: str_to_bool(x),
                                    )
-config_settings['syslogaddr'] = dict(
+config_settings['syslog_addr'] = dict(
                                      descr=(
 """
 Where to send syslog messages.
@@ -1233,7 +1233,7 @@ Where to send syslog messages.
 This can be a string containing the path to the syslog socket file, or
 a tuple containing the hostname and port (usually 514; available as logging.handlers.SYSLOG_UDP_PORT).
 
-Ignored if usesyslog is False.
+Ignored if use_syslog is False.
 """
                                            ),
                                      # see config_settings_extra()
@@ -1244,7 +1244,7 @@ otherwise, ('localhost', logging.handlers.SYSLOG_UDP_PORT)
 """
                                                    ),
                                     )
-config_settings['syslogsocktype'] = dict(
+config_settings['syslog_sock_type'] = dict(
                                          descr=(
 """
 What kind of socket to use for syslog.
@@ -1252,7 +1252,7 @@ What kind of socket to use for syslog.
 This can be socket.SOCK_DGRAM for UDP (the default), or
 socket.SOCK_STREAM for TCP.
 
-Ignored if usesyslog is False.
+Ignored if use_syslog is False.
 """
                                                ),
                                          default=socket.SOCK_DGRAM,
@@ -1264,7 +1264,7 @@ found, and is found to require socket.SOCK_STREAM
 """
                                                        ),
                                         )
-config_settings['syslogfac'] = dict(
+config_settings['syslog_fac'] = dict(
                                     descr=(
 """
 The syslog facility to use.
@@ -1278,26 +1278,26 @@ and their corresponding numerical constants.
 See the syslog and/or Python documentation (logging.handlers) for more
 information.
 
-Ignored if usesyslog is False.
+Ignored if use_syslog is False.
 """
                                           ),
                                     default='daemon',
                                     cl_coercer=str,
                                    )
-config_settings['syslogtag'] = dict(
+config_settings['syslog_tag'] = dict(
                                     descr=(
 """
 An identifier to add to each message logged to syslog.
 
 This is typically the name of the script.
 
-Ignored if usesyslog is False.
+Ignored if use_syslog is False.
 """
                                           ),
                                     default=script_shortname,
                                     cl_coercer=str,
                                    )
-config_settings['statuslog'] = dict(
+config_settings['status_log'] = dict(
                                     descr=(
 """
 The path to the status log.
@@ -1313,7 +1313,7 @@ If set to None, no status log will be used.
                                              '.log'),
                                     cl_coercer=str,
                                    )
-config_settings['outputlog'] = dict(
+config_settings['output_log'] = dict(
                                     descr=(
 """
 The path to the output log.
@@ -1321,8 +1321,8 @@ The path to the output log.
 Depending on the script, this log gets a copy of the output of various
 external commands, plus a few timestamps and diagnostics.
 
-If outputlog_layout is 'date', the filename will have outputlog_sep and a
-date string appended to it (see outputlog_sep and outputlog_date).
+If output_log_layout is 'date', the filename will have output_log_sep and
+a date string appended to it (see output_log_sep and output_log_date).
 
 Output logs may be compressed in place by any utility that uses any of
 the following suffixes, without disrupting the script:
@@ -1337,7 +1337,7 @@ If set to None, no output log will be used.
                                     cl_coercer=str,
                                     no_print=True,
                                    )
-config_settings['outputlog_layout'] = dict(
+config_settings['output_log_layout'] = dict(
                                            descr=(
 """
 The file layout to use for the output logs.
@@ -1347,36 +1347,36 @@ Available options:
   'number': log to numbered files (lower number = more recent, most recent
             has no number)
   'date': log to date-suffixed files (all suffixed, including the most
-          recent; see outputlog_date)
+          recent; see output_log_date)
 
-For example, if outputlog is '{0}.log', outputlog_layout is 'number',
-and outputlog_sep is '.', the second-most-recent file will be named
+For example, if output_log is '{0}.log', output_log_layout is 'number',
+and output_log_sep is '.', the second-most-recent file will be named
 '{0}.log.1'.
 
-Ignored if outputlog is None.
+Ignored if output_log is None.
 """.format(script_name)
                                                  ),
                                            default='number',
                                            cl_coercer=str,
                                            no_print=True,
                                           )
-config_settings['outputlog_sep'] = dict(
+config_settings['output_log_sep'] = dict(
                                         descr=(
 """
 The separator to use before number/date suffixes in output log names.
 
 This may not include '/' characters (all directories in the path must be
-in the outputlog setting).  However, it may be more than one character,
+in the output_log setting).  However, it may be more than one character,
 or blank.
 
-Ignored if outputlog is None or outputlog_layout is 'append'.
+Ignored if output_log is None or output_log_layout is 'append'.
 """
                                               ),
                                         default='.',
                                         cl_coercer=str,
                                         no_print=True,
                                        )
-config_settings['outputlog_date'] = dict(
+config_settings['output_log_date'] = dict(
                                        descr=(
 """
 The date format string for output log names.
@@ -1391,49 +1391,49 @@ Dates refer to when the script starts; all files created during a given
 run of the script will have the same date suffix.
 
 This may not include '/' characters (all directories in the path must be
-in the outputlog setting).  However, it may be blank.
+in the output_log setting).  However, it may be blank.
 
-Ignored if outputlog is None or outputlog_layout is not 'date'.
+Ignored if output_log is None or output_log_layout is not 'date'.
 """.format(TASKS_NAME)
                                              ),
                                        default='%Y%m%d',
                                        cl_coercer=str,
                                        no_print=True,
                                       )
-config_settings['outputlog_num'] = dict(
+config_settings['output_log_num'] = dict(
                                         descr=(
 """
 Number of output logs to keep, including the current one.
 
 A value of 0 means no number limit (but there may still be a date limit;
-see outputlog_days).
+see output_log_days).
 
-Note: this applies to both 'number' and 'date' values of outputlog_layout.
+Note: this applies to both 'number' and 'date' values of output_log_layout.
 
-Ignored if outputlog is None or outputlog_layout is 'append'.
+Ignored if output_log is None or output_log_layout is 'append'.
 """
                                               ),
                                         default=0,
                                         cl_coercer=int,
                                         no_print=True,
                                        )
-config_settings['outputlog_days'] = dict(
+config_settings['output_log_days'] = dict(
                                          descr=(
 """
 Days worth of output logs to keep.
 
 A value of 0 means no days limit (but there may still be a number limit;
-see outputlog_num).
+see output_log_num).
 
 Logs this many days old or older are removed.
 
 (Specifically, 1 day = a full 24 hours; if you run the script once a day,
-and set outputlog_days to 1, the log from the previous run will be newer
+and set output_log_days to 1, the log from the previous run will be newer
 than 24 hours by however long the script took to run, and it will be saved.)
 
-Note: this applies to both 'number' and 'date' values of outputlog_layout.
+Note: this applies to both 'number' and 'date' values of output_log_layout.
 
-Ignored if outputlog is None or outputlog_layout is 'append'.
+Ignored if output_log is None or output_log_layout is 'append'.
 """
                                                ),
                                          default=14,
@@ -1472,7 +1472,7 @@ def config_settings_extra():
 
   """
 
-  ### syslogaddr, syslogsocktype ###
+  ### syslog_addr, syslog_sock_type ###
 
   found_it = False
 
@@ -1494,36 +1494,36 @@ def config_settings_extra():
             except IOError:
               continue
             # looks like this needs to be SOCK_STREAM instead
-            config_settings['syslogsocktype']['default'] = (
+            config_settings['syslog_sock_type']['default'] = (
                 socket.SOCK_STREAM)
           continue
         s.close()
         found_it = True
-        config_settings['syslogaddr']['default'] = sock_path
+        config_settings['syslog_addr']['default'] = sock_path
         break
 
   if not found_it:
-    config_settings['syslogaddr']['default'] = (
+    config_settings['syslog_addr']['default'] = (
         ('localhost', logging.handlers.SYSLOG_UDP_PORT))
 
 config_settings_extra()
 
 
-def config_settings_no_print_outputlog(no_print):
+def config_settings_no_print_output_log(no_print):
   """
-  Turn self-documentation of the outputlog feature on or off.
+  Turn self-documentation of the output log feature on or off.
   Parameters:
-    no_print: desired value of the no_print attribute of the outputlog
+    no_print: desired value of the no_print attribute of the output_log
               settings (see notes on config_settings, above)
   Dependencies:
-    globals: config_settings['outputlog*']
+    globals: config_settings['output_log*']
   """
-  config_settings['outputlog']['no_print'] = no_print
-  config_settings['outputlog_layout']['no_print'] = no_print
-  config_settings['outputlog_sep']['no_print'] = no_print
-  config_settings['outputlog_date']['no_print'] = no_print
-  config_settings['outputlog_num']['no_print'] = no_print
-  config_settings['outputlog_days']['no_print'] = no_print
+  config_settings['output_log']['no_print'] = no_print
+  config_settings['output_log_layout']['no_print'] = no_print
+  config_settings['output_log_sep']['no_print'] = no_print
+  config_settings['output_log_date']['no_print'] = no_print
+  config_settings['output_log_num']['no_print'] = no_print
+  config_settings['output_log_days']['no_print'] = no_print
 
 
 ############################################################################
@@ -2638,20 +2638,20 @@ def rotate_prune_output_logs():
   following the suffix parameter.
 
   Dependencies:
-    config settings: outputlog, outputlog_layout, outputlog_sep,
-                     outputlog_num, outputlog_days
+    config settings: output_log, output_log_layout, output_log_sep,
+                     output_log_num, output_log_days
     globals: cfg, status_logger, STARTUP_EXITVAL
     functions: rotate_num_files, prune_files(), parentdir()
 
   """
 
   # no logs?
-  if not cfg['outputlog']:
+  if not cfg['output_log']:
     status_logger.info('Output logging is off; not rotating logs.')
     return
 
   # appending to one log?
-  if cfg['outputlog_layout'] == 'append':
+  if cfg['output_log_layout'] == 'append':
     status_logger.info('Output logs are being appended to a single file; '
                        'not rotating logs.')
     return
@@ -2659,14 +2659,14 @@ def rotate_prune_output_logs():
   status_logger.info('Rotating logs...')
 
   # rotate
-  if cfg['outputlog_layout'] == 'number':
-    rotate_num_files(parentdir(cfg['outputlog']), cfg['outputlog'],
-                     cfg['outputlog_sep'], '', STARTUP_EXITVAL)
+  if cfg['output_log_layout'] == 'number':
+    rotate_num_files(parentdir(cfg['output_log']), cfg['output_log'],
+                     cfg['output_log_sep'], '', STARTUP_EXITVAL)
 
   # prune
-  prune_files(cfg['outputlog_layout'], parentdir(cfg['outputlog']),
-              cfg['outputlog'], cfg['outputlog_sep'], '',
-              cfg['outputlog_num'], cfg['outputlog_days'],
+  prune_files(cfg['output_log_layout'], parentdir(cfg['output_log']),
+              cfg['output_log'], cfg['output_log_sep'], '',
+              cfg['output_log_num'], cfg['output_log_days'],
               STARTUP_EXITVAL)
 
 
@@ -2729,7 +2729,7 @@ class SMTPDiagHandler(logging.handlers.SMTPHandler):
     """
     Add diagnostics to the message, and log that an email was sent.
     Dependencies:
-      config settings: alertmailto
+      config settings: alert_emails_to
       globals: cfg, alert_logger
       functions: email_diagnostics()
       modules: copy
@@ -2740,7 +2740,8 @@ class SMTPDiagHandler(logging.handlers.SMTPHandler):
       r.msg += '\n'
     r.msg += email_diagnostics()
     super(SMTPDiagHandler, self).emit(r)
-    alert_logger.info('Alert email sent to {0}.'.format(cfg['alertmailto']))
+    alert_logger.info('Alert email sent to {0}.' .
+                      format(cfg['alert_emails_to']))
 
 
 def init_syslog():
@@ -2751,23 +2752,23 @@ def init_syslog():
   This is a helper function for init_logging().
 
   Dependencies:
-    config settings: syslogaddr, syslogsocktype, syslogfac, syslogtag
+    config settings: syslog_addr, syslog_sock_type, syslog_fac, syslog_tag
     globals: cfg
     modules: sys, logging, logging.handlers
     Python: 2.7/3.2, for SysLogHandler(socktype)
 
   """
 
-  if sys.hexversion >= 0x03040000 and cfg['syslogtag'] != '':
-    slh = logging.handlers.SysLogHandler(address=cfg['syslogaddr'],
-                                         socktype=cfg['syslogsocktype'],
-                                         facility=cfg['syslogfac'],
-                                         ident=cfg['syslogtag'])
+  if sys.hexversion >= 0x03040000 and cfg['syslog_tag'] != '':
+    slh = logging.handlers.SysLogHandler(address=cfg['syslog_addr'],
+                                         socktype=cfg['syslog_sock_type'],
+                                         facility=cfg['syslog_fac'],
+                                         ident=cfg['syslog_tag'])
   else:
-    slh = logging.handlers.SysLogHandler(address=cfg['syslogaddr'],
-                                         socktype=cfg['syslogsocktype'],
-                                         facility=cfg['syslogfac'])
-    syslog_formatter = logging.Formatter(cfg['syslogtag'] +
+    slh = logging.handlers.SysLogHandler(address=cfg['syslog_addr'],
+                                         socktype=cfg['syslog_sock_type'],
+                                         facility=cfg['syslog_fac'])
+    syslog_formatter = logging.Formatter(cfg['syslog_tag'] +
                                          '[%(process)d]: %(message)s')
     slh.setFormatter(syslog_formatter)
 
@@ -2796,9 +2797,10 @@ def init_logging_main():
   (e.g., newline -> #012).
 
   Dependencies:
-    config settings: debug, suppressemail, alertmailfrom, alertmailto,
-                     alertsubject, emailhost, emailcred, emailsec, quiet,
-                     usesyslog, statuslog
+    config settings: debug, send_alert_emails, alert_emails_from,
+                     alert_emails_to, alert_emails_subject,
+                     alert_emails_host, alert_emails_cred, alert_emails_sec,
+                     quiet, use_syslog, status_log
     globals: cfg, status_logger, alert_logger, email_logger,
              _syslog_handler, _stdout_handler, _stderr_handler,
              FULL_DATE_FORMAT, STARTUP_EXITVAL
@@ -2820,22 +2822,22 @@ def init_logging_main():
   else:
     base_logger.setLevel(logging.INFO)
   # status log
-  if cfg['statuslog']:
+  if cfg['status_log']:
     try:
-      statuslog_handler = logging.FileHandler(cfg['statuslog'], 'a')
+      status_log_handler = logging.FileHandler(cfg['status_log'], 'a')
     except IOError as e:
       err_exit('Error: could not open the status log ({0}); exiting.\n'
                'Details: [Errno {1}] {2}' .
-               format(pps(cfg['statuslog']), e.errno, e.strerror),
+               format(pps(cfg['status_log']), e.errno, e.strerror),
                STARTUP_EXITVAL)
-    statuslog_formatter = (
+    status_log_formatter = (
         logging.Formatter('%(asctime)s [%(process)d]: %(message)s',
                           FULL_DATE_FORMAT))
         # (syslog uses %e instead of %d, but it's less portable)
-    statuslog_handler.setFormatter(statuslog_formatter)
-    base_logger.addHandler(statuslog_handler)
+    status_log_handler.setFormatter(status_log_formatter)
+    base_logger.addHandler(status_log_handler)
   #syslog
-  if cfg['usesyslog']:
+  if cfg['use_syslog']:
     _syslog_handler = init_syslog()
     base_logger.addHandler(_syslog_handler)
 
@@ -2855,10 +2857,13 @@ def init_logging_main():
 
   # email; use this for most alerts/errors
   email_logger = logging.getLogger(__name__ + '.alert.email')
-  if not cfg['suppressemail']:
-    email_handler = SMTPDiagHandler(cfg['emailhost'], cfg['alertmailfrom'],
-                                    cfg['alertmailto'], cfg['alertsubject'],
-                                    cfg['emailcred'], cfg['emailsec'])
+  if cfg['send_alert_emails']:
+    email_handler = SMTPDiagHandler(cfg['alert_emails_host'],
+                                    cfg['alert_emails_from'],
+                                    cfg['alert_emails_to'],
+                                    cfg['alert_emails_subject'],
+                                    cfg['alert_emails_cred'],
+                                    cfg['alert_emails_sec'])
   else:
     # if we turn off propagation temporarily (see
     # logging_email_stop_logging()), we will get errors unless
@@ -2960,8 +2965,8 @@ def init_logging_output():
   *before* calling this function
 
   Dependencies:
-    config settings: outputlog, outputlog_layout, outputlog_sep,
-                     outputlog_date, (outputlog_num), (outputlog_days)
+    config settings: output_log, output_log_layout, output_log_sep,
+                     output_log_date, (output_log_num), (output_log_days)
     globals: cfg, output_logger, output_log_fo, email_logger,
              start_time, STARTUP_EXITVAL, FULL_DATE_FORMAT
     functions: fix_path(), rotate_prune_output_logs(), pps(),
@@ -2973,14 +2978,14 @@ def init_logging_output():
   global output_logger, output_log_fo, _stdout_handler
 
   # assemble the complete path, including datestring if applicable
-  if cfg['outputlog']:
-    outputlog_path = cfg['outputlog']
-    if cfg['outputlog_layout'] == 'date':
-      outputlog_path += (cfg['outputlog_sep'] +
-                         time.strftime(cfg['outputlog_date'],
+  if cfg['output_log']:
+    output_log_path = cfg['output_log']
+    if cfg['output_log_layout'] == 'date':
+      output_log_path += (cfg['output_log_sep'] +
+                         time.strftime(cfg['output_log_date'],
                                        time.localtime(start_time)))
     # needed for prune_date_files(), for pruning by number
-    touch_file(outputlog_path, 'the output log', None, use_logger=True,
+    touch_file(output_log_path, 'the output log', None, use_logger=True,
                warn_only=False, exit_val=STARTUP_EXITVAL)
 
   # rotate and prune output logs
@@ -2994,13 +2999,14 @@ def init_logging_output():
   output_logger = logging.getLogger(__name__ + '.output')
   output_logger.propagate = False
   output_logger.addHandler(_stdout_handler)
-  if cfg['outputlog']:
+  if cfg['output_log']:
     try:
-      output_handler = logging.FileHandler(cfg['outputlog'])
+      output_handler = logging.FileHandler(cfg['output_log'])
     except IOError as e:
       email_logger.error('Error: could not open the output log ({0}); '
                          'exiting.\nDetails: [Errno {1}] {2}' .
-                         format(pps(cfg['outputlog']), e.errno, e.strerror))
+                         format(pps(cfg['output_log']), e.errno,
+                                e.strerror))
       sys.exit(STARTUP_EXITVAL)
     output_logger.addHandler(output_handler)
 
@@ -3010,17 +3016,17 @@ def init_logging_output():
     # file won't exist, or it will have been moved out of the way by the
     # rotation - except in one case:
     # if we're using a date layout, and the script has been run more
-    # recently than the datestring allows for, we should append so as not to
-    # lose information
-    output_log_fo = open(fix_path(cfg['outputlog'])
-                           if cfg['outputlog']
+    # recently than the datestring allows for, we should append so as not
+    # to lose information
+    output_log_fo = open(fix_path(cfg['output_log'])
+                           if cfg['output_log']
                            else os.devnull,
                          'a')
   except IOError as e:
     email_logger.error('Error: could not open the output log ({0}); '
                        'exiting.\nDetails: [Errno {1}] {2}' .
-                       format(pps(cfg['outputlog'])
-                                if cfg['outputlog']
+                       format(pps(cfg['output_log'])
+                                if cfg['output_log']
                                 else os.devnull,
                               e.errno, e.strerror))
     sys.exit(STARTUP_EXITVAL)
@@ -3102,11 +3108,12 @@ def run_with_logging(cmd_args, include_stderr=True, **kwargs):
 #
 # For the functions below, setting_name can be either a string which is an
 # index into cfg, or else a tuple containing recursive indexes into cfg;
-# for example, ('emailhost', 1) would test the port number of the emailhost
-# setting (cfg['emailhost'][1]), assuming it's a tuple.
+# for example, ('alert_emails_host', 1) would test the port number of the
+# alert_emails_host setting (cfg['alert_emails_host'][1]), assuming it's
+# a tuple.
 #
 # In setting-checking functions, if the indexed setting doesn't exist (e.g.,
-# if emailhost is a string containing a hostname), it is considered a
+# if alert_emails_host is a string containing a hostname), it is considered a
 # failure of the check, and causes the script to exit with an error, unless
 # otherwise specified.  Settings should be have defaults applied, and/or be
 # checked for existence, before calling these.
@@ -3870,13 +3877,14 @@ def check_status():
   """
   Check if the script proper should actually start running.
 
-  * Has cfg['runevery'] passed?
+  * Has cfg['run_every'] passed?
   * Does cfg['lockfile'] already exist?
   * Send alerts about it if necessary.
   * Has the script been disabled?
 
   Dependencies:
-    config settings: runevery, startedfile, lockfile, ifrunning, alertfile
+    config settings: run_every, last_started_file, lockfile, if_running,
+                     lockfile_alert_file
     globals: cfg, status_logger, alert_logger, email_logger,
              TASK_NAME, TASKS_NAME, NO_ERROR_EXITVAL, STARTUP_EXITVAL,
              LOCKFILE_EXITVAL, LF_ALERTS_SILENCED, SCRIPT_DISABLED
@@ -3886,22 +3894,23 @@ def check_status():
 
   """
 
-  if cfg['runevery'] == 0:
+  if cfg['run_every'] == 0:
     status_logger.info('Interval checking has been disabled; continuing.')
   else:
     # has it been long enough since the script was last started
     # (sucessfully)?
     #
-    # if cfg['startedfile'] exists and is newer than cfg['runevery'], exit
+    # if cfg['last_started_file'] exists and is newer than
+    # cfg['run_every'], exit
     try:
-      nt = file_newer_than(cfg['startedfile'], cfg['runevery'])
+      nt = file_newer_than(cfg['last_started_file'], cfg['run_every'])
     except OSError as e:
       if e.errno == errno.ENOENT:
-        nt = False  # no startedfile is the same as not newer than
+        nt = False  # no last_started_file is the same as not newer than
       else:
-        email_logger.error("Error: could not stat cfg['startedfile'] ({0});"
-                           " exiting.\nDetails: [Errno {1}] {2}" .
-                           format(pps(cfg['startedfile']), e.errno,
+        email_logger.error("Error: could not stat cfg['last_started_file'] "
+                           "({0}); exiting.\nDetails: [Errno {1}] {2}" .
+                           format(pps(cfg['last_started_file']), e.errno,
                                   e.strerror))
         sys.exit(STARTUP_EXITVAL)
     if nt:
@@ -3942,11 +3951,10 @@ def check_status():
       # don't actually exit yet
 
       # send the initial alert email (email only; we already logged it)
-      if not os.path.exists(fix_path(cfg['alertfile'])):
+      if not os.path.exists(fix_path(cfg['lockfile_alert_file'])):
         # first, touch the semaphore
-        touch_file(cfg['alertfile'], "cfg['alertfile']", None,
-                   use_logger=True, warn_only=False,
-                   exit_val=None)
+        touch_file(cfg['lockfile_alert_file'], "cfg['lockfile_alert_file']",
+                   None, use_logger=True, warn_only=False, exit_val=None)
                    # don't exit yet, we're already about to exit
 
         # send the email and exit
@@ -3965,9 +3973,9 @@ def check_status():
 
       # but what about subsequent emails?
 
-      # if cfg['ifrunning']==0, log it but don't send email
-      if cfg['ifrunning'] == 0:
-        alert_logger.error('ifrunning == 0; no email sent.')
+      # if cfg['if_running']==0, log it but don't send email
+      if cfg['if_running'] == 0:
+        alert_logger.error('if_running == 0; no email sent.')
         sys.exit(LOCKFILE_EXITVAL)
 
       # if alerts have been silenced, log it but don't send email
@@ -3977,14 +3985,15 @@ def check_status():
         alert_logger.error('Alerts have been silenced; no email sent.')
         sys.exit(LOCKFILE_EXITVAL)
 
-      # if cfg['alertfile'] is newer than cfg['ifrunning'],
+      # if cfg['lockfile_alert_file'] is newer than cfg['if_running'],
       # log it but don't send email
       try:
-        nt = file_newer_than(cfg['alertfile'], cfg['ifrunning'])
+        nt = file_newer_than(cfg['lockfile_alert_file'], cfg['if_running'])
       except OSError:
-        email_logger.error("Error: could not stat cfg['alertfile'] ({0});"
-                           " exiting.\nDetails: [Errno {1}] {2}" .
-                           format(pps(cfg['alertfile']), e.errno,
+        email_logger.error("Error: could not stat "
+                           "cfg['lockfile_alert_file'] ({0}); exiting.\n"
+                           "Details: [Errno {1}] {2}" .
+                           format(pps(cfg['lockfile_alert_file']), e.errno,
                                   e.strerror))
         sys.exit(STARTUP_EXITVAL)
       if nt:
@@ -3992,9 +4001,8 @@ def check_status():
         sys.exit(LOCKFILE_EXITVAL)
 
       # touch the semaphore
-      touch_file(cfg['alertfile'], "cfg['alertfile']", None,
-                 use_logger=True, warn_only=False,
-                 exit_val=None)
+      touch_file(cfg['lockfile_alert_file'], "cfg['lockfile_alert_file']",
+                 None, use_logger=True, warn_only=False, exit_val=None)
                  # don't exit yet, we're already about to exit
 
       # send another alert email (email only; we already logged it)
@@ -4018,12 +4026,13 @@ def check_status():
 
   # clear lock-alert status
   try:
-    os.unlink(fix_path(cfg['alertfile']))
+    os.unlink(fix_path(cfg['lockfile_alert_file']))
   except OSError as e:
     if e.errno != errno.ENOENT:
-      email_logger.error("Error: could not remove cfg['alertfile'] ({0});"
-                         " exiting.\nDetails: [Errno {1}] {2}" .
-                         format(pps(cfg['alertfile']), e.errno,
+      email_logger.error("Error: could not remove "
+                         "cfg['lockfile_alert_file'] ({0}); exiting.\n"
+                         "Details: [Errno {1}] {2}" .
+                         format(pps(cfg['lockfile_alert_file']), e.errno,
                                 e.strerror))
       sys.exit(STARTUP_EXITVAL)
     else:  # it didn't exist, ignore
@@ -4045,7 +4054,7 @@ def render_status_messages(full=False):
     full: if true, include less-useful (e.g., debugging) info
 
   Dependencies:
-    config settings: startedfile, lockfile, alertfile
+    config settings: last_started_file, lockfile, lockfile_alert_file
     hooks: render_status_messages_hook
     globals: cfg, LF_ALERTS_SILENCED, SCRIPT_DISABLED, TASK_NAME, TASKS_NAME
     functions: fix_path()
@@ -4061,7 +4070,7 @@ Status:
 '''
         )
 
-  if not os.path.exists(fix_path(cfg['startedfile'])):
+  if not os.path.exists(fix_path(cfg['last_started_file'])):
     msg += ('No last-started file; '
             'this {0} appears to have never been run.\n' .
             format(TASK_NAME))
@@ -4074,7 +4083,7 @@ Status:
             'in progress.\n' .
             format(TASKS_NAME))
 
-  if os.path.exists(fix_path(cfg['alertfile'])):
+  if os.path.exists(fix_path(cfg['lockfile_alert_file'])):
     msg += ('Alertfile exists; a running {0} prevented a new one '
             'from starting.\n' .
             format(TASK_NAME))
@@ -4110,7 +4119,7 @@ def render_status_metadata(full=False):
     full: if true, include less-useful (e.g., debugging) info
 
   Dependencies:
-    config settings: startedfile, lockfile, alertfile
+    config settings: last_started_file, lockfile, lockfile_alert_file
     hooks: render_status_metadata_hook
     globals: cfg, LF_ALERTS_SILENCED, SCRIPT_DISABLED
     functions: get_file_metadata()
@@ -4123,13 +4132,13 @@ def render_status_metadata(full=False):
 Timestamps and other metadata:
 ------------------------------
 
-startedfile:
+last_started_file:
 {0}
 
 lockfile:
 {1}
 
-alertfile:
+lockfile_alert_file:
 {2}
 
 lfalertssilenced:
@@ -4137,9 +4146,9 @@ lfalertssilenced:
 
 scriptdisabled:
 {4}''' .
-         format(get_file_metadata(cfg['startedfile'], '(none)'),
+         format(get_file_metadata(cfg['last_started_file'], '(none)'),
                 get_file_metadata(cfg['lockfile'], '(none)'),
-                get_file_metadata(cfg['alertfile'], '(none)'),
+                get_file_metadata(cfg['lockfile_alert_file'], '(none)'),
                 get_file_metadata(os.path.join(cfg['lockfile'],
                                                LF_ALERTS_SILENCED),
                                   '(none)'),
@@ -4539,15 +4548,15 @@ def apply_config_defaults_extra():
   arguments.
 
   Dependencies:
-    config settings: alertfile, lockfile
+    config settings: lockfile_alert_file, lockfile
     hooks: apply_config_defaults_hook()
     globals: cfg
 
   """
 
-  # alertfile
-  if 'alertfile' not in cfg:
-    cfg['alertfile'] = cfg['lockfile'] + '.alert'
+  # lockfile_alert_file
+  if 'lockfile_alert_file' not in cfg:
+    cfg['lockfile_alert_file'] = cfg['lockfile'] + '.alert'
 
   # hook for adding more defaults
   if ('apply_config_defaults_hook' in globals() and
@@ -4577,85 +4586,86 @@ def validate_config():
   """
 
   # validate the settings that are already available
-  if 'execpath' in cfg:
-    setting_check_type('execpath', STRING_TYPES)
+  if 'exec_path' in cfg:
+    setting_check_type('exec_path', STRING_TYPES)
   if 'umask' in cfg:
     setting_check_num('umask', 0, 511)  # 511 = 0o777
   setting_check_type('debug', bool)
-  setting_check_num('runevery', 0)
-  setting_check_filedir_create('startedfile', 'f')
+  setting_check_num('run_every', 0)
+  setting_check_filedir_create('last_started_file', 'f')
   setting_check_filedir_create('lockfile', 'd')
-  setting_check_num('ifrunning', 0)
-  setting_check_filedir_create('alertfile', 'f')
-  setting_check_type('suppressemail', bool)
-  if cfg['suppressemail']:
-    setting_check_not_blank('alertmailfrom')
-    setting_check_type('alertmailto', list)
-    setting_check_no_blanks('alertmailto')
-    setting_check_type('alertsubject', STRING_TYPES)
-    if setting_check_type('emailhost', STRING_TYPES + (tuple,)) == tuple:
-      setting_check_len('emailhost', 2, 2)
-      setting_check_not_blank(('emailhost', 0))
-      setting_check_num(('emailhost', 1), 1, 65535)
+  setting_check_num('if_running', 0)
+  setting_check_filedir_create('lockfile_alert_file', 'f')
+  setting_check_type('send_alert_emails', bool)
+  if cfg['send_alert_emails']:
+    setting_check_not_blank('alert_emails_from')
+    setting_check_type('alert_emails_to', list)
+    setting_check_no_blanks('alert_emails_to')
+    setting_check_type('alert_emails_subject', STRING_TYPES)
+    if setting_check_type('alert_emails_host',
+                          STRING_TYPES + (tuple,)) == tuple:
+      setting_check_len('alert_emails_host', 2, 2)
+      setting_check_not_blank(('alert_emails_host', 0))
+      setting_check_num(('alert_emails_host', 1), 1, 65535)
     else:
-      setting_check_not_blank('emailhost')
-    if setting_check_type('emailcred', (None, tuple)) is not None:
-      setting_check_len('emailcred', 2, 2)
-      setting_check_no_blanks('emailcred')
-    if setting_check_type('emailsec', (None, tuple)) is not None:
-      setting_check_len('emailsec', 0, 2)
-      for i, f in enumerate(cfg['emailsec']):
-        setting_check_file_access(('emailsec', i), 'r')
+      setting_check_not_blank('alert_emails_host')
+    if setting_check_type('alert_emails_cred', (None, tuple)) is not None:
+      setting_check_len('alert_emails_cred', 2, 2)
+      setting_check_no_blanks('alert_emails_cred')
+    if setting_check_type('alert_emails_sec', (None, tuple)) is not None:
+      setting_check_len('alert_emails_sec', 0, 2)
+      for i, f in enumerate(cfg['alert_emails_sec']):
+        setting_check_file_access(('alert_emails_sec', i), 'r')
   setting_check_type('quiet', bool)
-  setting_check_type('usesyslog', bool)
-  if cfg['usesyslog']:
-    if setting_check_type('syslogaddr', STRING_TYPES + (tuple,)) == tuple:
-      setting_check_len('syslogaddr', 2, 2)
-      setting_check_not_blank(('syslogaddr', 0))
-      setting_check_num(('syslogaddr', 1), 1, 65535)
+  setting_check_type('use_syslog', bool)
+  if cfg['use_syslog']:
+    if setting_check_type('syslog_addr', STRING_TYPES + (tuple,)) == tuple:
+      setting_check_len('syslog_addr', 2, 2)
+      setting_check_not_blank(('syslog_addr', 0))
+      setting_check_num(('syslog_addr', 1), 1, 65535)
     else:
-      setting_check_file_access('syslogaddr', 'w')
-    setting_check_list('syslogsocktype', [socket.SOCK_DGRAM,
-                                          socket.SOCK_STREAM])
+      setting_check_file_access('syslog_addr', 'w')
+    setting_check_list('syslog_sock_type', [socket.SOCK_DGRAM,
+                                            socket.SOCK_STREAM])
     sl_class = logging.handlers.SysLogHandler  # for readability
     # encodePriority() doesn't do enough checking (e.g., it will allow
     # any integer), so just use the list from the documentation
-    setting_check_list('syslogfac', [
-                                     'auth', sl_class.LOG_AUTH,
-                                     'authpriv', sl_class.LOG_AUTHPRIV,
-                                     'cron', sl_class.LOG_CRON,
-                                     'daemon', sl_class.LOG_DAEMON,
-                                     'ftp', sl_class.LOG_FTP,
-                                     'kern', sl_class.LOG_KERN,
-                                     'lpr', sl_class.LOG_LPR,
-                                     'mail', sl_class.LOG_MAIL,
-                                     'news', sl_class.LOG_NEWS,
-                                     'syslog', sl_class.LOG_SYSLOG,
-                                     'user', sl_class.LOG_USER,
-                                     'uucp', sl_class.LOG_UUCP,
-                                     'local0', sl_class.LOG_LOCAL0,
-                                     'local1', sl_class.LOG_LOCAL1,
-                                     'local2', sl_class.LOG_LOCAL2,
-                                     'local3', sl_class.LOG_LOCAL3,
-                                     'local4', sl_class.LOG_LOCAL4,
-                                     'local5', sl_class.LOG_LOCAL5,
-                                     'local6', sl_class.LOG_LOCAL6,
-                                     'local7', sl_class.LOG_LOCAL7,
-                                    ])
-    setting_check_type('syslogtag', STRING_TYPES)
-  setting_check_type('statuslog', STRING_TYPES + (None,))
-  if cfg['statuslog']:
-    setting_check_filedir_create('statuslog', 'f')
-  setting_check_type('outputlog', STRING_TYPES + (None,))
-  if cfg['outputlog']:
-    setting_check_filedir_create('outputlog', 'f', True)
-    setting_check_list('outputlog_layout', ['append', 'number', 'date'])
-    setting_check_no_char('outputlog_sep', os.sep)
-    setting_check_not_blank('outputlog_date', os.sep)
-    setting_check_no_char('outputlog_date', os.sep)
-    if cfg['outputlog_layout'] != 'append':
-      setting_check_num('outputlog_num', 0)
-      setting_check_num('outputlog_days', 0)
+    setting_check_list('syslog_fac', [
+                                      'auth', sl_class.LOG_AUTH,
+                                      'authpriv', sl_class.LOG_AUTHPRIV,
+                                      'cron', sl_class.LOG_CRON,
+                                      'daemon', sl_class.LOG_DAEMON,
+                                      'ftp', sl_class.LOG_FTP,
+                                      'kern', sl_class.LOG_KERN,
+                                      'lpr', sl_class.LOG_LPR,
+                                      'mail', sl_class.LOG_MAIL,
+                                      'news', sl_class.LOG_NEWS,
+                                      'syslog', sl_class.LOG_SYSLOG,
+                                      'user', sl_class.LOG_USER,
+                                      'uucp', sl_class.LOG_UUCP,
+                                      'local0', sl_class.LOG_LOCAL0,
+                                      'local1', sl_class.LOG_LOCAL1,
+                                      'local2', sl_class.LOG_LOCAL2,
+                                      'local3', sl_class.LOG_LOCAL3,
+                                      'local4', sl_class.LOG_LOCAL4,
+                                      'local5', sl_class.LOG_LOCAL5,
+                                      'local6', sl_class.LOG_LOCAL6,
+                                      'local7', sl_class.LOG_LOCAL7,
+                                     ])
+    setting_check_type('syslog_tag', STRING_TYPES)
+  setting_check_type('status_log', STRING_TYPES + (None,))
+  if cfg['status_log']:
+    setting_check_filedir_create('status_log', 'f')
+  setting_check_type('output_log', STRING_TYPES + (None,))
+  if cfg['output_log']:
+    setting_check_filedir_create('output_log', 'f', True)
+    setting_check_list('output_log_layout', ['append', 'number', 'date'])
+    setting_check_no_char('output_log_sep', os.sep)
+    setting_check_not_blank('output_log_date', os.sep)
+    setting_check_no_char('output_log_date', os.sep)
+    if cfg['output_log_layout'] != 'append':
+      setting_check_num('output_log_num', 0)
+      setting_check_num('output_log_days', 0)
 
   # hook for adding more validation
   if ('validate_config_hook' in globals() and
@@ -4678,7 +4688,7 @@ def process_config(arg_ns):
             (see create_arg_parser() and process_command_line())
 
   Dependencies:
-    config settings: execpath, umask
+    config settings: exec_path, umask
     hooks: process_config_hook()
     globals: cfg, config_file_paths, cl_config, config_settings,
              STARTUP_EXITVAL
@@ -4738,8 +4748,8 @@ def process_config(arg_ns):
 
   # now that the settings are complete, initialize things based on them
   init_logging_main()
-  if 'execpath' in cfg:
-    os.environ['PATH'] = cfg['execpath']
+  if 'exec_path' in cfg:
+    os.environ['PATH'] = cfg['exec_path']
   if 'umask' in cfg:
     os.umask(cfg['umask'])
 
@@ -5030,7 +5040,7 @@ def run_mode():
   you can define run_mode_hook(), which takes no arguments.
 
   Dependencies:
-    config settings: startedfile
+    config settings: last_started_file
     globals: status_logger, output_logger, start_time, cfg, TASK_NAME,
              FULL_DATE_FORMAT, STARTUP_EXITVAL
     hooks: run_mode_hook()
@@ -5059,7 +5069,7 @@ def run_mode():
 
   # log that we're starting the task
   status_logger.info('Starting {0}.'.format(TASK_NAME))
-  touch_file(cfg['startedfile'], "cfg['startedfile']", None,
+  touch_file(cfg['last_started_file'], "cfg['last_started_file']", None,
              use_logger=True, warn_only=False, exitval=STARTUP_EXITVAL)
   output_logger.info('{0} started {1}.' .
                      format(TASK_NAME.capitalize(),
@@ -5171,17 +5181,17 @@ def main():
   process_command_line()
 
   #pp(cfg)
-  #pp(cfg['emailhost'])
-  #pp(setting_walk(('emailhost', 2)))
+  #pp(cfg['alert_emails_host'])
+  #pp(setting_walk(('alert_emails_host', 2)))
 
   #setting_check_one_is_set(('foo', 'bar'))
-  #setting_check_type(('emailhost', 2), (str, dict, bool))
-  #setting_check_type('emailhost', logging.Logger)
+  #setting_check_type(('alert_emails_host', 2), (str, dict, bool))
+  #setting_check_type('alert_emails_host', logging.Logger)
   #setting_check_type((''), (b))
-  #setting_check_list('outputlog_num', (4, 'f'))
-  #setting_check_file_type('statuslog', 'd')
-  #setting_check_file_access('statuslog', 'x')
-  #setting_check_not_all_empty(('foo', 'emailhost'))
+  #setting_check_list('output_log_num', (4, 'f'))
+  #setting_check_file_type('status_log', 'd')
+  #setting_check_file_access('status_log', 'x')
+  #setting_check_not_all_empty(('foo', 'alert_emails_host'))
 
   #status_logger.debug('status debug')
   #status_logger.info('status info')
