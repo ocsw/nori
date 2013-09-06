@@ -408,8 +408,8 @@ API FUNCTIONS:
   import_config_by_name
     Import a config file (module).
 
-  warn_bogus_config
-    Warn about non-existent settings that might have been set by accident.
+  check_bogus_config
+    If there are non-existent settings set, exit with an error.
 
   apply_config_defaults
     Apply defaults to the config settings, as necessary.
@@ -1461,7 +1461,7 @@ Ignored if output_log is None or output_log_layout is 'append'.
 # tuples matching sub-settings (e.g., ('alert_emails_sec', 3));
 # see the note about setting_names in the config functions section
 #
-# see also warn_bogus_config()
+# see also check_bogus_config()
 #
 bogus_config = [
 ]
@@ -4511,32 +4511,34 @@ def import_config_by_name(file_path):
   cfg.update(c_mod.cfg)
 
 
-def warn_bogus_config():
+def check_bogus_config():
 
   """
-  Warn about non-existent settings that might have been set by accident.
+  If there are non-existent settings set, exit with an error.
 
   Dependencies:
-    globals: cfg, config_settings, bogus_config, email_logger
-    functions: setting_walk(), pps()
+    globals: cfg, config_settings, bogus_config, STARTUP_EXITVAL
+    functions: setting_walk(), pps(), err_exit()
 
   """
 
   # check for bogus top-level settings
   for setting in cfg:
-    if setting not in config_settings or
-       'heading' in config_settings[setting]:
-      email_logger.warn("Warning: cfg['{0}'] is set (to {1}), "
-                        "but there is no such setting." .
-                        format(setting, pps(obj)))
+    if (setting not in config_settings or
+        'heading' in config_settings[setting]):
+      err_exit("Warning: cfg['{0}'] is set (to {1}), "
+               "but there is no such setting." .
+               format(setting, pps(obj)),
+               STARTUP_EXITVAL)
 
   # look for specific sub-settings
   for bogus in bogus_config:
     ret, obj, full_path, real_path = setting_walk(bogus)
     if ret:
-      email_logger.warn('Warning: {0} is set (to {1}), '
-                        'but there is no such setting.' .
-                        format(full_path, pps(obj)))
+      err_exit('Warning: {0} is set (to {1}), '
+               'but there is no such setting.' .
+               format(full_path, pps(obj)),
+               STARTUP_EXITVAL)
 
 
 def apply_config_defaults():
@@ -4719,7 +4721,7 @@ def process_config(arg_ns):
     hooks: process_config_hook()
     globals: cfg, config_file_paths, cl_config, config_settings,
              STARTUP_EXITVAL
-    functions: import_config_by_name(), warn_bogus_config(),
+    functions: import_config_by_name(), check_bogus_config(),
                apply_config_defaults(), validate_config(),
                init_logging_main(), init_logging_output(), pps(), err_exit()
     modules: argparse, os
@@ -4766,8 +4768,8 @@ def process_config(arg_ns):
                  format(s_name, pps(s_val)), STARTUP_EXITVAL)
       cl_config.append(s_name)
 
-  # check for bogus settings and ignore
-  warn_bogus_config()
+  # check for bogus settings
+  check_bogus_config()
 
   # apply defaults and validate
   apply_config_defaults()
