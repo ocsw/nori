@@ -944,11 +944,13 @@ config_defaults_multiple = dict(
 config_settings = collections.OrderedDict()
 # if we put the values in the constructor, they are added to kwargs and
 # lose their order, so we have to be more verbose
+
 config_settings['housekeeping_heading'] = dict(
-                                               heading='Housekeeping',
-                                              )
+    heading='Housekeeping',
+)
+
 config_settings['exec_path'] = dict(
-                                   descr=(
+    descr=(
 """
 Search path for executables.
 
@@ -957,13 +959,14 @@ Typical safe value:
 
 If unset, the system default will be used.
 """
-                                         ),
-                                   # no default
-                                   cl_coercer=str,
-                                   no_print=True,  # only needed w/ext cmds
-                                  )
+    ),
+    # no default
+    cl_coercer=str,
+    no_print=True,  # only needed w/ext cmds
+)
+
 config_settings['umask'] = dict(
-                                descr=(
+    descr=(
 """
 File-creation umask value.
 
@@ -973,28 +976,31 @@ strongly recommended.
 
 If unset, the system default will be used.
 """
-                                      ),
-                                # no default
-                                cl_coercer=lambda x: int(x, base=8),
-                                renderer=oct,
-                               )
+    ),
+    # no default
+    cl_coercer=lambda x: int(x, base=8),
+    renderer=oct,
+)
+
 config_settings['debug'] = dict(
-                                descr=(
+    descr=(
 """
 Debug the script?
 
 If True, messages of DEBUG priority and above are processed;
 if False, only INFO or above.
 """
-                                      ),
-                                default=False,
-                                cl_coercer=lambda x: str_to_bool(x),
-                               )
+    ),
+    default=False,
+    cl_coercer=lambda x: str_to_bool(x),
+)
+
 config_settings['status_heading'] = dict(
-                                         heading='Status checks',
-                                        )
+    heading='Status checks',
+)
+
 config_settings['run_every'] = dict(
-                                   descr=(
+    descr=(
 """
 How often to allow the script to run {0} {1}, in minutes.
 
@@ -1009,12 +1015,13 @@ Otherwise, {0} {1} will only be attempted if this amount
 of time has passed since the last {1} was started
 (see last_started_file, below).
 """.format(TASK_ARTICLE, TASK_NAME, TASKS_NAME)
-                                         ),
-                                   default=0,
-                                   cl_coercer=int,
-                                  )
+    ),
+    default=0,
+    cl_coercer=int,
+)
+
 config_settings['last_started_file'] = dict(
-                                      descr=(
+    descr=(
 """
 Path to the last-started timestamp file.
 
@@ -1026,28 +1033,26 @@ for a while)
 
 _Not_ ignored, even if run_every is 0.
 """.format(TASK_ARTICLE, TASK_NAME, TASKS_NAME)
-                                            ),
-                                      default=('/var/log/' +
-                                               script_shortname +
-                                               '.started'),
-                                      cl_coercer=str,
-                                     )
+    ),
+    default=('/var/log/' + script_shortname + '.started'),
+    cl_coercer=str,
+)
+
 config_settings['lockfile'] = dict(
-                                   descr=(
+    descr=(
 """
 Path to the lockfile.
 
 (Actually a directory for technical reasons, and since we have it,
 we can put temp files in it.)
 """
-                                         ),
-                                   default=('/var/run/' +
-                                            script_shortname +
-                                            '.lock'),
-                                   cl_coercer=str,
-                                  )
+    ),
+    default=('/var/run/' + script_shortname + '.lock'),
+    cl_coercer=str,
+)
+
 config_settings['if_running'] = dict(
-                                    descr=(
+    descr=(
 """
 If the script has passed the run_every check, but the previous
 {0} is still running or was interrupted
@@ -1061,67 +1066,71 @@ If the script has passed the run_every check, but the previous
    so you know that the previous {0} finally finished, and the
    next one has begun.
 """.format(TASK_NAME, script_name)
-                                          ),
-                                    default=120,
-                                    default_descr=(
+    ),
+    default=120,
+    default_descr=(
 """
 120 (2 hours)
 """
-                                                  ),
-                                    cl_coercer=int,
-                                   )
+    ),
+    cl_coercer=int,
+)
+
 config_settings['lockfile_alert_file'] = dict(
-                                    descr=(
+    descr=(
 """
 Path to the alert-timestamp file (used to track if_running).
 
 _Not_ ignored, even if if_running is 0.
 """
-                                          ),
-                                    # default is cfg['lockfile'] + '.alert',
-                                    # applied at the last minute; see
-                                    # apply_config_defaults_extra()
-                                    default_descr=(
+    ),
+    # default is cfg['lockfile'] + '.alert', applied at the last minute;
+    # see apply_config_defaults_extra()
+    default_descr=(
 """
 cfg['lockfile'] + '.alert'
 (e.g., if lockfile is set to '/var/run/{0}.lock', lockfile_alert_file
 will default to '/var/run/{0}.lock.alert'
 """.format(script_shortname)
-                                                  ),
-                                    cl_coercer=str,
-                                   )
+    ),
+    cl_coercer=str,
+)
+
 config_settings['logging_heading'] = dict(
-                                          heading='Alerts and logging',
-                                         )
+    heading='Alerts and logging',
+)
+
 config_settings['send_alert_emails'] = dict(
-                                        descr=(
+    descr=(
 """
 Send email for alerts/errors?  (True/False)
 """
-                                              ),
-                                        default=True,
-                                        cl_coercer=lambda x: str_to_bool(x),
-                                       )
+    ),
+    default=True,
+    cl_coercer=lambda x: str_to_bool(x),
+)
+
 config_settings['alert_emails_from'] = dict(
-                                        descr=(
+    descr=(
 """
 Address to send email alerts/errors from.
 
 Ignored if send_alert_emails is False.
 """
-                                              ),
-                                        default=running_as_email,
-                                        default_descr=(
+    ),
+    default=running_as_email,
+    default_descr=(
 """
 the local email address of the user running the script
 (i.e., [user]@[hostname], where [user] is the current user and [hostname]
 is the local hostname)
 """
-                                                      ),
-                                        cl_coercer=str,
-                                       )
+    ),
+    cl_coercer=str,
+)
+
 config_settings['alert_emails_to'] = dict(
-                                      descr=(
+    descr=(
 """
 Where to send email alerts/errors.
 
@@ -1129,37 +1138,37 @@ This must be a list of strings (even if there is only one address).
 
 Ignored if send_alert_emails is False.
 """
-                                            ),
-                                      default=[running_as_email],
-                                      default_descr=(
+    ),
+    default=[running_as_email],
+    default_descr=(
 """
 a list containing the local email address of the user running
 the script (i.e., [user]@[hostname], where [user] is the current user
 and [hostname] is the local hostname)
 """
-                                                    ),
-                                     )
+    ),
+)
+
 config_settings['alert_emails_subject'] = dict(
-                                       descr=(
+    descr=(
 """
 The subject line of alert/error emails.
 
 Ignored if send_alert_emails is False.
 """
-                                             ),
-                                       default=(script_shortname +
-                                                ' alert on ' +
-                                                socket.getfqdn()),
-                                       default_descr=(
+    ),
+    default=(script_shortname + ' alert on ' + socket.getfqdn()),
+    default_descr=(
 """
 '{0} alert on [hostname]', where [hostname] is the local
 hostname
 """.format(script_shortname)
-                                                     ),
-                                       cl_coercer=str,
-                                      )
+    ),
+    cl_coercer=str,
+)
+
 config_settings['alert_emails_host'] = dict(
-                                    descr=(
+    descr=(
 """
 The SMTP server via which email alerts will be sent.
 
@@ -1168,11 +1177,12 @@ hostname and the port number.
 
 Ignored if send_alert_emails is False.
 """
-                                          ),
-                                    default='localhost',
-                                   )
+    ),
+    default='localhost',
+)
+
 config_settings['alert_emails_cred'] = dict(
-                                    descr=(
+    descr=(
 """
 The credentials to be used with the alert_emails_host.
 
@@ -1180,11 +1190,12 @@ This can be None or a tuple containing the username and password.
 
 Ignored if send_alert_emails is False.
 """
-                                          ),
-                                    default=None,
-                                   )
+    ),
+    default=None,
+)
+
 config_settings['alert_emails_sec'] = dict(
-                                   descr=(
+    descr=(
 """
 The SSL/TLS options to be used with the alert_emails_host.
 
@@ -1194,11 +1205,12 @@ and certificate files.
 
 Ignored if send_alert_emails is False.
 """
-                                         ),
-                                   default=None,
-                                  )
+    ),
+    default=None,
+)
+
 config_settings['quiet'] = dict(
-                                descr=(
+    descr=(
 """
 Suppress most printed output?
 
@@ -1210,23 +1222,25 @@ the script.
 
 Can be True or False.
 """
-                                      ),
-                                default=False,
-                                cl_coercer=lambda x: str_to_bool(x),
-                               )
+    ),
+    default=False,
+    cl_coercer=lambda x: str_to_bool(x),
+)
+
 config_settings['use_syslog'] = dict(
-                                    descr=(
+    descr=(
 """
 Log messages to syslog?
 
 Can be True or False.
 """
-                                          ),
-                                    default=True,
-                                    cl_coercer=lambda x: str_to_bool(x),
-                                   )
+    ),
+    default=True,
+    cl_coercer=lambda x: str_to_bool(x),
+)
+
 config_settings['syslog_addr'] = dict(
-                                     descr=(
+    descr=(
 """
 Where to send syslog messages.
 
@@ -1235,17 +1249,18 @@ a tuple containing the hostname and port (usually 514; available as logging.hand
 
 Ignored if use_syslog is False.
 """
-                                           ),
-                                     # see config_settings_extra()
-                                     default_descr=(
+    ),
+    # see config_settings_extra()
+    default_descr=(
 """
 if either '/dev/log' or '/var/run/syslog' works, it is used;
 otherwise, ('localhost', logging.handlers.SYSLOG_UDP_PORT)
 """
-                                                   ),
-                                    )
+    ),
+)
+
 config_settings['syslog_sock_type'] = dict(
-                                         descr=(
+    descr=(
 """
 What kind of socket to use for syslog.
 
@@ -1254,18 +1269,19 @@ socket.SOCK_STREAM for TCP.
 
 Ignored if use_syslog is False.
 """
-                                               ),
-                                         default=socket.SOCK_DGRAM,
-                                         # see also config_settings_extra()
-                                         default_descr=(
+    ),
+    default=socket.SOCK_DGRAM,
+    # see also config_settings_extra()
+    default_descr=(
 """
 socket.SOCK_DGRAM, unless '/dev/log' or '/var/run/syslog' is
 found, and is found to require socket.SOCK_STREAM
 """
-                                                       ),
-                                        )
+    ),
+)
+
 config_settings['syslog_fac'] = dict(
-                                    descr=(
+    descr=(
 """
 The syslog facility to use.
 
@@ -1280,12 +1296,13 @@ information.
 
 Ignored if use_syslog is False.
 """
-                                          ),
-                                    default='daemon',
-                                    cl_coercer=str,
-                                   )
+    ),
+    default='daemon',
+    cl_coercer=str,
+)
+
 config_settings['syslog_tag'] = dict(
-                                    descr=(
+    descr=(
 """
 An identifier to add to each message logged to syslog.
 
@@ -1293,12 +1310,13 @@ This is typically the name of the script.
 
 Ignored if use_syslog is False.
 """
-                                          ),
-                                    default=script_shortname,
-                                    cl_coercer=str,
-                                   )
+    ),
+    default=script_shortname,
+    cl_coercer=str,
+)
+
 config_settings['status_log'] = dict(
-                                    descr=(
+    descr=(
 """
 The path to the status log.
 
@@ -1307,14 +1325,13 @@ the output log.  Messages are appended; this file is not rotated.
 
 If set to None, no status log will be used.
 """
-                                          ),
-                                    default=('/var/log/' +
-                                             script_shortname +
-                                             '.log'),
-                                    cl_coercer=str,
-                                   )
+    ),
+    default=('/var/log/' + script_shortname + '.log'),
+    cl_coercer=str,
+)
+
 config_settings['output_log'] = dict(
-                                    descr=(
+    descr=(
 """
 The path to the output log.
 
@@ -1330,15 +1347,14 @@ the following suffixes, without disrupting the script:
 
 If set to None, no output log will be used.
 """.format(ZIP_SUFFIXES)
-                                          ),
-                                    default=('/var/log/' +
-                                             script_shortname +
-                                             '-output.log'),
-                                    cl_coercer=str,
-                                    no_print=True,
-                                   )
+    ),
+    default=('/var/log/' + script_shortname + '-output.log'),
+    cl_coercer=str,
+    no_print=True,
+)
+
 config_settings['output_log_layout'] = dict(
-                                           descr=(
+    descr=(
 """
 The file layout to use for the output logs.
 
@@ -1355,13 +1371,14 @@ and output_log_sep is '.', the second-most-recent file will be named
 
 Ignored if output_log is None.
 """.format(script_name)
-                                                 ),
-                                           default='number',
-                                           cl_coercer=str,
-                                           no_print=True,
-                                          )
+    ),
+    default='number',
+    cl_coercer=str,
+    no_print=True,
+)
+
 config_settings['output_log_sep'] = dict(
-                                        descr=(
+    descr=(
 """
 The separator to use before number/date suffixes in output log names.
 
@@ -1371,13 +1388,14 @@ or blank.
 
 Ignored if output_log is None or output_log_layout is 'append'.
 """
-                                              ),
-                                        default='.',
-                                        cl_coercer=str,
-                                        no_print=True,
-                                       )
+    ),
+    default='.',
+    cl_coercer=str,
+    no_print=True,
+)
+
 config_settings['output_log_date'] = dict(
-                                       descr=(
+    descr=(
 """
 The date format string for output log names.
 
@@ -1395,13 +1413,14 @@ in the output_log setting).  However, it may be blank.
 
 Ignored if output_log is None or output_log_layout is not 'date'.
 """.format(TASKS_NAME)
-                                             ),
-                                       default='%Y%m%d',
-                                       cl_coercer=str,
-                                       no_print=True,
-                                      )
+    ),
+    default='%Y%m%d',
+    cl_coercer=str,
+    no_print=True,
+)
+
 config_settings['output_log_num'] = dict(
-                                        descr=(
+    descr=(
 """
 Number of output logs to keep, including the current one.
 
@@ -1412,13 +1431,14 @@ Note: this applies to both 'number' and 'date' values of output_log_layout.
 
 Ignored if output_log is None or output_log_layout is 'append'.
 """
-                                              ),
-                                        default=0,
-                                        cl_coercer=int,
-                                        no_print=True,
-                                       )
+    ),
+    default=0,
+    cl_coercer=int,
+    no_print=True,
+)
+
 config_settings['output_log_days'] = dict(
-                                         descr=(
+    descr=(
 """
 Days worth of output logs to keep.
 
@@ -1435,11 +1455,11 @@ Note: this applies to both 'number' and 'date' values of output_log_layout.
 
 Ignored if output_log is None or output_log_layout is 'append'.
 """
-                                               ),
-                                         default=14,
-                                         cl_coercer=int,
-                                         no_print=True,
-                                        )
+    ),
+    default=14,
+    cl_coercer=int,
+    no_print=True,
+)
 
 #
 # non-existent settings that the end-user might set by accident,
