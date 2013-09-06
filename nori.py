@@ -1,14 +1,6 @@
 #!/usr/bin/env python
 
 
-# TODO:
-#
-# repo
-#
-# module docstring
-# comments/docstrings to 72
-
-
 """
 ABOUT NORI:
 -----------
