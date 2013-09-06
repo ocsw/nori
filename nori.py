@@ -1560,7 +1560,7 @@ def char_name(c):
   """
   cnames = {
              ' ': 'space',
-             '\t': 'tab', 
+             '\t': 'tab',
              '\n': 'newline',
              '\r': 'carriage return',
              '\f': 'formfeed',
@@ -2797,7 +2797,7 @@ def init_logging_main():
 
   status_logger and alert_logger both log to the status log (with a prefix
   including the date and process ID) and to syslog.  status_logger also
-  outputs to stdout, and alert_logger to stderr.  email_logger sends an 
+  outputs to stdout, and alert_logger to stderr.  email_logger sends an
   email including additional diagnostics and hands off the message to
   alert_logger.
 
@@ -3370,7 +3370,7 @@ def setting_check_not_all_empty(setting_name_list):
   """
   At least one of a group of settings must be non-empty, else error/exit.
 
-  Otherwise, returns a tuple containing the first non-empty setting object 
+  Otherwise, returns a tuple containing the first non-empty setting object
   found and the full path to the object (see setting_walk()).
 
   The existence and types of the (existent) settings are checked.
@@ -3499,7 +3499,7 @@ def setting_check_not_all_blank(setting_name_list, ish=False):
   """
   At least one of a group of settings must be non-blank, else error/exit.
 
-  Otherwise, returns a tuple containing the first non-blank setting object 
+  Otherwise, returns a tuple containing the first non-blank setting object
   found and the full path to the object (see setting_walk()).
 
   The existence and types of the (existent) settings are checked.
@@ -3817,7 +3817,7 @@ def setting_check_dir_rwx(setting_name):
   return setting_check_file_access(setting_name, 'rwx', False)
 
 
-def setting_check_filedir_create(setting_name, create_type='f', 
+def setting_check_filedir_create(setting_name, create_type='f',
                                  need_rotation=False):
 
   """
@@ -3946,7 +3946,7 @@ def check_status():
                          format(pps(cfg['lockfile']), e.errno,
                                 e.strerror))
       # not LOCKFILE_EXITVAL because it's not about locking, it's about
-      # the path or the filesystem or whatever 
+      # the path or the filesystem or whatever
       sys.exit(STARTUP_EXITVAL)
 
     else:  # lockfile exists already
@@ -4266,7 +4266,7 @@ def unsilence_lf_alerts():
                'exiting.\nDetails: [Errno {1}] {2}\n' .
                format(pps(os.path.join(cfg['lockfile'],
                                        LF_ALERTS_SILENCED)),
-                      e.errno, e.strerror), 
+                      e.errno, e.strerror),
                STARTUP_EXITVAL)
     else:  # it didn't exist, ignore
       pass
@@ -4363,7 +4363,7 @@ def enable_script():
                'exiting.\nDetails: [Errno {1}] {2}\n' .
                format(pps(os.path.join(cfg['lockfile'],
                                        SCRIPT_DISABLED)),
-                      e.errno, e.strerror), 
+                      e.errno, e.strerror),
                STARTUP_EXITVAL)
     else:  # it didn't exist, ignore
       pass
@@ -4417,7 +4417,7 @@ def clear_lockfile():
     if e.errno != errno.ENOENT:
       err_exit('Error: could not remove the lockfile directory ({0}); '
                'exiting.\nDetails: [Errno {1}] {2}' .
-               format(pps(cfg['lockfile']), e.errno, e.strerror), 
+               format(pps(cfg['lockfile']), e.errno, e.strerror),
                STARTUP_EXITVAL)
     else:  # it didn't exist, ignore
       pass
@@ -4812,7 +4812,7 @@ def render_config():
       return 'Config file: (none)'
     if len(config_file_paths) == 1:
       return 'Config file: {0}'.format(config_file_paths[0])
-    return ('Config files: ' + 
+    return ('Config files: ' +
             '\n              '.join(config_file_paths))
 
   def render_settings():
