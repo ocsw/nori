@@ -519,7 +519,8 @@ import errno
 import getpass
 import stat
 import time
-import logging, logging.handlers
+import logging
+import logging.handlers
 import copy
 import subprocess
 import threading
@@ -596,7 +597,7 @@ TASKS_NAME = 'script invocations'
 SCRIPT_MODES = ['license', 'config', 'settings', 'status', 'statusall',
                 'silence', 'unsilence', 'stop', 'disable', 'start',
                 'enable', 'clearlock', 'unlock', 'create', 'createfull',
-                'run',]
+                'run', ]
 SCRIPT_MODES_DESCR = ('''
 available modes:
   'license': a license message is printed
@@ -691,31 +692,31 @@ else:
                       collections.ValuesView)
 
 # see config setting functions
-PATH_SEP = os.sep + ('/' if os.name=='nt' else '')
+PATH_SEP = os.sep + ('/' if os.name == 'nt' else '')
 
 # internal, see file/path functions
 # set third tuple value to False for lookup-only
 # (i.e., use for going from character to tuple, but not the reverse)
 _FILE_TYPE_FUNCS = {
-                     '-': (stat.S_ISREG, 'regular file', True),
-                     # f is non-standard, but clearer
-                     'f': (stat.S_ISREG, 'regular file', False),
-                     'd': (stat.S_ISDIR, 'directory', True),
-                     'l': (stat.S_ISLNK, 'symbolic link', True),
-                     'b': (stat.S_ISBLK, 'block device', True),
-                     'c': (stat.S_ISCHR, 'character device', True),
-                     'p': (stat.S_ISFIFO, 'named pipe (FIFO)', True),
-                     's': (stat.S_ISSOCK, 'socket', True),
+                    '-': (stat.S_ISREG, 'regular file', True),
+                    # f is non-standard, but clearer
+                    'f': (stat.S_ISREG, 'regular file', False),
+                    'd': (stat.S_ISDIR, 'directory', True),
+                    'l': (stat.S_ISLNK, 'symbolic link', True),
+                    'b': (stat.S_ISBLK, 'block device', True),
+                    'c': (stat.S_ISCHR, 'character device', True),
+                    'p': (stat.S_ISFIFO, 'named pipe (FIFO)', True),
+                    's': (stat.S_ISSOCK, 'socket', True),
                    }
 if sys.hexversion >= 0x03040000:
   _FILE_TYPE_FUNCS += {
-                        'w': (stat.S_ISWHT, 'whiteout', True),
-                        'D': (stat.S_ISDOOR, 'door', True),
-                        'P': (stat.S_ISPORT, 'event port', True),
+                       'w': (stat.S_ISWHT, 'whiteout', True),
+                       'D': (stat.S_ISDOOR, 'door', True),
+                       'P': (stat.S_ISPORT, 'event port', True),
                       }
 
 # see file rotation functions
-ZIP_SUFFIXES = ['.gz', '.bz2', '.lz', '.xz',]
+ZIP_SUFFIXES = ['.gz', '.bz2', '.lz', '.xz', ]
 
 
 ############
@@ -1236,7 +1237,8 @@ config_settings['syslog_addr'] = dict(
 Where to send syslog messages.
 
 This can be a string containing the path to the syslog socket file, or
-a tuple containing the hostname and port (usually 514; available as logging.handlers.SYSLOG_UDP_PORT).
+a tuple containing the hostname and port (usually 514; available as
+logging.handlers.SYSLOG_UDP_PORT).
 
 Ignored if use_syslog is False.
 """
@@ -3085,7 +3087,7 @@ def run_with_logging(cmd_args, include_stderr=True, **kwargs):
         for f in files:
           f.write(line)
       infile.close()
-    t = threading.Thread(target=fanout, args=(infile,)+files)
+    t = threading.Thread(target=fanout, args=(infile,) + files)
     t.start()
     return t
 
@@ -3174,13 +3176,13 @@ def setting_walk(setting_name):
   setting_name = scalar_to_tuple(setting_name)
 
   # create the full path string
-  full_path='cfg'
+  full_path = 'cfg'
   for ind in setting_name:
     full_path += '[' + pps(ind) + ']'
 
   # walk the tree
   obj = cfg
-  real_path='cfg'
+  real_path = 'cfg'
   for ind in setting_name:
     try:
       obj = obj[ind]
