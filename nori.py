@@ -307,12 +307,10 @@ API FUNCTIONS:
         Get the configuration (sub-)object indicated by setting_name.
 
     setting_is_set()
-        Readability wrapper for setting_walk() to test if a setting
-        is set.
+        Readability wrapper for setting_walk(): is a setting set?
 
     setting_is_unset()
-        Readbility wrapper for setting_walk() to test if a setting
-        is unset.
+        Readability wrapper for setting_walk(): is a setting unset?
 
     setting_check_is_set()
         If a config setting is not set, exit with an error.
@@ -3281,7 +3279,7 @@ def setting_walk(setting_name):
 
 def setting_is_set(setting_name):
     """
-    Readability wrapper for setting_walk() to test if a setting is set.
+    Readability wrapper for setting_walk(): is a setting set?
     Dependencies:
         config settings: (contents of setting_name)
         globals: cfg
@@ -3292,7 +3290,7 @@ def setting_is_set(setting_name):
 
 def setting_is_unset(setting_name):
     """
-    Readbility wrapper for setting_walk() to test if a setting is unset.
+    Readability wrapper for setting_walk(): is a setting unset?
     Dependencies:
         config settings: (contents of setting_name)
         globals: cfg
