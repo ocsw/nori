@@ -3045,17 +3045,13 @@ def init_logging_output():
     """
     Initialize output logging, including both logger and file objects.
 
-    The output log is for output from external programs, and it will
-    catch both stdout and stderr.  See init_logging_main() for the rest
-    of the logging.
+    The output log is for output from external programs; see, e.g.,
+    run_with_logging().  See init_logging_main() for the rest of the
+    logging.
 
-    output_logger logs to the output log and everything status_logger logs to
-    (see init_logging_main()).  output_log_fo is a file object attached to the
-    output log, and is used by (e.g.) run_with_logging().
-
-    NOTE: this function also gets the datestring for the output log name, so
-    if you need to get other datestrings close to that one, get them right
-    *before* calling this function
+    output_logger logs to the output log and stdout.  output_log_fo is a
+    file object attached to the output log, and is used by (e.g.)
+    run_with_logging().
 
     Dependencies:
         config settings: output_log, output_log_layout, output_log_sep,
