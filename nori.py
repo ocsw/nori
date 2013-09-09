@@ -4671,7 +4671,7 @@ def check_bogus_config():
               'heading' in config_settings[setting]):
             err_exit("Warning: cfg['{0}'] is set (to {1}), "
                      "but there is no such setting." .
-                     format(setting, pps(obj)),
+                     format(setting, pps(cfg[setting])),
                      STARTUP_EXITVAL)
 
     # look for specific sub-settings
