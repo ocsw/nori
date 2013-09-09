@@ -3883,8 +3883,8 @@ def setting_check_file_read(setting_name):
         functions: setting_check_file_type(),
                    setting_check_file_access()
     """
-    setting_check_file_type(setting_name, 'f', True)
-    return setting_check_file_access(setting_name, 'r', False)
+    setting_check_file_type(setting_name, 'f')
+    return setting_check_file_access(setting_name, 'r')
 
 
 def setting_check_file_rw(setting_name):
@@ -3898,8 +3898,8 @@ def setting_check_file_rw(setting_name):
         functions: setting_check_file_type(),
                    setting_check_file_access()
     """
-    setting_check_file_type(setting_name, 'f', True)
-    return setting_check_file_access(setting_name, 'rw', False)
+    setting_check_file_type(setting_name, 'f')
+    return setting_check_file_access(setting_name, 'rw')
 
 
 def setting_check_dir_rwx(setting_name):
@@ -3914,8 +3914,8 @@ def setting_check_dir_rwx(setting_name):
         functions: setting_check_file_type(),
                    setting_check_file_access()
     """
-    setting_check_file_type(setting_name, 'd', True)
-    return setting_check_file_access(setting_name, 'rwx', False)
+    setting_check_file_type(setting_name, 'd')
+    return setting_check_file_access(setting_name, 'rwx')
 
 
 def setting_check_filedir_create(setting_name, create_type='f',
@@ -4755,8 +4755,10 @@ def validate_config():
         functions: setting_check_type(), setting_check_num(),
                    setting_check_filedir_create(),
                    setting_check_not_blank(), setting_check_no_blanks(),
-                   setting_check_len(), setting_check_file_access(),
-                   setting_check_list(), setting_check_no_char()
+                   setting_check_len(), setting_check_file_read(),
+                   setting_check_file_type(),
+                   setting_check_file_access(), setting_check_list(),
+                   setting_check_no_char()
         modules: os, socket
 
     """
@@ -4793,7 +4795,7 @@ def validate_config():
               is not NoneType):
             setting_check_len('alert_emails_sec', 0, 2)
             for i, f in enumerate(cfg['alert_emails_sec']):
-                setting_check_file_access(('alert_emails_sec', i), 'r')
+                setting_check_file_read(('alert_emails_sec', i))
     setting_check_type('quiet', bool)
     setting_check_type('use_syslog', bool)
     if cfg['use_syslog']:
@@ -4803,6 +4805,7 @@ def validate_config():
             setting_check_not_blank(('syslog_addr', 0))
             setting_check_num(('syslog_addr', 1), 1, 65535)
         else:
+            setting_check_file_type('syslog_addr', 'f')
             setting_check_file_access('syslog_addr', 'w')
         setting_check_list('syslog_sock_type', [socket.SOCK_DGRAM,
                                                 socket.SOCK_STREAM])
@@ -4838,7 +4841,7 @@ def validate_config():
         setting_check_filedir_create('status_log', 'f')
     setting_check_type('output_log', STRING_TYPES + (NoneType, ))
     if cfg['output_log']:
-        setting_check_filedir_create('output_log', 'f', True)
+        setting_check_filedir_create('output_log', 'f', need_rotation=True)
         setting_check_list('output_log_layout',
                            ['append', 'number', 'date'])
         setting_check_no_char('output_log_sep', PATH_SEP)
