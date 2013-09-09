@@ -3250,7 +3250,7 @@ def setting_walk(setting_name):
     [1] to test for the existence of the object.
 
     Parameters:
-        setting_name: see note above
+        setting_name: see note, above
 
     Dependencies:
         config settings: (contents of setting_name)
@@ -3310,7 +3310,7 @@ def setting_check_is_set(setting_name):
     and the full path to the object (see setting_walk()).
 
     Parameters:
-        setting_name: see note above
+        setting_name: see note, above
 
     Dependencies:
         config settings: (contents of setting_name)
@@ -3339,7 +3339,7 @@ def setting_check_one_is_set(setting_name_list):
     and the full path to the object (see setting_walk()).
 
     Parameters:
-        setting_name_list: a list or tuple of setting_names; see note
+        setting_name_list: a list or tuple of setting_names; see note,
                            above
 
     Dependencies:
@@ -3372,7 +3372,7 @@ def setting_check_type(setting_name, type_tuple):
     The existence of the setting is checked.
 
     Parameters:
-        setting_name: see note above
+        setting_name: see note, above
         type_tuple: a type or tuple of types, which can be either from
                     the types module, or class objects (built-in or
                     user-defined); in both cases, instances of
@@ -3434,7 +3434,7 @@ def setting_check_not_empty(setting_name):
     See CONTAINER_TYPES, under constants.
 
     Parameters:
-        setting_name: see note above
+        setting_name: see note, above
 
     Dependencies:
         config settings: (contents of setting_name)
@@ -3473,7 +3473,7 @@ def setting_check_not_all_empty(setting_name_list):
     See CONTAINER_TYPES, under constants.
 
     Parameters:
-        setting_name_list: a list or tuple of setting_names; see note
+        setting_name_list: a list or tuple of setting_names; see note,
                            above
 
     Dependencies:
@@ -3518,7 +3518,7 @@ def setting_check_len(setting_name, min_len, max_len):
     See CONTAINER_TYPES and STRINGISH_TYPES, under constants.
 
     Parameters:
-        setting_name: see note above
+        setting_name: see note, above
         min_len: None, or a minimum allowed length (inclusive)
         max_len: None, or a maximum allowed length (inclusive)
 
@@ -3562,7 +3562,7 @@ def setting_check_not_blank(setting_name, ish=False):
     The existence and type of the setting are checked.
 
     Parameters:
-        setting_name: see note above
+        setting_name: see note, above
         ish: if true, string-like but non-string types are allowed
              (see STRINGISH_TYPES, under constants)
 
@@ -3602,7 +3602,7 @@ def setting_check_not_all_blank(setting_name_list, ish=False):
     settings do.
 
     Parameters:
-        setting_name_list: a list or tuple of setting_names; see note
+        setting_name_list: a list or tuple of setting_names; see note,
                            above
         ish: if true, string-like but non-string types are allowed
              (see STRINGISH_TYPES, under constants)
@@ -3651,7 +3651,7 @@ def setting_check_no_blanks(setting_name, ish=False):
     See CONTAINER_TYPES, under constants.
 
     Parameters:
-        setting_name: see note above
+        setting_name: see note, above
         ish: if true, string-like but non-string types are allowed
              (see STRINGISH_TYPES, under constants)
 
@@ -3696,7 +3696,7 @@ def setting_check_no_char(setting_name, char, ish=False):
     The existence and type of the setting are checked.
 
     Parameters:
-        setting_name: see note above
+        setting_name: see note, above
         char: a string containing the illegal character, or a tuple of
               such strings
         ish: if true, string-like but non-string types are allowed
@@ -3741,7 +3741,7 @@ def setting_check_list(setting_name, list_vals):
     The existence of the setting is checked.
 
     Parameters:
-        setting_name: see note above
+        setting_name: see note, above
         list_vals: a list (or tuple) containing the allowed values
                    of the setting
 
@@ -3777,7 +3777,7 @@ def setting_check_num(setting_name, min_val=None, max_val=None):
     See NUMBER_TYPES, under constants.
 
     Parameters:
-        setting_name: see note above
+        setting_name: see note, above
         min_val: None, or a minimum allowed value (inclusive)
         max_val: None, or a maximum allowed value (inclusive)
 
@@ -3819,7 +3819,7 @@ def setting_check_file_type(setting_name, type_char='f', follow_links=True):
     setting may not be blank.  The file must exist.
 
     Parameters:
-        setting_name: see note above
+        setting_name: see note, above
         see check_file_access() for the others
 
     Dependencies:
@@ -3852,7 +3852,7 @@ def setting_check_file_access(setting_name, file_rwx='r'):
     setting may not be blank.  The file must exist.
 
     Parameters:
-        setting_name: see note above
+        setting_name: see note, above
         file_rwx: see check_file_access()
 
     Dependencies:
@@ -3937,7 +3937,7 @@ def setting_check_filedir_create(setting_name, create_type='f',
     See check_filedir_create() for details.
 
     Parameters:
-        setting_name: see note above
+        setting_name: see note, above
         see check_filedir_create() for the others
 
     Dependencies:
