@@ -3174,14 +3174,14 @@ def run_with_logging(cmd_args, include_stderr=True, **kwargs):
     p = subprocess.Popen(cmd_args,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT
-                             if include_stderr else None,
+                                if include_stderr else None,
                          **kwargs)
 
     # get the output
     threads = []
     threads.append(tee(p.stdout, output_log_fo, sys.stdout))
     for t in threads:
-      t.join()  # wait for IO completion
+        t.join()  # wait for IO completion
 
     # get the exit value
     return p.wait()
@@ -4983,8 +4983,8 @@ def render_config():
                     msg += ("cfg['" + s_name + "'] = " +
                             s_dict['renderer'](cfg[s_name]) + "\n")
                 else:
-                    msg += "cfg['" + s_name + "'] = " + pps(cfg[s_name]) +
-                           "\n"
+                    msg += ("cfg['" + s_name + "'] = " +
+                            pps(cfg[s_name]) + "\n")
             else:
                 msg += "cfg['" + s_name + "'] is not set\n"
         return msg.strip()
@@ -5111,8 +5111,9 @@ def create_blank_config_files(full=False):
         else:
             for cfp in config_file_paths:
                 # use os.open() to avoid a race condition,
-                # but this means we can't have symlinks in the paths
-                # see http://stackoverflow.com/questions/10978869/safely-create-a-file-if-and-only-if-it-does-not-exist-with-python/10979569#10979569
+                # but this means we can't have symlinks in the paths;
+                # see
+                # http://stackoverflow.com/questions/10978869/safely-create-a-file-if-and-only-if-it-does-not-exist-with-python/10979569#10979569
                 # and SCRIPT_MODES_DESCR
                 with os.fdopen(os.open(fix_path(cfp),
                                os.O_CREAT | os.O_EXCL | os.O_WRONLY)) as cf_obj:
