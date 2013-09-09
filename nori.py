@@ -226,6 +226,9 @@ API FUNCTIONS:
     parentdir()
         Get the parent directory of a file or directory.
 
+    open_create_only()
+        Open a file, if and only if this causes it to be created.
+
     touch_file()
         Update a file's timestamp, or create it if it doesn't exist.
 
@@ -2365,6 +2368,24 @@ def parentdir(file_path):
 #print(parentdir('foo//bar//'))           # foo
 #print(parentdir('foo//bar//baz'))        # foo//bar
 #print(parentdir('foo//bar//baz//'))      # foo//bar
+
+
+def open_create_only(file_path):
+    """
+    Open a file, if and only if this causes it to be created.
+    The path may not include symlinks.
+    See
+    http://stackoverflow.com/questions/10978869/safely-create-a-file-if-and-only-if-it-does-not-exist-with-python/10979569#10979569
+    May raise an OSError exception.
+    Parameters:
+        file_path: the path to the file to create; may not include symlinks
+    Dependencies:
+        functions: fix_path()
+        modules: os
+    """
+    # use os.open() to avoid a race condition
+    return os.fdopen(os.open(fix_path(file_path),
+                             os.O_CREAT | os.O_EXCL | os.O_WRONLY))
 
 
 def touch_file(file_path, file_label, times=None, use_logger=False,
@@ -5061,8 +5082,8 @@ def create_blank_config_files(full=False):
 
     Dependencies:
         globals: config_file_paths, config_settings, STARTUP_EXITVAL
-        functions: fix_path(), pps(), err_exit()
-        modules: sys, os, errno, re
+        functions: open_create_only(), pps(), err_exit()
+        modules: sys, errno, re
 
     """
 
@@ -5110,13 +5131,8 @@ def create_blank_config_files(full=False):
             print(msg, file=sys.stdout)
         else:
             for cfp in config_file_paths:
-                # use os.open() to avoid a race condition,
-                # but this means we can't have symlinks in the paths;
-                # see
-                # http://stackoverflow.com/questions/10978869/safely-create-a-file-if-and-only-if-it-does-not-exist-with-python/10979569#10979569
-                # and SCRIPT_MODES_DESCR
-                with os.fdopen(os.open(fix_path(cfp),
-                               os.O_CREAT | os.O_EXCL | os.O_WRONLY)) as cf_obj:
+                # can't have symlinks in cfp; see SCRIPT_MODES_DESCR
+                with open_create_only(cfp) as cf_obj:
                     print(msg, file=cf_obj)
     except (OSError, IOError) as e:
         if (e.errno == errno.EEXIST):
