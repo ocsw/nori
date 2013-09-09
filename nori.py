@@ -283,13 +283,15 @@ API FUNCTIONS:
         Turn on stdout/stderr printing in the loggers.
 
     logging_email_stop_logging()
-        Turn off propagation in the email logger (i.e., no actual logging).
+        Turn off propagation in the email logger (i.e., no actual
+        logging).
 
     logging_email_start_logging()
         Turn on propagation in the email logger (i.e., actual logging).
 
     init_logging_output()
-        Initialize output logging, including both logger and file objects.
+        Initialize output logging, including both logger and file
+        objects.
 
     end_logging_output()
         Close the output log file object.
@@ -305,25 +307,30 @@ API FUNCTIONS:
         Get the configuration (sub-)object indicated by setting_name.
 
     setting_is_set()
-        Readability wrapper for setting_walk() to test if a setting is set.
+        Readability wrapper for setting_walk() to test if a setting
+        is set.
 
     setting_is_unset()
-        Readbility wrapper for setting_walk() to test if a setting is unset.
+        Readbility wrapper for setting_walk() to test if a setting
+        is unset.
 
     setting_check_is_set()
         If a config setting is not set, exit with an error.
 
     setting_check_one_is_set()
-        At least one of a group of settings must be set, else error/exit.
+        At least one of a group of settings must be set, else
+        error/exit.
 
     setting_check_type()
         If a config setting is not an allowed type, exit with an error.
 
     setting_check_not_empty()
-        If a container-typed config setting is empty, exit with an error.
+        If a container-typed config setting is empty, exit with an
+        error.
 
     setting_check_not_all_empty()
-        At least one of a group of settings must be non-empty, else error/exit.
+        At least one of a group of settings must be non-empty, else
+        error/exit.
 
     setting_check_len()
         If a config setting has an invalid length, exit with an error.
@@ -332,37 +339,42 @@ API FUNCTIONS:
         If a string-typed config setting is empty, exit with an error.
 
     setting_check_not_all_blank()
-        At least one of a group of settings must be non-blank, else error/exit.
+        At least one of a group of settings must be non-blank, else
+        error/exit.
 
     setting_check_no_blanks()
-        If a container config setting contains any blanks, exit with an error.
+        If a container config setting contains any blanks, error/exit.
 
     setting_check_no_char()
-        If a config setting contains particular character(s), error/exit.
+        If a config setting contains particular character(s),
+        error/exit.
 
     setting_check_list()
-        If a config setting's value is not in a list, exit with an error.
+        If a config setting's value is not in a list, exit with an
+        error.
 
     setting_check_num()
         If a number-typed config setting is invalid, exit with an error.
 
     setting_check_file_type()
-        If a file setting does not have the correct file type, error/exit.
+        If a file setting does not have the correct file type,
+        error/exit.
 
     setting_check_file_access()
-        If a file indicated by a setting is not accessible, exit with an error.
+        If a file indicated by a setting is not accessible, error/exit.
 
     setting_check_file_read()
-        Wrapper to check the common case of a file we just need to read.
+        Wrapper to check the case of a file we just need to read.
 
     setting_check_file_rw()
-        Wrapper to check the common case of a file we need to read and write.
+        Wrapper to check the case of a file we need to read and write.
 
     setting_check_dir_rwx()
-        Wrapper: check a dir in which we need to create and/or rotate files.
+        Wrapper: check a dir in which we need to create and/or rotate
+        files.
 
     setting_check_filedir_create()
-        If we won't be able to create a file or directory, exit with an error.
+        If we won't be able to create a file or directory, error/exit.
 
 
     Status checks and modifications:
@@ -421,13 +433,15 @@ API FUNCTIONS:
         Validate the configuration settings.
 
     process_config()
-        Process the config file and the settings supplied on the command line.
+        Process the config file and the settings supplied on the
+        command line.
 
     render_config()
         Return a string containing the current config settings.
 
     log_cl_config()
-        Log the config file paths, CWD, and settings given on the command line.
+        Log the config file paths, CWD, and settings given on the
+        command line.
 
     create_blank_config_files()
         Create blank config files, or print blank config to stdout.
@@ -454,7 +468,8 @@ API FUNCTIONS:
         Do the actual business of the script.
 
     process_command_line()
-        Process the command-line arguments and do mode-dependent actions.
+        Process the command-line arguments and do mode-dependent
+        actions.
 
 
 API CLASSES:
@@ -468,13 +483,15 @@ API HOOKS:
 ----------
 
     render_status_messages_hook()
-        Change/add to status messages returned by render_status_messages().
+        Change/add to status messages returned by
+        render_status_messages().
 
     render_status_metadata_hook()
         Change/add to metadata returned by render_status_metadata().
 
     apply_config_defaults_hook()
-        Override/add to last-minute defaults applied by apply_config_defaults().
+        Override/add to last-minute defaults applied by
+        apply_config_defaults().
 
     validate_config_hook()
         Add config-setting validations to validate_config().
@@ -483,13 +500,15 @@ API HOOKS:
         Override/add to process_config() initializations.
 
     create_arg_parser_hook()
-        Override/add to command-line parser returned by create_arg_parser().
+        Override/add to command-line parser returned by
+        create_arg_parser().
 
     run_mode_hook()
         Supply a task for the script, as performed by run_mode().
 
     mode_callbacks_hook()
-        Change/add to mode_callbacks dictionary used by process_command_line().
+        Change/add to mode_callbacks dictionary used by
+        process_command_line().
 
 
 USAGE IN SCRIPTS:
@@ -504,9 +523,9 @@ USAGE IN SCRIPTS:
 """
 
 
-############################################################################
-#                               MAIN IMPORTS
-############################################################################
+########################################################################
+#                             MAIN IMPORTS
+########################################################################
 
 from __future__ import print_function
 
@@ -551,9 +570,9 @@ except ImportError:
 ### more below, after the version check ###
 
 
-############################################################################
-#                                 VARIABLES
-############################################################################
+########################################################################
+#                               VARIABLES
+########################################################################
 
 #####################
 # (pseudo-)constants
@@ -561,8 +580,8 @@ except ImportError:
 
 #
 # These can actually be redefined if necessary by scripts that use this
-# library (before using them!), but most of them aren't ordinarily intended
-# to be.  The ones that SHOULD be redefined are noted.
+# library (before using them!), but most of them aren't ordinarily
+# intended to be.  The ones that SHOULD be redefined are noted.
 #
 
 # exit values; see the module's docstring for details
@@ -583,10 +602,12 @@ FULL_DATE_FORMAT = '%a %b %d %H:%M:%S %Z %Y'
 
 # what the script does, used in various messages;
 # these SHOULD be changed by scripts that use this module
-#   TASK_ARTICLE: the article to use with TASK_NAME, such as 'a' or 'an';
-#            this is used in messages like 'a backup is probably running'
-#   TASK_NAME: a description of the script's purpose, such as 'backup'; this
-#              is used in messages like 'after the current backup finishes'
+#   TASK_ARTICLE: the article to use with TASK_NAME, such as 'a' or
+#                 'an'; this is used in messages like 'a backup is
+#                 probably running'
+#   TASK_NAME: a description of the script's purpose, such as 'backup';
+#              this is used in messages like 'after the current backup
+#              finishes'
 #   TASKS_NAME: the plural of TASK_NAME, used in messages like 'backups
 #               have been disabled'
 TASK_ARTICLE = 'a'
@@ -605,8 +626,8 @@ available modes:
   'config' or 'settings': the current config settings are printed
 
   'status': the current status, including timestamps, is printed
-  'statusall': temp files mainly relevant for debugging are also included
-  (if applicable)
+  'statusall': temp files mainly relevant for debugging are also
+  included (if applicable)
 
   'silence': alerts about the lockfile existing are silenced until
   either they are unsilenced, or the lockfile is no longer present
@@ -618,8 +639,8 @@ available modes:
 
   'start' or 'enable': {2} are re-enabled
 
-  'clearlock' or 'unlock': the lockfile is forcibly removed; only use this
-  if you're sure {0} {1} isn't currently running!
+  'clearlock' or 'unlock': the lockfile is forcibly removed; only use
+  this if you're sure {0} {1} isn't currently running!
 
   'create': a config file template is printed (all settings, in logical
   order, commented out so that the default values will be used unless
@@ -632,8 +653,8 @@ available modes:
 
       NOTE: the path given to -f cannot be a symlink.
 
-  'createfull': like 'create', but includes a description of each setting,
-   as well as the default (if any)
+  'createfull': like 'create', but includes a description of each
+  setting, as well as the default (if any)
 
   'run': run normally (the default)''' .
                      format(TASK_ARTICLE, TASK_NAME, TASKS_NAME))
@@ -744,9 +765,9 @@ _stderr_handler = None
 ### see also the configuration section, below ###
 
 
-############################################################################
-#                               VERSION CHECK
-############################################################################
+########################################################################
+#                             VERSION CHECK
+########################################################################
 
 def pyversion_check(two_ver, three_ver):
 
@@ -767,8 +788,8 @@ def pyversion_check(two_ver, three_ver):
 
     # sanity check
     if two_ver < 0 and three_ver < 0:
-        print('\nInternal Error: Python 2.x and 3.x are both disallowed; '
-              'exiting.\n',
+        print('\nInternal Error: Python 2.x and 3.x are both '
+              'disallowed; exiting.\n',
               file=sys.stderr)
         sys.exit(INTERNAL_EXITVAL)
 
@@ -805,9 +826,9 @@ def pyversion_check(two_ver, three_ver):
 pyversion_check(7, 2)
 
 
-############################################################################
-#                             REMAINING IMPORTS
-############################################################################
+########################################################################
+#                           REMAINING IMPORTS
+########################################################################
 
 ####################
 # version-dependent
@@ -818,9 +839,9 @@ import argparse  # requires 2.7/3.2
 import importlib  # requires 2.7/3.1
 
 
-############################################################################
-#                         CONFIGURATION AND STATUS
-############################################################################
+########################################################################
+#                       CONFIGURATION AND STATUS
+########################################################################
 
 ############
 # variables
@@ -831,13 +852,15 @@ import importlib  # requires 2.7/3.1
 # by scripts that use this module
 script_name = os.path.basename(sys.argv[0])
 
-# remove .py, etc. from the script name for use in messages and filenames
+# remove .py, etc. from the script name for use in messages
+# and filenames
 script_shortname = re.sub('\.py.?$', '', script_name)
 
 # get the user's local email address
 # uses environment variables, so it's not totally safe;
 # better to set the address explicitly whereever it's needed
-# (e.g., don't use the default alert_emails_from/alert_emails_to settings)
+# (e.g., don't use the default alert_emails_from/alert_emails_to
+# settings)
 running_as_email = getpass.getuser() + '@' + socket.getfqdn()
 
 # starting timestamp (see run_mode(); listed here for centralization)
@@ -889,26 +912,28 @@ config_defaults_multiple = dict(
 # are dictionaries containing these keys:
 #
 #   descr: a description of the setting, used by
-#          create_blank_config_files(full=True) (with leading and trailing
-#          whitespace removed); should be supplied for all settings, but
-#          won't cause an error if omitted
+#          create_blank_config_files(full=True) (with leading and
+#          trailing whitespace removed); should be supplied for all
+#          settings, but won't cause an error if omitted
 #          note: this will have '# ' prepended to each line; format
 #          accordingly
 #
 #   default: the default value of the setting, applied if it is unset;
 #            can be omitted
 #
-#   default_descr: a string description of the default; if this is present,
-#                  it will be used by create_blank_config_files(full=True)
-#                  (with leading and trailing whitespace removed) in place
-#                  of the actual default
+#   default_descr: a string description of the default; if this is
+#                  present, it will be used by
+#                  create_blank_config_files(full=True)
+#                  (with leading and trailing whitespace removed)
+#                  in place of the actual default
 #                  note: this will have '# Default: ' prepended to the
 #                  first line, and '# ' to the rest; format accordingly
 #
-#   cl_coercer: a function that can take a value passed on the command line
-#               (as a string) and generate a value for the config setting
-#               (possibly raising a ValueError exception); if omitted, the
-#               setting cannot be supplied on the command line
+#   cl_coercer: a function that can take a value passed on the command
+#               line (as a string) and generate a value for the config
+#               setting (possibly raising a ValueError exception);
+#               if omitted, the setting cannot be supplied on the
+#               command line
 #               notes:
 #                 - conversion is safest with scalar (non-container)
 #                   values, so this is usually str, int, etc.
@@ -926,11 +951,13 @@ config_defaults_multiple = dict(
 #             to a particular script, but need to be left in the code
 #             so as not to break anything (for example, this is often
 #             the case with output_log*, so those settings have this set
-#             by default; see also config_settings_no_print_output_log())
+#             by default; see also
+#             config_settings_no_print_output_log())
 #
-#   heading: if this is present, the element represents a section heading
-#            for render_config() and create_blank_config_files(), not an
-#            actual setting; the value of this key is the heading string
+#   heading: if this is present, the element represents a section
+#            heading for render_config() and
+#            create_blank_config_files(), not an actual setting;
+#            the value of this key is the heading string
 #
 config_settings = collections.OrderedDict()
 # if we put the values in the constructor, they are added to kwargs and
@@ -1475,17 +1502,17 @@ bogus_config = [
 def config_settings_extra():
 
     """
-  Fix up config settings that are platform-dependent or complicated.
+    Fix up config settings that are platform-dependent or complicated.
 
-  In a function for namespace cleanliness; called immediately.
+    In a function for namespace cleanliness; called immediately.
 
-  Dependencies:
-    globals: config_settings
-    modules: os, stat, socket, errno, logging.handlers
+    Dependencies:
+        globals: config_settings
+        modules: os, stat, socket, errno, logging.handlers
 
-  """
+    """
 
-  ### syslog_addr, syslog_sock_type ###
+    ### syslog_addr, syslog_sock_type ###
 
     found_it = False
 
@@ -1507,7 +1534,8 @@ def config_settings_extra():
                             s.connect(sock_path)
                         except IOError:
                             continue
-                         # looks like this needs to be SOCK_STREAM instead
+                         # looks like this needs to be SOCK_STREAM
+                         # instead
                         config_settings['syslog_sock_type']['default'] = (
                             socket.SOCK_STREAM
                         )
@@ -1529,8 +1557,9 @@ def config_settings_no_print_output_log(no_print):
     """
     Turn self-documentation of the output log feature on or off.
     Parameters:
-        no_print: desired value of the no_print attribute of the output_log
-                  settings (see notes on config_settings, above)
+        no_print: desired value of the no_print attribute of the
+                  output_log* settings (see notes on config_settings,
+                  above)
     Dependencies:
         globals: config_settings['output_log*']
     """
@@ -1542,9 +1571,9 @@ def config_settings_no_print_output_log(no_print):
     config_settings['output_log_days']['no_print'] = no_print
 
 
-############################################################################
-#                                 FUNCTIONS
-############################################################################
+########################################################################
+#                               FUNCTIONS
+########################################################################
 
 
 ### see also the version check and configuration sections, above ###
@@ -1655,16 +1684,16 @@ def file_access_const(c):
 def file_type_info(c):
     """
     Return the stat.IS* function and name for a file type character.
-    If the character isn't recognized, or corresponds to a function that isn't
-    available in the version of Python running the script, returns
-    (None, None, None).
+    If the character isn't recognized, or corresponds to a function
+    that isn't available in the version of Python running the script,
+    returns (None, None, None).
     Parameters:
         c: a string containing the character
     Dependencies:
         globals: _FILE_TYPE_FUNCS
       modules: stat
     """
-    if c[0] in _FILE_TYPE_FUNCS:  # add [0] in case a longer string is passed
+    if c[0] in _FILE_TYPE_FUNCS:  # add [0] in case more is passed
         return _FILE_TYPE_FUNCS[c[0]]
     return (None, None, None)
 
@@ -1682,19 +1711,23 @@ def file_error_handler(e, verb, file_label, file_path, must_exist=True,
         e: the exception object
         verb: a string describing the action that failed (e.g., 'stat',
               'remove')
-        file_label: a string describing the file the exception was related to
-        file_path: the path to the file/directory the exception was related to
-        must_exist: if false, and if the exception was because of a non-existent
-                    file, the exception is ignored and the function returns None
+        file_label: a string describing the file the exception was
+                    related to
+        file_path: the path to the file/directory the exception was
+                   related to
+        must_exist: if false, and if the exception was because of a
+                    non-existent file, the exception is ignored and the
+                    function returns None
         use_logger: if None, no messages are logged/printed
-                    if callable, is called with a message string and warn_only
+                    if callable, is called with a message string and
+                    warn_only
                     if true, the email logger is used
                     if false, messages are printed to stderr
         warn_only: if true, this is treated as a warning, not an error
-                   (which changes the messages logged/printed and prevents
-                   exiting the script)
-        exit_val: the value to exit the script with; if this is None, the
-                  function doesn't actually exit the script
+                   (which changes the messages logged/printed and
+                   prevents exiting the script)
+        exit_val: the value to exit the script with; if this is None,
+                  the function doesn't actually exit the script
 
     Dependencies:
         globals: email_logger, STARTUP_EXITVAL
@@ -1752,25 +1785,27 @@ def check_file_type(file_path, file_label, type_char='f', follow_links=True,
     """
     Check if a file has the correct type.
 
-    For purposes of this function, 'file' includes directories, symlinks, etc.
+    For purposes of this function, 'file' includes directories,
+    symlinks, etc.
 
     Parameters:
         file_path: the path to the file to check
-        type_char: a string containing characters corresponding to file types
-                   (see _FILE_TYPE_FUNCS, under constants); if this contains an
-                   illegal value, the script will exit with an internal error
-        follow_links: if true, the function will operate on the target of a
-                      symlink, not the link itself
+        type_char: a string containing characters corresponding to file
+                   types (see _FILE_TYPE_FUNCS, under constants); if
+                   this contains an illegal value, the script will exit
+                   with an internal error
+        follow_links: if true, the function will operate on the target
+                      of a symlink, not the link itself
         must_exist: determines what happens if the file doesn't exist:
                     if true, it will be treated as an error
-                    if false, it will be ignored (i.e., treated as a success
-                    of the check)
+                    if false, it will be ignored (i.e., treated as a
+                    success of the check)
         see file_error_handler() for the rest
 
     Dependencies:
         globals: email_logger, STARTUP_EXITVAL, INTERNAL_EXITVAL
-        functions: fix_path(), file_error_handler(), file_type_info(), pps(),
-                   err_exit()
+        functions: fix_path(), file_error_handler(), file_type_info(),
+                   pps(), err_exit()
         modules: os, stat, sys
 
   """
@@ -1786,7 +1821,7 @@ def check_file_type(file_path, file_label, type_char='f', follow_links=True,
         st_mode = stat_func(fix_path(file_path))[0]
     except OSError as e:
         if file_error_handler(e, 'stat', file_label, file_path, must_exist,
-                          use_logger, warn_only, exit_val) is None:
+                              use_logger, warn_only, exit_val) is None:
             return True
 
     # file type?
@@ -1803,25 +1838,28 @@ check_file_type(file_path={1}, file_label={2}, type_char={3},
                 warn_only={7}, exit_val={8})
 
 Exiting.''' .
-                     format(*map(pps, [t_char, file_path, file_label, type_char,
-                                       follow_links, must_exist, use_logger,
-                                       warn_only, exit_val])),
+                     format(*map(pps, [t_char, file_path, file_label,
+                                       type_char, follow_links, must_exist,
+                                       use_logger, warn_only, exit_val])),
                      INTERNAL_EXITVAL
             )
         if t_func(st_mode):
             return True
 
-    # try to give info while being clear (to the user; the code, OTOH...)
+    # try to give info while being clear
+    # (to the user; the code, OTOH...)
     if warn_only:
         if len(type_char) == 1:
             warn_str = ('Warning: {0} ({1}) is not a {2}{3}.' .
                         format(file_label, pps(file_path), t_name,
-                               ' or a symlink to one' if follow_links else ''))
+                               ' or a symlink to one' if follow_links
+                                                      else ''))
         else:
             warn_str = ('Warning: {0} ({1}) is not an allowed file type '
                         '({2}){3}.' .
                         format(file_label, pps(file_path), t_name,
-                               '\nor a symlink to one' if follow_links else ''))
+                               '\nor a symlink to one' if follow_links
+                                                       else ''))
 
         if use_logger is None:
             pass  # no messages
@@ -1843,7 +1881,8 @@ Exiting.''' .
             err_str = ('Error: {0} ({1}) is not an allowed file type '
                        '({2}){3}; exiting.' .
                        format(file_label, pps(file_path), t_name,
-                              '\nor a symlink to one' if follow_links else ''))
+                              '\nor a symlink to one' if follow_links
+                                                      else ''))
 
         if use_logger is None:
             pass  # no messages
@@ -1865,29 +1904,31 @@ def check_file_access(file_path, file_label, file_rwx='r', use_logger=False,
     """
     Check if a file is accessible.
 
-    For purposes of this function, 'file' includes directories, symlinks, etc.
+    For purposes of this function, 'file' includes directories,
+    symlinks, etc.
 
     If the file doesn't exist, the check will fail.
 
     Parameters:
         file_path: the path to the file to check
-        file_rwx: a string containing characters indicating which types of
-                  access to check: 'r' (read), 'w' (write), and/or 'x'
-                  (execute, or search if the file is a directory)
+        file_rwx: a string containing characters indicating which types
+                  of access to check: 'r' (read), 'w' (write), and/or
+                  'x' (execute, or search if the file is a directory)
                   if blank, access is not checked; if this contains an
-                  illegal value, the script will exit with an internal error
+                  illegal value, the script will exit with an internal
+                  error
         see file_error_handler() for the rest
 
     Dependencies:
         globals: email_logger, STARTUP_EXITVAL, INTERNAL_EXITVAL
-        functions: fix_path(), file_access_const(), file_error_handler(),
-                   pps(), err_exit()
+        functions: fix_path(), file_access_const(),
+                   file_error_handler(), pps(), err_exit()
         modules: os, sys
 
     """
 
-    # check if the file doesn't exist, so we can say that instead of multiple
-    # r/w/x failure messages;
+    # check if the file doesn't exist, so we can say that instead of
+    # multiple r/w/x failure messages;
     # while we're at it, remove any other 'f's that might have been in
     # file_rwx
     file_rwx = 'f' + file_rwx.replace('f', '')
@@ -1906,8 +1947,9 @@ check_file_access(file_path={1}, file_label={2}, file_rwx={3},
                   use_logger={4}, warn_only={5}, exit_val={6})
 
 Exiting.''' .
-                     format(*map(pps, [a_char, file_path, file_label, file_rwx,
-                                       use_logger, warn_only, exit_val])),
+                     format(*map(pps, [a_char, file_path, file_label,
+                                       file_rwx, use_logger, warn_only,
+                                       exit_val])),
                      INTERNAL_EXITVAL
             )
 
@@ -1915,11 +1957,13 @@ Exiting.''' .
         try:
             access_ret = os.access(fix_path(file_path), a_const)
         except (OSError, IOError) as e:
-            # the documentation doesn't really say anything about exceptions,
-            # and I can't produce one, but I've seen examples online, so...
+            # the documentation doesn't really say anything about
+            # exceptions, and I can't produce one, but I've seen
+            # examples online, so...
             # (must_exist=True)
-            if (file_error_handler(e, 'check access to', file_label, file_path,
-                                   True, use_logger, warn_only, exit_val)
+            if (file_error_handler(e, 'check access to', file_label,
+                                   file_path, True, use_logger, warn_only,
+                                   exit_val)
                   is None):
                 return False
 
@@ -1971,7 +2015,8 @@ Exiting.''' .
             # r/w/x messages
             if warn_only:
                 warn_msg = ('Warning: {0} ({1}) is not {2}.' .
-                            format(file_label, pps(file_path), err_word[a_char]))
+                            format(file_label, pps(file_path),
+                                   err_word[a_char]))
 
                 if use_logger is None:
                     pass  # no messages
@@ -1986,7 +2031,8 @@ Exiting.''' .
 
             else:  # not warn_only
                 err_msg = ('Error: {0} ({1}) is not {2}; exiting.' .
-                           format(file_label, pps(file_path), err_word[a_char]))
+                           format(file_label, pps(file_path),
+                                  err_word[a_char]))
 
                 if use_logger is None:
                     pass  # no messages
@@ -2012,15 +2058,16 @@ def check_filedir_create(file_path, file_label, create_type='f',
     """
     Check if we can create a file or directory.
 
-    Specifically: this is for files/directories we're going to be touching,
-    writing to, creating, and/or rotating (but not necessarily reading),
-    such as output logs.
+    Specifically: this is for files/directories we're going to be
+    touching, writing to, creating, and/or rotating (but not necessarily
+    reading), such as output logs.
 
     If the file/directory exists, then:
         - If create_type is 'f', it must be a file or a symlink to one,
           and it must be writable.
-        - If create_type is 'd', it must be a directory or a symlink to one,
-          and it must be writable and searchable (for creating files).
+        - If create_type is 'd', it must be a directory or a symlink to
+          one and it must be writable and searchable (for creating
+          files).
     Regardless, the parent directory must exist, be a directory or a
     symlink to one, and be writable and searchable; if need_rotation
     is true, it must also be readable.
@@ -2030,8 +2077,8 @@ def check_filedir_create(file_path, file_label, create_type='f',
         create_type: what we want to be able to create: 'f' (file) or
                      'd' (directory); if this contains an illegal value,
                      the script will exit with an internal error
-        need_rotation: if true, the parent directory of file_path must be
-                       readable (see above)
+        need_rotation: if true, the parent directory of file_path must
+                       be readable (see above)
         see file_error_handler() for the rest
 
     Dependencies:
@@ -2161,15 +2208,16 @@ def get_file_metadata(file_path, if_noent=None):
     """
     Get a string with the metadata for a file.
 
-    For purposes of this function, 'file' includes directories, symlinks, etc.
+    For purposes of this function, 'file' includes directories,
+    symlinks, etc.
 
     Format is similar to 'ls -l':
         mode links owner group size mtime name
 
     Does not follow symlinks.
 
-    Returns if_noent if the file doesn't exist; may raise an OSError for other
-    error conditions.
+    Returns if_noent if the file doesn't exist; may raise an OSError for
+    other error conditions.
 
     Parameters:
         file_path: path to the file
@@ -2221,7 +2269,8 @@ def get_file_metadata(file_path, if_noent=None):
     if (time.time() - st_mtime) > (60 * 60 * 24 * 182.5):  # 6 months
         st_mtime_str = time.strftime('%b %d %Y', time.localtime(st_mtime))
     else:
-        st_mtime_str = time.strftime('%b %d %H:%M', time.localtime(st_mtime))
+        st_mtime_str = time.strftime('%b %d %H:%M',
+                                     time.localtime(st_mtime))
 
     # join what we have so far
     metadata_str = ' '.join([st_mode_str, str(st_nlink), st_uid_str,
@@ -2389,17 +2438,18 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
     """
     Rotate numbered files or directories.
 
-    Files/directories can optionally have any of the suffixes in ZIP_SUFFIXES
-    following the suffix parameter.
+    Files/directories can optionally have any of the suffixes in
+    ZIP_SUFFIXES following the suffix parameter.
 
     Parameters:
-        dir_path: the directory containing the files/directories to rotate
-        prefix: file/directory name up to the number, not including any trailing
-                separator
-        sep: separator before the number (not in prefix because the most recent
-             file won't have a separator or a number)
-        suffix: suffix after the number, including any leading separator;
-                cannot begin with a number
+        dir_path: the directory containing the files/directories to
+                  rotate
+        prefix: file/directory name up to the number, not including any
+                trailing separator
+        sep: separator before the number (not in prefix because the most
+             recent file won't have a separator or a number)
+        suffix: suffix after the number, including any leading
+                separator; cannot begin with a number
         exit_val: value to exit the script with on error
 
     Dependencies:
@@ -2409,11 +2459,12 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
 
     """
 
-    # get a list of matching files in dir_path, along with their file numbers,
-    # sorted in reverse numerical order
+    # get a list of matching files in dir_path, along with their
+    # file numbers, sorted in reverse numerical order
     f_list = []
     r = re.compile('^' +
-                   re.escape(prefix + sep) + '([0-9]+)' + re.escape(suffix) +
+                   re.escape(prefix + sep) + '([0-9]+)' +
+                   re.escape(suffix) +
                    '(|' + '|'.join(map(re.escape, ZIP_SUFFIXES)) + ')' +
                    '$')
     try:
@@ -2478,19 +2529,21 @@ def prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
     """
     Prune numbered files or directories by number and date.
 
-    Files/directories can optionally have any of the suffixes in ZIP_SUFFIXES
+    Files/directories can optionally have any of the suffixes in
+    ZIP_SUFFIXES
     following the suffix parameter.
 
     Parameters:
-        dir_path: the directory containing the files/directories to rotate
-        prefix: file/directory name up to the number, not including any trailing
-                separator
-        sep: separator before the number (not in prefix because the most recent
-             file won't have a separator or a number)
-        suffix: suffix after the number, including any leading separator;
-                cannot begin with a number
-        num_f: number of files to keep, including the current (un-numbered) one;
-               0 = unlimited
+        dir_path: the directory containing the files/directories to
+                  rotate
+        prefix: file/directory name up to the number, not including any
+                trailing separator
+        sep: separator before the number (not in prefix because the most
+             recent file won't have a separator or a number)
+        suffix: suffix after the number, including any leading
+                separator; cannot begin with a number
+        num_f: number of files to keep, including the current
+               (un-numbered) one; 0 = unlimited
         days_f: number of days worth of files to keep; 0 = unlimited
         exit_val: value to exit the script with on error
 
@@ -2505,10 +2558,12 @@ def prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
     if not num_f and not days_f:
         return
 
-    # get a list of matching files in dir_path, along with their file numbers
+    # get a list of matching files in dir_path, along with their
+    # file numbers
     f_list = []
     r = re.compile('^' +
-                   re.escape(prefix + sep) + '([0-9]+)' + re.escape(suffix) +
+                   re.escape(prefix + sep) + '([0-9]+)' +
+                   re.escape(suffix) +
                    '(|' + '|'.join(map(re.escape, ZIP_SUFFIXES)) + ')' +
                    '$')
     try:
@@ -2538,9 +2593,11 @@ def prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
                 nt = file_newer_than(os.path.join(dir_path, ft[0]),
                                      (days_f * 1440))
             except OSError as e:
-                email_logger.error('Error: could not stat file/directory {0}; '
-                                   'exiting.\nDetails: [Errno {1}] {2}' .
-                                   format(pps(os.path.join(dir_path, ft[0])),
+                email_logger.error('Error: could not stat file/directory '
+                                   '{0}; exiting.\n'
+                                   'Details: [Errno {1}] {2}' .
+                                   format(pps(os.path.join(dir_path,
+                                                           ft[0])),
                                           e.errno, e.strerror))
                 sys.exit(exit_val)
             if not nt:
@@ -2555,21 +2612,23 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
     """
     Prune dated files or directories by number and date.
 
-    Files/directories can optionally have any of the suffixes in ZIP_SUFFIXES
-    following the suffix parameter.
+    Files/directories can optionally have any of the suffixes in
+    ZIP_SUFFIXES following the suffix parameter.
 
-    Note: the 'current' file must exist before calling this function, so that
-    it can be counted.
+    Note: the 'current' file must exist before calling this function, so
+    that it can be counted.
 
-    Also, because we can't make any assumptions about the format of the date
-    string, this function can be over-broad in the files it looks at;
-    make sure there are no files that match ^[prefix][sep].*[suffix][zip]?$
+    Also, because we can't make any assumptions about the format of the
+    date string, this function can be over-broad in the files it looks
+    at; make sure there are no files that match
+    ^[prefix][sep].*[suffix][zip]?$
     except for the desired ones.
 
     Parameters:
-        dir_path: the directory containing the files/directories to rotate
-        prefix: file/directory name up to the date, not including any trailing
-                separator
+        dir_path: the directory containing the files/directories to
+                  rotate
+        prefix: file/directory name up to the date, not including any
+                trailing separator
         sep: separator before the date
         suffix: suffix after the date, including any leading separator
         num_f: number of files to keep, including the current one;
@@ -2615,7 +2674,7 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
                                       e.errno, e.strerror))
             sys.exit(exit_val)
         # delete by date
-        if ((time.time() - st_mtime) >= (days_f * 86400)):  # secs per day
+        if ((time.time() - st_mtime) >= (days_f * 86400)):  # secs/day
             rm_rf(os.path.join(dir_path, ft[0]), 'file/directory',
                   must_exist=False, use_logger=True, warn_only=False,
                   exit_val=exit_val)
@@ -2635,8 +2694,8 @@ def prune_files(layout, dir_path, prefix, sep, suffix, num_f, days_f,
                 exit_val=STARTUP_EXITVAL):
     """
     Wrapper: prune numbered or dated files/dirs by number and date.
-    Files/directories can optionally have any of the suffixes in ZIP_SUFFIXES
-    following the suffix parameter.
+    Files/directories can optionally have any of the suffixes in
+    ZIP_SUFFIXES following the suffix parameter.
     Parameters:
         layout: the layout type (see below)
         see prune_num_files() and prune_days_files() for the rest
@@ -2677,8 +2736,8 @@ def rotate_prune_output_logs():
 
     # appending to one log?
     if cfg['output_log_layout'] == 'append':
-        status_logger.info('Output logs are being appended to a single file; '
-                           'not rotating logs.')
+        status_logger.info('Output logs are being appended to a single '
+                           'file; not rotating logs.')
         return
 
     status_logger.info('Rotating logs...')
@@ -2721,12 +2780,12 @@ def err_exit(msg, exit_val):
     Print a nicely-formatted message and exit.
     msg should _not_ end with \n.
     In general, this function should only be used for errors which might
-    happen before the config file has been imported and the logger objects
-    have been initialized.
+    happen before the config file has been imported and the logger
+    objects have been initialized.
     Parameters:
         msg: the message to print
-        exit_val: the value to exit the script with; if this is None, don't
-                  actually exit
+        exit_val: the value to exit the script with; if this is None,
+                  don't actually exit
     Dependencies:
         modules: sys
     """
@@ -2777,7 +2836,8 @@ def init_syslog():
     This is a helper function for init_logging().
 
     Dependencies:
-        config settings: syslog_addr, syslog_sock_type, syslog_fac, syslog_tag
+        config settings: syslog_addr, syslog_sock_type, syslog_fac,
+                         syslog_tag
         globals: cfg
         modules: sys, logging, logging.handlers
         Python: 2.7/3.2, for SysLogHandler(socktype)
@@ -2785,14 +2845,18 @@ def init_syslog():
     """
 
     if sys.hexversion >= 0x03040000 and cfg['syslog_tag'] != '':
-        slh = logging.handlers.SysLogHandler(address=cfg['syslog_addr'],
-                                             socktype=cfg['syslog_sock_type'],
-                                             facility=cfg['syslog_fac'],
-                                             ident=cfg['syslog_tag'])
+        slh = logging.handlers.SysLogHandler(
+                  address=cfg['syslog_addr'],
+                  socktype=cfg['syslog_sock_type'],
+                  facility=cfg['syslog_fac'],
+                  ident=cfg['syslog_tag']
+              )
     else:
-        slh = logging.handlers.SysLogHandler(address=cfg['syslog_addr'],
-                                             socktype=cfg['syslog_sock_type'],
-                                             facility=cfg['syslog_fac'])
+        slh = logging.handlers.SysLogHandler(
+                  address=cfg['syslog_addr'],
+                  socktype=cfg['syslog_sock_type'],
+                  facility=cfg['syslog_fac']
+              )
         syslog_formatter = logging.Formatter(cfg['syslog_tag'] +
                                              '[%(process)d]: %(message)s')
         slh.setFormatter(syslog_formatter)
@@ -2808,24 +2872,24 @@ def init_logging_main():
     Includes email, stdout/err, syslog, and/or status log.  See
     init_logging_output() for the output log.
 
-    status_logger and alert_logger both log to the status log (with a prefix
-    including the date and process ID) and to syslog.  status_logger also
-    outputs to stdout, and alert_logger to stderr.  email_logger sends an
-    email including additional diagnostics and hands off the message to
-    alert_logger.
+    status_logger and alert_logger both log to the status log (with a
+    prefix including the date and process ID) and to syslog.
+    status_logger also outputs to stdout, and alert_logger to stderr.
+    email_logger sends an email including additional diagnostics and
+    hands off the message to alert_logger.
 
     See logging_stop_stdouterr(), logging_start_stdouterr(),
-    logging_email_stop_logging(), and logging_email_start_logging() for ways
-    to temporarily change the logging methods.
+    logging_email_stop_logging(), and logging_email_start_logging() for
+    ways to temporarily change the logging methods.
 
-    Note: syslog may turn control characters into octal, including whitespace
-    (e.g., newline -> #012).
+    Note: syslog may turn control characters into octal, including
+    whitespace (e.g., newline -> #012).
 
     Dependencies:
         config settings: debug, send_alert_emails, alert_emails_from,
                          alert_emails_to, alert_emails_subject,
-                         alert_emails_host, alert_emails_cred, alert_emails_sec,
-                         quiet, use_syslog, status_log
+                         alert_emails_host, alert_emails_cred,
+                         alert_emails_sec, quiet, use_syslog, status_log
         globals: cfg, status_logger, alert_logger, email_logger,
                  _syslog_handler, _stdout_handler, _stderr_handler,
                  FULL_DATE_FORMAT, STARTUP_EXITVAL
@@ -2853,8 +2917,8 @@ def init_logging_main():
         try:
             status_log_handler = logging.FileHandler(cfg['status_log'], 'a')
         except IOError as e:
-            err_exit('Error: could not open the status log ({0}); exiting.\n'
-                     'Details: [Errno {1}] {2}' .
+            err_exit('Error: could not open the status log ({0}); '
+                     'exiting.\nDetails: [Errno {1}] {2}' .
                      format(pps(cfg['status_log']), e.errno, e.strerror),
                      STARTUP_EXITVAL)
         status_log_formatter = (
@@ -2903,8 +2967,8 @@ def init_logging_main():
 def logging_stop_syslog():
     """
     Turn off syslog in the loggers.
-    Useful when you need to log something sensitive; remember that syslog
-    frequently goes to a world-readable file!
+    Useful when you need to log something sensitive; remember that
+    syslog frequently goes to a world-readable file!
     Call logging_start_stdouterr() when done.
     Dependencies:
         globals: base_logger, _syslog_handler
@@ -2927,10 +2991,12 @@ def logging_start_syslog():
 def logging_stop_stdouterr():
     """
     Turn off stdout/stderr printing in the loggers.
-    Useful when you need to log something that doesn't need to be printed.
+    Useful when you need to log something that doesn't need to be
+    printed.
     Call logging_start_stdouterr() when done.
     Dependencies:
-        globals: status_logger, alert_logger, _stdout_handler, _stderr_handler
+        globals: status_logger, alert_logger, _stdout_handler,
+                 _stderr_handler
         modules: logging
     """
     status_logger.removeHandler(_stdout_handler)
@@ -2942,7 +3008,8 @@ def logging_start_stdouterr():
     Turn on stdout/stderr printing in the loggers.
     See logging_stop_stdouterr().
     Dependencies:
-        globals: status_logger, alert_logger, _stdout_handler, _stderr_handler
+        globals: status_logger, alert_logger, _stdout_handler,
+                 _stderr_handler
         modules: logging
     """
     status_logger.addHandler(_stdout_handler)
@@ -2952,8 +3019,8 @@ def logging_start_stdouterr():
 def logging_email_stop_logging():
     """
     Turn off propagation in the email logger (i.e., no actual logging).
-    Useful if you need to send an email with the same settings but without
-    logging or printing.
+    Useful if you need to send an email with the same settings but
+    without logging or printing.
     Call logging_email_start_logging() when done.
     WARNING: the current implementation is not thread-safe.
     Dependencies:
@@ -2980,9 +3047,9 @@ def init_logging_output():
     """
     Initialize output logging, including both logger and file objects.
 
-    The output log is for output from external programs, and it will catch
-    both stdout and stderr.  See init_logging_main() for the rest of the
-    logging.
+    The output log is for output from external programs, and it will
+    catch both stdout and stderr.  See init_logging_main() for the rest
+    of the logging.
 
     output_logger logs to the output log and everything status_logger logs to
     (see init_logging_main()).  output_log_fo is a file object attached to the
@@ -2994,7 +3061,8 @@ def init_logging_output():
 
     Dependencies:
         config settings: output_log, output_log_layout, output_log_sep,
-                         output_log_date, (output_log_num), (output_log_days)
+                         output_log_date, (output_log_num),
+                         (output_log_days)
         globals: cfg, output_logger, output_log_fo, email_logger,
                  start_time, STARTUP_EXITVAL, FULL_DATE_FORMAT
         functions: fix_path(), rotate_prune_output_logs(), pps(),
@@ -3031,8 +3099,8 @@ def init_logging_output():
         try:
             output_handler = logging.FileHandler(cfg['output_log'])
         except IOError as e:
-            email_logger.error('Error: could not open the output log ({0}); '
-                               'exiting.\nDetails: [Errno {1}] {2}' .
+            email_logger.error('Error: could not open the output log '
+                               '({0}); exiting.\nDetails: [Errno {1}] {2}' .
                                format(pps(cfg['output_log']), e.errno,
                                       e.strerror))
             sys.exit(STARTUP_EXITVAL)
@@ -3040,12 +3108,12 @@ def init_logging_output():
 
     # output log file object, for use by (e.g.) run_with_logging()
     try:
-        # appending is always safe / the right thing to do, because either the
-        # file won't exist, or it will have been moved out of the way by the
-        # rotation - except in one case:
+        # appending is always safe / the right thing to do, because
+        # either the file won't exist, or it will have been moved out of
+        # the way by the rotation - except in one case:
         # if we're using a date layout, and the script has been run more
-        # recently than the datestring allows for, we should append so as not
-        # to lose information
+        # recently than the datestring allows for, we should append so
+        # as not to lose information
         output_log_fo = open(fix_path(cfg['output_log'])
                                  if cfg['output_log']
                                  else os.devnull,
@@ -3082,7 +3150,8 @@ def run_with_logging(cmd_args, include_stderr=True, **kwargs):
 
     Parameters:
         cmd_args: list containing the command and its arguments
-        include_stderr: if true, include stderr in the output (but on stdout)
+        include_stderr: if true, include stderr in the output (but on
+                        stdout)
         kwargs: passed to subprocess.Popen()
 
     Dependencies:
@@ -3136,25 +3205,26 @@ def run_with_logging(cmd_args, include_stderr=True, **kwargs):
 #
 # ### setting_names ###
 #
-# For the functions below, setting_name can be either a string which is an
-# index into cfg, or else a tuple containing recursive indexes into cfg;
-# for example, ('alert_emails_host', 1) would test the port number of the
-# alert_emails_host setting (cfg['alert_emails_host'][1]), assuming it's
-# a tuple.
+# For the functions below, setting_name can be either a string which is
+# an index into cfg, or else a tuple containing recursive indexes into
+# cfg; for example, ('alert_emails_host', 1) would test the port number
+# of the alert_emails_host setting (cfg['alert_emails_host'][1]),
+# assuming it's a tuple.
 #
-# In setting-checking functions, if the indexed setting doesn't exist (e.g.,
-# if alert_emails_host is a string containing a hostname), it is considered a
-# failure of the check, and causes the script to exit with an error, unless
-# otherwise specified.  Settings should be have defaults applied, and/or be
-# checked for existence, before calling these.
+# In setting-checking functions, if the indexed setting doesn't exist
+# (e.g., if alert_emails_host is a string containing a hostname), it is
+# considered a failure of the check, and causes the script to exit with
+# an error, unless otherwise specified.  Settings should be have
+# defaults applied, and/or be checked for existence, before calling
+# these.
 #
 # Examples:
 #
 # allowed to be either unset or a string:
 #   setting_is_unset('s_name') or setting_check_type('s_name', str)
 #
-# allowed to be either a non-blank string or a tuple containing a non-blank
-# string and an integer between 1 and 65535:
+# allowed to be either a non-blank string or a tuple containing a
+# non-blank string and an integer between 1 and 65535:
 #   t = setting_check_type('s_name', (str, tuple))
 #   if t == str: setting_check_not_blank('s_name')
 #   if t == tuple: (setting_check_not_blank(('s_name', 0)) and
@@ -3170,13 +3240,14 @@ def setting_walk(setting_name):
     Returns a tuple containing 4 elements:
         0: True (if the object is found) or False (if it isn't)
         1: the object (if found) or None (if not)
-        2: the full path to the object (a string such as cfg['name1']['name2'])
-        3: a path indicating how far the search got; if the object was not
-           found, this path will stop at the last found component, otherwise it
-           will be the same as [2]
+        2: the full path to the object (a string such as
+           cfg['name1']['name2'])
+        3: a path indicating how far the search got; if the object was
+           not found, this path will stop at the last found component,
+           otherwise it will be the same as [2]
 
-    Note that None can also be a legitimate object value, so don't use [1] to
-    test for the existence of the object.
+    Note that None can also be a legitimate object value, so don't use
+    [1] to test for the existence of the object.
 
     Parameters:
         setting_name: see note above
@@ -3251,8 +3322,8 @@ def setting_check_is_set(setting_name):
     ret, obj, full_path, real_path = setting_walk(setting_name)
     if not ret:
         # you should be walking down the tree in order, so everything
-        # up to the last component should exist; we won't complicate things
-        # by including the real_path
+        # up to the last component should exist; we won't complicate
+        # things by including the real_path
         err_exit('Error: setting {0} is not set; exiting.' .
                  format(pps(full_path)),
                  STARTUP_EXITVAL)
@@ -3268,7 +3339,8 @@ def setting_check_one_is_set(setting_name_list):
     and the full path to the object (see setting_walk()).
 
     Parameters:
-        setting_name_list: a list or tuple of setting_names; see note above
+        setting_name_list: a list or tuple of setting_names; see note
+                           above
 
     Dependencies:
         config settings: (contents of setting_name)
@@ -3301,11 +3373,12 @@ def setting_check_type(setting_name, type_tuple):
 
     Parameters:
         setting_name: see note above
-        type_tuple: a type or tuple of types, which can be either from the types
-                    module, or class objects (built-in or user-defined); in both
-                    cases, instances of subclasses will also be allowed
-                    illegal values in this list will cause the script to exit
-                    with an internal error
+        type_tuple: a type or tuple of types, which can be either from
+                    the types module, or class objects (built-in or
+                    user-defined); in both cases, instances of
+                    subclasses will also be allowed
+                    illegal values in this list will cause the script to
+                    exit with an internal error
 
     Dependencies:
         config settings: (contents of setting_name)
@@ -3321,15 +3394,16 @@ def setting_check_type(setting_name, type_tuple):
     # if type_tuple isn't a tuple, make it one
     type_tuple = scalar_to_tuple(type_tuple)
 
-    # isinstance() could check them all at once, but then we can't tell which
-    # type matched
+    # isinstance() could check them all at once, but then we can't tell
+    # which type matched
     for t in type_tuple:
         try:
             if isinstance(obj, t):
                 return t
         except TypeError:
-            err_exit('Internal Error: type_tuple contains an illegal value ({0})\n'
-                     'in setting_check_type(); call was (in expanded notation):\n'
+            err_exit('Internal Error: type_tuple contains an illegal value '
+                     '({0})\nin setting_check_type(); call was '
+                     '(in expanded notation):\n'
                      'setting_check_type({1}, {2})\n'
                      'Exiting.' .
                      format(*map(pps, [t, setting_name, type_tuple])),
@@ -3352,8 +3426,8 @@ def setting_check_not_empty(setting_name):
     """
     If a container-typed config setting is empty, exit with an error.
 
-    Otherwise, returns a tuple containing the setting object and the full
-    path to the object (see setting_walk()).
+    Otherwise, returns a tuple containing the setting object and the
+    full path to the object (see setting_walk()).
 
     The existence and type of the setting are checked.
 
@@ -3365,7 +3439,8 @@ def setting_check_not_empty(setting_name):
     Dependencies:
         config settings: (contents of setting_name)
         globals: cfg, CONTAINER_TYPES, STARTUP_EXITVAL
-        functions: setting_check_is_set(), setting_check_type(), err_exit()
+        functions: setting_check_is_set(), setting_check_type(),
+                   err_exit()
 
     """
 
@@ -3386,10 +3461,10 @@ def setting_check_not_empty(setting_name):
 def setting_check_not_all_empty(setting_name_list):
 
     """
-    At least one of a group of settings must be non-empty, else error/exit.
+    At least one of a group of settings must be non-empty, else e/e.
 
-    Otherwise, returns a tuple containing the first non-empty setting object
-    found and the full path to the object (see setting_walk()).
+    Otherwise, returns a tuple containing the first non-empty setting
+    object found and the full path to the object (see setting_walk()).
 
     The existence and types of the (existent) settings are checked.
     Non-existent settings do not cause an error, but non-container-typed
@@ -3398,7 +3473,8 @@ def setting_check_not_all_empty(setting_name_list):
     See CONTAINER_TYPES, under constants.
 
     Parameters:
-        setting_name_list: a list or tuple of setting_names; see note above
+        setting_name_list: a list or tuple of setting_names; see note
+                           above
 
     Dependencies:
         config settings: (contents of setting_name)
@@ -3433,11 +3509,11 @@ def setting_check_len(setting_name, min_len, max_len):
     """
     If a config setting has an invalid length, exit with an error.
 
-    Otherwise, returns a tuple containing the setting object and the full
-    path to the object (see setting_walk()).
+    Otherwise, returns a tuple containing the setting object and the
+    full path to the object (see setting_walk()).
 
-    Works on container- or stringish-typed settings.  The existence and type
-    of the setting are checked.
+    Works on container- or stringish-typed settings.  The existence and
+    type of the setting are checked.
 
     See CONTAINER_TYPES and STRINGISH_TYPES, under constants.
 
@@ -3464,8 +3540,8 @@ def setting_check_len(setting_name, min_len, max_len):
     if ((min_len is not None and len(obj) < min_len) or
           (max_len is not None and len(obj) > max_len)):
         if t in CONTAINER_TYPES:
-            err_exit('Error: {0} contains an invalid number of elements ({1}); '
-                     'exiting.'.format(obj_path, pps(len(obj))),
+            err_exit('Error: {0} contains an invalid number of elements '
+                     '({1}); exiting.'.format(obj_path, pps(len(obj))),
                      STARTUP_EXITVAL)
         else:
             err_exit('Error: {0} is an invalid length ({1}); '
@@ -3480,8 +3556,8 @@ def setting_check_not_blank(setting_name, ish=False):
     """
     If a string-typed config setting is empty, exit with an error.
 
-    Otherwise, returns a tuple containing the setting object and the full
-    path to the object (see setting_walk()).
+    Otherwise, returns a tuple containing the setting object and the
+    full path to the object (see setting_walk()).
 
     The existence and type of the setting are checked.
 
@@ -3493,7 +3569,8 @@ def setting_check_not_blank(setting_name, ish=False):
     Dependencies:
         config settings: (contents of setting_name)
         globals: cfg, STRING_TYPES, STRINGISH_TYPES, STARTUP_EXITVAL
-        functions: setting_check_is_set(), setting_check_type(), err_exit()
+        functions: setting_check_is_set(), setting_check_type(),
+                   err_exit()
 
     """
 
@@ -3515,17 +3592,18 @@ def setting_check_not_blank(setting_name, ish=False):
 def setting_check_not_all_blank(setting_name_list, ish=False):
 
     """
-    At least one of a group of settings must be non-blank, else error/exit.
+    At least one of a group of settings must be non-blank, else e/e.
 
-    Otherwise, returns a tuple containing the first non-blank setting object
-    found and the full path to the object (see setting_walk()).
+    Otherwise, returns a tuple containing the first non-blank setting
+    object found and the full path to the object (see setting_walk()).
 
     The existence and types of the (existent) settings are checked.
     Non-existent settings do not cause an error, but non-string-typed
     settings do.
 
     Parameters:
-        setting_name_list: a list or tuple of setting_names; see note above
+        setting_name_list: a list or tuple of setting_names; see note
+                           above
         ish: if true, string-like but non-string types are allowed
              (see STRINGISH_TYPES, under constants)
 
@@ -3561,14 +3639,14 @@ def setting_check_not_all_blank(setting_name_list, ish=False):
 def setting_check_no_blanks(setting_name, ish=False):
 
     """
-    If a container config setting contains any blanks, exit with an error.
+    If a container config setting contains any blanks, error/exit.
 
-    Otherwise, returns a tuple containing the setting object and the full
-    path to the object (see setting_walk()).
+    Otherwise, returns a tuple containing the setting object and the
+    full path to the object (see setting_walk()).
 
-    The existence and type of the container are checked, but only the types
-    of the container's contents are checked.  If the container can't be empty,
-    see setting_check_not_empty().
+    The existence and type of the container are checked, but only the
+    types of the container's contents are checked.  If the container
+    can't be empty, see setting_check_not_empty().
 
     See CONTAINER_TYPES, under constants.
 
@@ -3581,7 +3659,8 @@ def setting_check_no_blanks(setting_name, ish=False):
         config settings: (contents of setting_name)
         globals: cfg, CONTAINER_TYPES, STRING_TYPES, STRINGISH_TYPES,
                  STARTUP_EXITVAL
-        functions: setting_check_is_set(), setting_check_type(), err_exit()
+        functions: setting_check_is_set(), setting_check_type(),
+                   err_exit()
 
     """
 
@@ -3611,8 +3690,8 @@ def setting_check_no_char(setting_name, char, ish=False):
     If a config setting contains particular character(s), error/exit.
     (Setting must be string-typed.)
 
-    Otherwise, returns a tuple containing the setting object and the full
-    path to the object (see setting_walk()).
+    Otherwise, returns a tuple containing the setting object and the
+    full path to the object (see setting_walk()).
 
     The existence and type of the setting are checked.
 
@@ -3656,8 +3735,8 @@ def setting_check_list(setting_name, list_vals):
     """
     If a config setting's value is not in a list, exit with an error.
 
-    Otherwise, returns a tuple containing the setting object and the full
-    path to the object (see setting_walk()).
+    Otherwise, returns a tuple containing the setting object and the
+    full path to the object (see setting_walk()).
 
     The existence of the setting is checked.
 
@@ -3690,8 +3769,8 @@ def setting_check_num(setting_name, min_val=None, max_val=None):
     """
     If a number-typed config setting is invalid, exit with an error.
 
-    Otherwise, returns a tuple containing the setting object and the full
-    path to the object (see setting_walk()).
+    Otherwise, returns a tuple containing the setting object and the
+    full path to the object (see setting_walk()).
 
     The existence and type of the setting are checked.
 
@@ -3730,10 +3809,11 @@ def setting_check_file_type(setting_name, type_char='f', follow_links=True):
     """
     If a file setting does not have the correct file type, error/exit.
 
-    Otherwise, returns a tuple containing the setting object and the full
-    path to the object (see setting_walk()).
+    Otherwise, returns a tuple containing the setting object and the
+    full path to the object (see setting_walk()).
 
-    For purposes of this function, 'file' includes directories, symlinks, etc.
+    For purposes of this function, 'file' includes directories,
+    symlinks, etc.
 
     The existence and (string) type of the setting are checked, and the
     setting may not be blank.  The file must exist.
@@ -3763,10 +3843,10 @@ def setting_check_file_type(setting_name, type_char='f', follow_links=True):
 def setting_check_file_access(setting_name, file_rwx='r'):
 
     """
-    If a file indicated by a setting is not accessible, exit with an error.
+    If a file indicated by a setting is not accessible, error/exit.
 
-    Otherwise, returns a tuple containing the setting object and the full
-    path to the object (see setting_walk()).
+    Otherwise, returns a tuple containing the setting object and the
+    full path to the object (see setting_walk()).
 
     The existence and (string) type of the setting are checked, and the
     setting may not be blank.  The file must exist.
@@ -3794,13 +3874,14 @@ def setting_check_file_access(setting_name, file_rwx='r'):
 
 def setting_check_file_read(setting_name):
     """
-    Wrapper to check the common case of a file we just need to read.
-    Setting must be a non-blank string.  File must exist, be a regular file
-    or a symlink to one, and be readable.
+    Wrapper to check the case of a file we just need to read.
+    Setting must be a non-blank string.  File must exist, be a regular
+    file or a symlink to one, and be readable.
     Dependencies:
         config settings: (contents of setting_name)
         globals: cfg
-        functions: setting_check_file_type(), setting_check_file_access()
+        functions: setting_check_file_type(),
+                   setting_check_file_access()
     """
     setting_check_file_type(setting_name, 'f', True)
     return setting_check_file_access(setting_name, 'r', False)
@@ -3808,13 +3889,14 @@ def setting_check_file_read(setting_name):
 
 def setting_check_file_rw(setting_name):
     """
-    Wrapper to check the common case of a file we need to read and write.
-    Setting must be a non-blank string.  File must exist, be a regular file
-    or a symlink to one, and be readable and writable.
+    Wrapper to check the case of a file we need to read and write.
+    Setting must be a non-blank string.  File must exist, be a regular
+    file or a symlink to one, and be readable and writable.
     Dependencies:
         config settings: (contents of setting_name)
         globals: cfg
-        functions: setting_check_file_type(), setting_check_file_access()
+        functions: setting_check_file_type(),
+                   setting_check_file_access()
     """
     setting_check_file_type(setting_name, 'f', True)
     return setting_check_file_access(setting_name, 'rw', False)
@@ -3823,13 +3905,14 @@ def setting_check_file_rw(setting_name):
 def setting_check_dir_rwx(setting_name):
     """
     Wrapper: check a dir in which we need to create and/or rotate files.
-    Setting must be a non-blank string.  Directory must exist, be a directory
-    or a symlink to one, and have full permissions (r for rotation, wx for
-    creating files).
+    Setting must be a non-blank string.  Directory must exist, be a
+    directory or a symlink to one, and have full permissions (r for
+    rotation, wx for creating files).
     Dependencies:
         config settings: (contents of setting_name)
         globals: cfg
-        functions: setting_check_file_type(), setting_check_file_access()
+        functions: setting_check_file_type(),
+                   setting_check_file_access()
     """
     setting_check_file_type(setting_name, 'd', True)
     return setting_check_file_access(setting_name, 'rwx', False)
@@ -3839,10 +3922,10 @@ def setting_check_filedir_create(setting_name, create_type='f',
                                  need_rotation=False):
 
     """
-    If we won't be able to create a file or directory, exit with an error.
+    If we won't be able to create a file or directory, error/exit.
 
-    Otherwise, returns a tuple containing the setting object and the full
-    path to the object (see setting_walk()).
+    Otherwise, returns a tuple containing the setting object and the
+    full path to the object (see setting_walk()).
 
     Specifically: this is for files/directories we're going to be
     touching, writing to, creating, and/or rotating (but not necessarily
@@ -3889,16 +3972,16 @@ def lockfile_cleanup():
         functions: fix_path()
         modules: os, shutil
     """
-    # If the file exists, a disable command must have been run while we were
-    # running; leave the lockfile dir alone, so future invocations will be
-    # disabled.
+    # If the file exists, a disable command must have been run while we
+    # were running; leave the lockfile dir alone, so future invocations
+    # will be disabled.
     if not os.path.isfile(fix_path(os.path.join(cfg['lockfile'],
                                                 SCRIPT_DISABLED))):
         # By the time we run this, we won't really be able to rely on
         # any of the logging, and we might be in the middle of a signal
-        # handler, so ignore errors.  The next time the script is invoked,
-        # it will complain that the lockfile directory exists, so we'll know
-        # something went wrong.
+        # handler, so ignore errors.  The next time the script is
+        # invoked, it will complain that the lockfile directory exists,
+        # so we'll know something went wrong.
         shutil.rmtree(os.path.realpath(fix_path(cfg['lockfile'])), True)
 
 
@@ -3913,14 +3996,16 @@ def check_status():
     * Has the script been disabled?
 
     Dependencies:
-        config settings: run_every, last_started_file, lockfile, if_running,
-                         lockfile_alert_file
+        config settings: run_every, last_started_file, lockfile,
+                         if_running, lockfile_alert_file
         globals: cfg, status_logger, alert_logger, email_logger,
-                 TASK_NAME, TASKS_NAME, NO_ERROR_EXITVAL, STARTUP_EXITVAL,
-                 LOCKFILE_EXITVAL, LF_ALERTS_SILENCED, SCRIPT_DISABLED
+                 TASK_NAME, TASKS_NAME, NO_ERROR_EXITVAL,
+                 STARTUP_EXITVAL, LOCKFILE_EXITVAL, LF_ALERTS_SILENCED,
+                 SCRIPT_DISABLED
         functions: fix_path(), file_newer_than(),
                    logging_email_stop_logging(),
-                   logging_email_start_logging(), pps(), lockfile_cleanup()
+                   logging_email_start_logging(), pps(),
+                   lockfile_cleanup()
         modules: sys, atexit, os, errno
 
     """
@@ -4030,8 +4115,8 @@ def check_status():
                                    'no email sent.')
                 sys.exit(LOCKFILE_EXITVAL)
 
-            # if cfg['lockfile_alert_file'] is newer than cfg['if_running'],
-            # log it but don't send email
+            # if cfg['lockfile_alert_file'] is newer than
+            # cfg['if_running'], log it but don't send email
             try:
                 nt = file_newer_than(cfg['lockfile_alert_file'],
                                      cfg['if_running'])
@@ -4056,7 +4141,8 @@ def check_status():
                        exit_val=None)
                        # don't exit yet, we're already about to exit
 
-            # send another alert email (email only; we already logged it)
+            # send another alert email
+            # (email only; we already logged it)
             logging_email_stop_logging()
             if os.path.exists(fix_path(os.path.join(cfg['lockfile'],
                                                     SCRIPT_DISABLED))):
@@ -4102,17 +4188,19 @@ def render_status_messages(full=False):
     """
     Return a string with status messages about the script.
 
-    The messages can be changed or added to by redefining this function or
-    by defining render_status_messages_hook(), which must take the message
-    string and the full flag, and return a message string.
+    The messages can be changed or added to by redefining this function
+    or by defining render_status_messages_hook(), which must take the
+    message string and the full flag, and return a message string.
 
     Parameters:
         full: if true, include less-useful (e.g., debugging) info
 
     Dependencies:
-        config settings: last_started_file, lockfile, lockfile_alert_file
+        config settings: last_started_file, lockfile,
+                         lockfile_alert_file
         hooks: render_status_messages_hook
-        globals: cfg, LF_ALERTS_SILENCED, SCRIPT_DISABLED, TASK_NAME, TASKS_NAME
+        globals: cfg, LF_ALERTS_SILENCED, SCRIPT_DISABLED, TASK_NAME,
+                 TASKS_NAME
         functions: fix_path()
         modules: os
 
@@ -4167,15 +4255,16 @@ def render_status_metadata(full=False):
     """
     Return a string with metadata about lockfiles, semaphores, etc.
 
-    The metadata can be changed or added to by redefining this function or
-    by defining render_status_metadata_hook(), which must take the message
-    string and the full flag, and return a message string.
+    The metadata can be changed or added to by redefining this function
+    or by defining render_status_metadata_hook(), which must take the
+    message string and the full flag, and return a message string.
 
     Parameters:
         full: if true, include less-useful (e.g., debugging) info
 
     Dependencies:
-        config settings: last_started_file, lockfile, lockfile_alert_file
+        config settings: last_started_file, lockfile,
+                         lockfile_alert_file
         hooks: render_status_metadata_hook
         globals: cfg, LF_ALERTS_SILENCED, SCRIPT_DISABLED
         functions: get_file_metadata()
@@ -4224,7 +4313,8 @@ scriptdisabled:
 def render_status(full=False):
     """
     Return the complete status string.
-    Doesn't print surrounding blank lines; add them if necessary in context.
+    Doesn't print surrounding blank lines; add them if necessary in
+    context.
     Parameters:
         full: if true, include less-useful (e.g., debugging) info
     """
@@ -4248,7 +4338,8 @@ def silence_lf_alerts():
         globals: cfg, status_logger, NO_ERROR_EXITVAL, STARTUP_EXITVAL,
                  LF_ALERTS_SILENCED
         functions: fix_path(), logging_stop_stdouterr(),
-                   logging_start_stdouterr(), log_cl_config(), pps(), err_exit()
+                   logging_start_stdouterr(), log_cl_config(), pps(),
+                   err_exit()
         modules: sys, os
 
     """
@@ -4268,8 +4359,8 @@ def silence_lf_alerts():
     # using a file in the lockfile dir means that we automatically
     # get the silencing cleared when the lockfile is removed
     touch_file(os.path.join(cfg['lockfile'], LF_ALERTS_SILENCED),
-               'the semaphore file', None, use_logger=False, warn_only=False,
-               exit_val=STARTUP_EXITVAL)
+               'the semaphore file', None, use_logger=False,
+               warn_only=False, exit_val=STARTUP_EXITVAL)
 
     # print and log status, separately
     print('\nLockfile alerts have been silenced.\n')
@@ -4290,7 +4381,8 @@ def unsilence_lf_alerts():
         globals: cfg, status_logger, NO_ERROR_EXITVAL, STARTUP_EXITVAL,
                  LF_ALERTS_SILENCED
         functions: fix_path(), logging_stop_stdouterr(),
-                   logging_start_stdouterr(), log_cl_config(), pps(), err_exit()
+                   logging_start_stdouterr(), log_cl_config(), pps(),
+                   err_exit()
         modules: sys, os, errno
 
     """
@@ -4303,7 +4395,8 @@ def unsilence_lf_alerts():
 
     # remove the semaphore
     try:
-        os.unlink(fix_path(os.path.join(cfg['lockfile'], LF_ALERTS_SILENCED)))
+        os.unlink(fix_path(os.path.join(cfg['lockfile'],
+                                        LF_ALERTS_SILENCED)))
     except OSError as e:
         if e.errno != errno.ENOENT:
             err_exit('\nError: could not remove the semaphore file ({0}); '
@@ -4331,10 +4424,12 @@ def disable_script():
 
     Dependencies:
         config settings: lockfile
-        globals: cfg, status_logger, TASK_ARTICLE, TASK_NAME, TASKS_NAME,
-                 NO_ERROR_EXITVAL, STARTUP_EXITVAL, SCRIPT_DISABLED
+        globals: cfg, status_logger, TASK_ARTICLE, TASK_NAME,
+                 TASKS_NAME, NO_ERROR_EXITVAL, STARTUP_EXITVAL,
+                 SCRIPT_DISABLED
         functions: fix_path(), logging_stop_stdouterr(),
-                   logging_start_stdouterr(), log_cl_config(), pps(), err_exit()
+                   logging_start_stdouterr(), log_cl_config(), pps(),
+                   err_exit()
         modules: sys, os, errno
 
     """
@@ -4342,12 +4437,14 @@ def disable_script():
     # script already disabled?
     if os.path.exists(fix_path(os.path.join(cfg['lockfile'],
                                             SCRIPT_DISABLED))):
-        print('\n{0} were already disabled.\n'.format(TASKS_NAME.capitalize()))
+        print('\n{0} were already disabled.\n' .
+              format(TASKS_NAME.capitalize()))
         sys.exit(STARTUP_EXITVAL)
 
     # lockfile exists?
     if os.path.exists(fix_path(cfg['lockfile'])):
-        print('\nThe lockfile directory exists; {0} {1} is probably running.\n'
+        print('\nThe lockfile directory exists; {0} {1} is probably '
+              'running.\n'
               'The disable command will take effect after the current {1} '
               'finishes.'.format(TASK_ARTICLE, TASK_NAME))  # no \n
 
@@ -4357,15 +4454,15 @@ def disable_script():
         os.mkdir(fix_path(os.path.join(cfg['lockfile'])))
     except OSError as e:
         if e.errno != errno.EEXIST:
-            err_exit('\nError: could not create the lockfile directory ({0}); '
-                     'exiting.\nDetails: [Errno {1}] {2}\n' .
+            err_exit('\nError: could not create the lockfile directory '
+                     '({0}); exiting.\nDetails: [Errno {1}] {2}\n' .
                      format(pps(cfg['lockfile']), e.errno, e.strerror),
                      STARTUP_EXITVAL)
         else:  # it existed already
             pass
     touch_file(os.path.join(cfg['lockfile'], SCRIPT_DISABLED),
-               'the semaphore file', None, use_logger=False, warn_only=False,
-               exit_val=STARTUP_EXITVAL)
+               'the semaphore file', None, use_logger=False,
+               warn_only=False, exit_val=STARTUP_EXITVAL)
 
     # print and log status, separately
     print('\n{0} have been disabled; remember to re-enable them later!\n' .
@@ -4373,7 +4470,8 @@ def disable_script():
     logging_stop_stdouterr()
     log_cl_config()  # to help interpret the status message
     status_logger.info('{0} have been disabled; lockfile is {1}.' .
-                       format(TASKS_NAME.capitalize(), pps(cfg['lockfile'])))
+                       format(TASKS_NAME.capitalize(),
+                              pps(cfg['lockfile'])))
     logging_start_stdouterr()
 
 
@@ -4384,10 +4482,12 @@ def enable_script():
 
     Dependencies:
         config settings: lockfile
-        globals: cfg, status_logger, TASK_ARTICLE, TASK_NAME, TASKS_NAME,
-                 NO_ERROR_EXITVAL, STARTUP_EXITVAL, SCRIPT_DISABLED
+        globals: cfg, status_logger, TASK_ARTICLE, TASK_NAME,
+                 TASKS_NAME, NO_ERROR_EXITVAL, STARTUP_EXITVAL,
+                 SCRIPT_DISABLED
         functions: fix_path(), logging_stop_stdouterr(),
-                   logging_start_stdouterr(), log_cl_config(), pps(), err_exit()
+                   logging_start_stdouterr(), log_cl_config(), pps(),
+                   err_exit()
         modules: sys, os, errno
 
     """
@@ -4395,7 +4495,8 @@ def enable_script():
     # script already enabled?
     if not os.path.exists(fix_path(os.path.join(cfg['lockfile'],
                                                 SCRIPT_DISABLED))):
-        print('\n{0} were already enabled.\n'.format(TASKS_NAME.capitalize()))
+        print('\n{0} were already enabled.\n' .
+              format(TASKS_NAME.capitalize()))
         sys.exit(STARTUP_EXITVAL)
 
     # remove the semaphore
@@ -4420,7 +4521,8 @@ def enable_script():
     logging_stop_stdouterr()
     log_cl_config()  # to help interpret the status message
     status_logger.info('{0} have been re-enabled; lockfile is {1}.' .
-                       format(TASKS_NAME.capitalize(), pps(cfg['lockfile'])))
+                       format(TASKS_NAME.capitalize(),
+                              pps(cfg['lockfile'])))
     logging_start_stdouterr()
 
 
@@ -4431,10 +4533,11 @@ def clear_lockfile():
 
     Dependencies:
         config settings: lockfile
-        globals: cfg, status_logger, TASK_ARTICLE, TASK_NAME, NO_ERROR_EXITVAL,
-                 STARTUP_EXITVAL
+        globals: cfg, status_logger, TASK_ARTICLE, TASK_NAME,
+                 NO_ERROR_EXITVAL, STARTUP_EXITVAL
         functions: fix_path(), logging_stop_stdouterr(),
-                   logging_start_stdouterr(), log_cl_config(), pps(), err_exit()
+                   logging_start_stdouterr(), log_cl_config(), pps(),
+                   err_exit()
         modules: sys, os, shutil, errno
 
     """
@@ -4445,8 +4548,9 @@ def clear_lockfile():
         sys.exit(STARTUP_EXITVAL)
 
     # are you sure?
-    yn = raw_input("\nWARNING: the lockfile directory should only be removed "
-                   "if you're sure that\n{0} {1} is not currently running.\n"
+    yn = raw_input("\nWARNING: the lockfile directory should only be "
+                   "removed if you're sure that\n{0} {1} is not currently "
+                   "running.\n"
                    "Continue (y/n)? " .
                    format(TASK_ARTICLE, TASK_NAME))
     if yn.lower() != 'y':
@@ -4458,8 +4562,8 @@ def clear_lockfile():
         shutil.rmtree(os.path.realpath(fix_path(cfg['lockfile'])), False)
     except OSError as e:
         if e.errno != errno.ENOENT:
-            err_exit('Error: could not remove the lockfile directory ({0}); '
-                     'exiting.\nDetails: [Errno {1}] {2}' .
+            err_exit('Error: could not remove the lockfile directory '
+                     '({0}); exiting.\nDetails: [Errno {1}] {2}' .
                      format(pps(cfg['lockfile']), e.errno, e.strerror),
                      STARTUP_EXITVAL)
         else:  # it didn't exist, ignore
@@ -4486,12 +4590,13 @@ def import_by_name(file_path):
 
     Returns a tuple containing the module name and the module object.
 
-    Does not use sys.path or the relative import syntax, and allows filenames
-    to contain any character.
+    Does not use sys.path or the relative import syntax, and allows
+    filenames to contain any character.
 
     If using a version of Python prior to 2.7/3.2 which does not have
-    universal newlines support, the file must use Unix newlines.  Versions
-    prior to 2.7/3.2 may also require that the file end with a newline.
+    universal newlines support, the file must use Unix newlines.
+    Versions prior to 2.7/3.2 may also require that the file end with a
+    newline.
 
     May raise exceptions: OSError, IOError, SyntaxError, or TypeError.
 
@@ -4505,9 +4610,10 @@ def import_by_name(file_path):
 
     Dependencies:
         functions: fix_path()
-        modules: re, os, sys, imp [if using Python <3.4], types.ModuleType
-                 [if using Python 3.4+]
-        Python: 2.7/3.2 [depending on the contents of the file; see above]
+        modules: re, os, sys, imp [if using Python <3.4],
+                 types.ModuleType [if using Python 3.4+]
+        Python: 2.7/3.2 [depending on the contents of the file; see
+                above]
 
     """
 
@@ -4610,8 +4716,8 @@ def apply_config_defaults_extra():
 
     """
     Apply configuration defaults that are last-minute/complicated.
-    In particular, this is the place for defaults that depend on the values
-    supplied for other settings.
+    In particular, this is the place for defaults that depend on the
+    values supplied for other settings.
 
     To change or add to the extra setting defaults, either redefine this
     function, or define apply_config_defaults_hook(), which takes no
@@ -4701,8 +4807,9 @@ def validate_config():
         setting_check_list('syslog_sock_type', [socket.SOCK_DGRAM,
                                                 socket.SOCK_STREAM])
         sl_class = logging.handlers.SysLogHandler  # for readability
-        # encodePriority() doesn't do enough checking (e.g., it will allow
-        # any integer), so just use the list from the documentation
+        # encodePriority() doesn't do enough checking (e.g., it will
+        # allow any integer), so just use the list from the
+        # documentation
         setting_check_list('syslog_fac', [
                                           'auth', sl_class.LOG_AUTH,
                                           'authpriv', sl_class.LOG_AUTHPRIV,
@@ -4732,7 +4839,8 @@ def validate_config():
     setting_check_type('output_log', STRING_TYPES + (NoneType, ))
     if cfg['output_log']:
         setting_check_filedir_create('output_log', 'f', True)
-        setting_check_list('output_log_layout', ['append', 'number', 'date'])
+        setting_check_list('output_log_layout',
+                           ['append', 'number', 'date'])
         setting_check_no_char('output_log_sep', PATH_SEP)
         setting_check_not_blank('output_log_date', PATH_SEP)
         setting_check_no_char('output_log_date', PATH_SEP)
@@ -4749,9 +4857,9 @@ def validate_config():
 def process_config(arg_ns):
 
     """
-    Process the config file and the settings supplied on the command line.
-    Includes applying defaults, validating values, and initializing loggers
-    (main and output).
+    Process the config file and settings supplied on the command line.
+    Includes applying defaults, validating values, and initializing
+    loggers (main and output).
 
     To add initializations, define process_config_hook(), which takes no
     arguments.
@@ -4767,7 +4875,8 @@ def process_config(arg_ns):
                  STARTUP_EXITVAL
         functions: import_config_by_name(), check_bogus_config(),
                    apply_config_defaults(), validate_config(),
-                   init_logging_main(), init_logging_output(), pps(), err_exit()
+                   init_logging_main(), init_logging_output(), pps(),
+                   err_exit()
         modules: argparse, os
         Python: 2.7/3.2, for argparse
 
@@ -4775,18 +4884,18 @@ def process_config(arg_ns):
 
     global cl_config
 
-    # config_file_paths is set in process_command_line() because it might
-    # be needed before this function is called
+    # config_file_paths is set in process_command_line() because it
+    # might be needed before this function is called
 
     # import the config files
     if config_file_paths is not None:
         for cfp in config_file_paths:
             if not cfp:
-                err_exit('Error: config file paths may not be empty strings; '
-                         'exiting', STARTUP_EXITVAL)
+                err_exit('Error: config file paths may not be empty '
+                         'strings; exiting', STARTUP_EXITVAL)
             check_file_type(cfp, 'config file', 'f', follow_links=True,
-                            must_exist=True, use_logger=False, warn_only=False,
-                            exit_val=STARTUP_EXITVAL)
+                            must_exist=True, use_logger=False,
+                            warn_only=False, exit_val=STARTUP_EXITVAL)
             check_file_access(cfp, 'config file', 'r', use_logger=False,
                               warn_only=False, exit_val=STARTUP_EXITVAL)
             import_config_by_name(cfp)
@@ -4821,7 +4930,8 @@ def process_config(arg_ns):
     apply_config_defaults()
     validate_config()
 
-    # now that the settings are complete, initialize things based on them
+    # now that the settings are complete, initialize things
+    # based on them
     init_logging_main()
     if 'exec_path' in cfg:
         os.environ['PATH'] = cfg['exec_path']
@@ -4840,7 +4950,8 @@ def render_config():
     Return a string containing the current config settings.
     Also includes config file names and CWD.
 
-    Doesn't print surrounding blank lines; add them if necessary in context.
+    Doesn't print surrounding blank lines; add them if necessary in
+    context.
 
     Dependencies:
         config settings: (all)
@@ -4900,7 +5011,7 @@ CWD: {1}
 def log_cl_config():
 
     """
-    Log the config file paths, CWD, and settings given on the command line.
+    Log the config file paths, CWD, and settings from the command line.
 
     Dependencies:
         config settings: (any that can be passed on the command line)
@@ -4948,8 +5059,8 @@ def create_blank_config_files(full=False):
     Files must not exist already.
 
     Parameters:
-        full: if true, include a description of each setting, as well as the
-              default (if any)
+        full: if true, include a description of each setting, as well as
+              the default (if any)
 
     Dependencies:
         globals: config_file_paths, config_settings, STARTUP_EXITVAL
@@ -5032,9 +5143,9 @@ def create_arg_parser():
     """
     Create and return the command-line-argument parser.
 
-    To change the arguments the script takes, either redefine this function,
-    or define create_arg_parser_hook(), which must take and return an
-    ArgumentParser object.
+    To change the arguments the script takes, either redefine this
+    function, or define create_arg_parser_hook(), which must take and
+    return an ArgumentParser object.
 
     See also process_command_line().
 
@@ -5121,16 +5232,17 @@ def run_mode():
     """
     Do the actual business of the script.
 
-    To supply a task for the script to do, this function can be redefined, or
-    you can define run_mode_hook(), which takes no arguments.
+    To supply a task for the script to do, this function can be
+    redefined, or you can define run_mode_hook(), which takes no
+    arguments.
 
     Dependencies:
         config settings: last_started_file
-        globals: status_logger, output_logger, start_time, cfg, TASK_NAME,
-                 FULL_DATE_FORMAT, STARTUP_EXITVAL
+        globals: status_logger, output_logger, start_time, cfg,
+                 TASK_NAME, FULL_DATE_FORMAT, STARTUP_EXITVAL
         hooks: run_mode_hook()
-        functions: log_cl_config(), check_status(), init_logging_output(),
-                   touch_file()
+        functions: log_cl_config(), check_status(),
+                   init_logging_output(), touch_file()
         modules: time
 
     """
@@ -5145,8 +5257,8 @@ def run_mode():
     # make sure we're clear to keep going
     check_status()
 
-    # get the starting timestamp; can be used for comparisons and filenames,
-    # including the output logs
+    # get the starting timestamp; can be used for comparisons and
+    # filenames, including the output logs
     start_time = time.time()
 
     # set up the output logger in case we need it, and rotate the logs
@@ -5183,17 +5295,19 @@ def process_command_line():
     Process the command-line arguments and do mode-dependent actions.
 
     To change the modes the script offers, change SCRIPT_MODES and
-    SCRIPT_MODES_DESCR and define mode_callbacks_hook(), which must take and
-    return the mode_callbacks dict.
+    SCRIPT_MODES_DESCR and define mode_callbacks_hook(), which must take
+    and return the mode_callbacks dict.
 
     Dependencies:
         hooks: mode_callbacks_hook()
-        globals: config_file_paths, default_config_files, NO_ERROR_EXITVAL
+        globals: config_file_paths, default_config_files,
+                 NO_ERROR_EXITVAL
         functions: license_mode(), config_mode(), status_mode(),
-                   statusall_mode(), silence_lf_alerts(), unsilence_lf_alerts(),
-                   disable_script(), enable_script(), clear_lockfile(),
-                   create_blank_config_files(), createfull_mode(), run_mode(),
-                   create_arg_parser(), process_config()
+                   statusall_mode(), silence_lf_alerts(),
+                   unsilence_lf_alerts(), disable_script(),
+                   enable_script(), clear_lockfile(),
+                   create_blank_config_files(), createfull_mode(),
+                   run_mode(), create_arg_parser(), process_config()
         modules: argparse, sys
         Python: 2.7/3.2, for argparse
 
@@ -5245,8 +5359,8 @@ def process_command_line():
     # get the script mode; be defensive in case the args were changed
     mode = arg_ns.mode if hasattr(arg_ns, 'mode') else 'run'
 
-    # first deal with the modes that don't require processing the config file
-    # or command-line settings
+    # first deal with the modes that don't require processing the
+    # config file or command-line settings
     if not mode_callbacks[mode][1]:
         mode_callbacks[mode][0]()
         sys.exit(NO_ERROR_EXITVAL)
