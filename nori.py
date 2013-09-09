@@ -4820,7 +4820,7 @@ def validate_config():
             setting_check_not_blank(('syslog_addr', 0))
             setting_check_num(('syslog_addr', 1), 1, 65535)
         else:
-            setting_check_file_type('syslog_addr', 'f')
+            setting_check_file_type('syslog_addr', 's')
             setting_check_file_access('syslog_addr', 'w')
         setting_check_list('syslog_sock_type', [socket.SOCK_DGRAM,
                                                 socket.SOCK_STREAM])
