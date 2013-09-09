@@ -1306,9 +1306,9 @@ config_settings['syslog_fac'] = dict(
 The syslog facility to use.
 
 Allowed values:
-  'auth' 'authpriv' 'cron' 'daemon' 'ftp' 'kern' 'lpr' 'mail' 'news'
-  'syslog' 'user' 'uucp' 'local0' 'local1' 'local2' 'local3' 'local4'
-  'local5' 'local6' 'local7'
+    'auth' 'authpriv' 'cron' 'daemon' 'ftp' 'kern' 'lpr' 'mail' 'news'
+    'syslog' 'user' 'uucp' 'local0' 'local1' 'local2' 'local3' 'local4'
+    'local5' 'local6' 'local7'
 and their corresponding numerical constants.
 
 See the syslog and/or Python documentation (logging.handlers) for more
@@ -1379,11 +1379,11 @@ config_settings['output_log_layout'] = dict(
 The file layout to use for the output logs.
 
 Available options:
-  'append': append to a single file, with no rotation
-  'number': log to numbered files (lower number = more recent, most recent
-            has no number)
-  'date': log to date-suffixed files (all suffixed, including the most
-          recent; see output_log_date)
+    'append': append to a single file, with no rotation
+    'number': log to numbered files (lower number = more recent, most
+              recent has no number)
+    'date': log to date-suffixed files (all suffixed, including the most
+            recent; see output_log_date)
 
 For example, if output_log is '{0}.log', output_log_layout is 'number',
 and output_log_sep is '.', the second-most-recent file will be named
@@ -1809,7 +1809,7 @@ def check_file_type(file_path, file_label, type_char='f', follow_links=True,
                    pps(), err_exit()
         modules: os, stat, sys
 
-  """
+    """
 
     # follow links?
     if follow_links:
@@ -5038,7 +5038,7 @@ def log_cl_config():
         functions: pps()
         modules: os
 
-  """
+    """
 
     # log the list of config files
     if config_file_paths is None:
@@ -5203,7 +5203,7 @@ def create_arg_parser():
          help='mode in which to run the script; see below'
     )
 
-  # hook for adding more arguments
+    # hook for adding more arguments
     if ('create_arg_parser_hook' in globals() and
           callable(create_arg_parser_hook)):
         arg_parser = create_arg_parser_hook(arg_parser)
