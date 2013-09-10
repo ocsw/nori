@@ -1028,6 +1028,30 @@ If unset, the system default will be used.
     renderer=oct,
 )
 
+config_settings['print_cmds'] = dict(
+    descr=(
+"""
+For important external commands, print the commands themselves?
+Environment variables added to the commands are also printed, one per line.
+
+For example:
+
+    Running command:
+    'ls' '-l' 'nori.py'
+    with environment additions:
+    A='B'
+    PATH='/bin/:/usr/bin/'
+
+Commands printed are script-dependent.
+
+Can be True or False.
+"""
+    ),
+    default=False,
+    cl_coercer=lambda x: str_to_bool(x),
+    no_print=True,
+)
+
 config_settings['debug'] = dict(
     descr=(
 """
@@ -3183,7 +3207,8 @@ def end_logging_output():
     output_log_fo.close()
 
 
-def run_with_logging(cmd_args, include_stderr=True, **kwargs):
+def run_with_logging(cmd_descr, cmd_args, include_stderr=True, env_add=None,
+                     **kwargs):
 
     """
     Run a command and log its output to the output log and stdout.
@@ -3191,14 +3216,26 @@ def run_with_logging(cmd_args, include_stderr=True, **kwargs):
     Returns the exit value of the command.
 
     Parameters:
+        cmd_descr: a string describing the command, used in messages
+                   like 'starting rsync backup'
         cmd_args: list containing the command and its arguments
         include_stderr: if true, include stderr in the output (but on
                         stdout)
+        env_add: if not None, a dictionary of keys and values to add to
+                 the environment in which the command will run; this is
+                 added to the current environment if there is no env
+                 argument or if env is None, or to the env argument if
+                 it is not None
+                 * keys that already exist in the target environment
+                   will be overridden
+                 * values must be strings, or a TypeError will be raised
         kwargs: passed to subprocess.Popen()
 
     Dependencies:
-        globals: output_log_fo
-        modules: subprocess, threading, sys
+        globals: output_logger, output_log_fo, status_logger,
+                 FULL_DATE_FORMAT
+        functions: pps()
+        modules: copy, os, time, operator, subprocess, threading, sys
 
     Based on J.F. Sebastian's code, here:
     http://stackoverflow.com/questions/4984428/python-subprocess-get-childrens-output-to-file-and-terminal/4985080#4985080
@@ -3216,6 +3253,29 @@ def run_with_logging(cmd_args, include_stderr=True, **kwargs):
         t.start()
         return t
 
+    # set up the environment
+    if env_add is not None:
+        if 'env' not in kwargs or kwargs['env'] is None:
+            kwargs['env'] = copy.copy(os.environ).update(env_add)
+        else:
+            kwargs['env'].update(env_add)
+
+    # log the starting time
+    output_logger.info('Starting {0} {1}.' .
+                       format(cmd_descr,
+                              time.strftime(FULL_DATE_FORMAT,
+                                            time.localtime())))
+
+    # print the command
+    cmd_msg = 'Running command:\n'
+    cmd_msg += ' '.join(map(pps, cmd_args)) + '\n'
+    if env_add is not None:
+        cmd_msg += 'with environment additions:\n'
+        for k, v in sorted(env_add.items(), key=operator.itemgetter(0)):
+            cmd_msg += k + '=' + pps(v) + '\n'
+    print(cmd_msg.strip(), file=output_log_fo)  # no stdout yet
+    status_logger.info(cmd_msg.strip())
+
     # run the command;
     # redirect stderr here rather than starting a separate thread so we
     # get everything in the same order as we would on the command line
@@ -3230,6 +3290,12 @@ def run_with_logging(cmd_args, include_stderr=True, **kwargs):
     threads.append(tee(p.stdout, output_log_fo, sys.stdout))
     for t in threads:
         t.join()  # wait for IO completion
+
+    # log the ending time
+    output_logger.info('{0} finished {1}.' .
+                       format(cmd_descr.capitalize(),
+                              time.strftime(FULL_DATE_FORMAT,
+                                            time.localtime())))
 
     # get the exit value
     return p.wait()
