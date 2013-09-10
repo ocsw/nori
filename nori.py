@@ -1128,13 +1128,13 @@ If the script has passed the run_every check, but the previous
 {0} is still running or was interrupted
 (i.e., the lockfile is still present):
 
--= It will send an alert to the alert_emails_to address(es).
--= It will send further alerts every if_running minutes, unless
-   if_running is 0 or the alerts are silenced.
-   (run '{1} --help' for more information on silencing alerts)
--= Either way, it will send an alert when it next successfully starts,
-   so you know that the previous {0} finally finished, and the
-   next one has begun.
+* It will send an alert to the alert_emails_to address(es).
+* It will send further alerts every if_running minutes, unless
+  if_running is 0 or the alerts are silenced.
+  (run '{1} --help' for more information on silencing alerts)
+* Either way, it will send an alert when it next successfully starts,
+  so you know that the previous {0} finally finished, and the
+  next one has begun.
 """.format(TASK_NAME, script_name)
     ),
     default=120,
