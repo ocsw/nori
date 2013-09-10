@@ -577,6 +577,7 @@ import pprint
 from pprint import pprint as pp  # for debugging
 from types import *
 import collections
+import operator
 
 if sys.hexversion < 0x03040000:
     import imp  # see import_by_name()
@@ -2500,7 +2501,7 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
     Dependencies:
         globals: email_logger, STARTUP_EXITVAL, ZIP_SUFFIXES
         functions: fix_path(), pps()
-        modules: re, os, sys
+        modules: re, os, operator, sys
 
     """
 
@@ -2522,7 +2523,7 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
                            'Details: [Errno {1}] {2}' .
                            format(pps(dir_path), e.errno, e.strerror))
         sys.exit(exit_val)
-    f_list.sort(None, lambda x: x[1], True)
+    f_list.sort(None, operator.itemgetter(1), True)
 
     # move to the new numbers
     for ft in f_list:
@@ -2684,7 +2685,7 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
     Dependencies:
         globals: email_logger, STARTUP_EXITVAL, ZIP_SUFFIXES
         functions: fix_path(), pps(), rm_rf()
-        modules: re, os, time, sys
+        modules: re, os, time, operator, sys
 
     """
 
@@ -2727,7 +2728,7 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
             f_remain.append(ft)
 
     # delete by number
-    f_remain.sort(None, lambda x: x[1], False)
+    f_remain.sort(None, operator.itemgetter(1), False)
     for i, ft in enumerate(f_remain):
         if i >= num_f:
             rm_rf(os.path.join(dir_path, ft[0]), 'file/directory',
