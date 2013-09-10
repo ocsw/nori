@@ -2,39 +2,54 @@
 
 
 """
-ABOUT NORI:
------------
+CONTENTS:
+    1) About Nori
+    2) General Information
+    3) Exit Values
+    4) API Variables
+    5) API Functions
+    6) API Classes
+    7) API Hooks
+    8) Usage In Scripts
+    9) Modification Notes
+    
 
-This is the Nori library for wrapping scripts.  It provides tools such
-as powerful lockfile checking, logging, command-line processing, and
-config setting validation, and is particularly helpful for scripts that
-need to be run from cron with minimal intervention and maximal stability
-(although it can also be helpful in other cases.)
+1) ABOUT NORI:
+--------------
 
-It was originally factored out of the Aeolus backup script, then ported
-to Python; the original and the port are by Daniel Malament.
+    This is the Nori library for wrapping scripts.  It provides tools
+    such as powerful lockfile checking, logging, command-line
+    processing, and config setting validation, and is particularly
+    helpful for scripts that need to be run from cron with minimal
+    intervention and maximal stability (although it can also be helpful
+    in other cases.)
 
-The module requires Python 2.7/3.2, and will exit the script upon import
-(with an error message) if this requirement is not met.
+    It was originally factored out of the Aeolus backup script, then
+    ported to Python; the original and the port are by Daniel Malament.
 
-
-GENERAL INFORMATION:
---------------------
-
-For command-line usage information, run the module with '--help'.
-
-For config setting information, run the module with '-n create' or
-'-n createall'.
-
-For license information, run the module with 'license' or see the
-LICENSE file.
-
-These will also work by default in scripts that use this module, and
-will include script-specific changes.
+    The module requires Python 2.7/3.2, and will exit the script upon
+    import (with an error message) if this requirement is not met.
 
 
-EXIT VALUES:
-------------
+2) GENERAL INFORMATION:
+-----------------------
+
+    For command-line usage information, run the module with '--help'.
+
+    For config setting information, run the module with '-n create' or
+    '-n createall'.
+
+    For license information, run the module with 'license' or see the
+    LICENSE file.
+
+    These will also work by default in scripts that use this module, and
+    will include script-specific changes.
+
+    For more end-user information, see the USAGE file.
+
+
+3) EXIT VALUES:
+---------------
 
     0   = no error (e.g., run_every hasn't expired, or invocation was
           completed without errors)
@@ -51,8 +66,8 @@ EXIT VALUES:
     250 = internal error; should never happen
 
 
-API VARIABLES:
---------------
+4) API VARIABLES:
+-----------------
 
     (Pseudo-)Constants:
     -------------------
@@ -155,8 +170,8 @@ API VARIABLES:
         bogus_config
 
 
-API FUNCTIONS:
---------------
+5) API FUNCTIONS:
+-----------------
 
     Version check:
     -------------
@@ -474,15 +489,15 @@ API FUNCTIONS:
         actions.
 
 
-API CLASSES:
-------------
+6) API CLASSES:
+---------------
 
     SMTPDiagHandler(logging.handlers.SMTPHandler)
         Override SMTPHandler to add diagnostics to the email.
 
 
-API HOOKS:
-----------
+7) API HOOKS:
+-------------
 
     render_status_messages_hook()
         Change/add to status messages returned by
@@ -513,18 +528,40 @@ API HOOKS:
         process_command_line().
 
 
-USAGE IN SCRIPTS:
------------------
+8) USAGE IN SCRIPTS:
+--------------------
+
+    (These are some pointers for using this module; however, there are
+    many things left out.  See the comments and docstrings, below, for
+    more information.)
+
+    To use this module to wrap a task, the minimum setup that should be
+    done is as follows:
+        * redefine TASK_ARTICLE, TASK_NAME, and TASKS_NAME
+        * redefine LICENSE
+        * add to config_settings, as necessary, and define
+          validate_config_hook()
+        * define run_mode_hook()
+
+    In most cases, these will also be necessary:
+        * add more *_EXITVAL constants
+        * redefine default_config_files
+        * copy and edit/expand the USAGE file, replacing 'nori' with the
+          name of the script
+
+    To use the output log feature:
+        * run config_settings_no_print_output_log(False)
+        * set these (in most cases):
+          config_settings['exec_path']['no_print'] = False
+          config_settings['print_cmds']['no_print'] = False
+
+    To add command-line modes:
+        * add to / redefine SCRIPT_MODES and SCRIPT_MODES_DESCR
+        * define mode_callbacks_hook()
 
 
-
-#   config_settings_no_print_output_log(),
-#   global var setup for use, incl. all with aeolus, task*,
-#     default_config_files, logging types
-
-
-MODIFICATION NOTES:
--------------------
+9) MODIFICATION NOTES:
+----------------------
 
     Settings:
     ---------
