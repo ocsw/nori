@@ -4961,28 +4961,31 @@ def validate_config():
         # encodePriority() doesn't do enough checking (e.g., it will
         # allow any integer), so just use the list from the
         # documentation
-        setting_check_list('syslog_fac', [
-                                          'auth', sl_class.LOG_AUTH,
-                                          'authpriv', sl_class.LOG_AUTHPRIV,
-                                          'cron', sl_class.LOG_CRON,
-                                          'daemon', sl_class.LOG_DAEMON,
-                                          'ftp', sl_class.LOG_FTP,
-                                          'kern', sl_class.LOG_KERN,
-                                          'lpr', sl_class.LOG_LPR,
-                                          'mail', sl_class.LOG_MAIL,
-                                          'news', sl_class.LOG_NEWS,
-                                          'syslog', sl_class.LOG_SYSLOG,
-                                          'user', sl_class.LOG_USER,
-                                          'uucp', sl_class.LOG_UUCP,
-                                          'local0', sl_class.LOG_LOCAL0,
-                                          'local1', sl_class.LOG_LOCAL1,
-                                          'local2', sl_class.LOG_LOCAL2,
-                                          'local3', sl_class.LOG_LOCAL3,
-                                          'local4', sl_class.LOG_LOCAL4,
-                                          'local5', sl_class.LOG_LOCAL5,
-                                          'local6', sl_class.LOG_LOCAL6,
-                                          'local7', sl_class.LOG_LOCAL7,
-                                         ])
+        setting_check_list(
+            'syslog_fac',
+            [
+                'auth', sl_class.LOG_AUTH,
+                'authpriv', sl_class.LOG_AUTHPRIV,
+                'cron', sl_class.LOG_CRON,
+                'daemon', sl_class.LOG_DAEMON,
+                'ftp', sl_class.LOG_FTP,
+                'kern', sl_class.LOG_KERN,
+                'lpr', sl_class.LOG_LPR,
+                'mail', sl_class.LOG_MAIL,
+                'news', sl_class.LOG_NEWS,
+                'syslog', sl_class.LOG_SYSLOG,
+                'user', sl_class.LOG_USER,
+                'uucp', sl_class.LOG_UUCP,
+                'local0', sl_class.LOG_LOCAL0,
+                'local1', sl_class.LOG_LOCAL1,
+                'local2', sl_class.LOG_LOCAL2,
+                'local3', sl_class.LOG_LOCAL3,
+                'local4', sl_class.LOG_LOCAL4,
+                'local5', sl_class.LOG_LOCAL5,
+                'local6', sl_class.LOG_LOCAL6,
+                'local7', sl_class.LOG_LOCAL7,
+            ]
+        )
         setting_check_type('syslog_tag', STRING_TYPES)
     setting_check_type('status_log', STRING_TYPES + (NoneType, ))
     if cfg['status_log']:
