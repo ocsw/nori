@@ -3269,7 +3269,8 @@ def run_with_logging(cmd_descr, cmd_args, include_stderr=True, env_add=None,
         kwargs: passed to subprocess.Popen()
 
     Dependencies:
-        globals: output_logger, output_log_fo, status_logger,
+        config_settings: print_cmds
+        globals: cfg, output_logger, output_log_fo, status_logger,
                  FULL_DATE_FORMAT
         functions: pps()
         modules: copy, os, time, operator, subprocess, threading, sys
@@ -3304,14 +3305,16 @@ def run_with_logging(cmd_descr, cmd_args, include_stderr=True, env_add=None,
                                             time.localtime())))
 
     # print the command
-    cmd_msg = 'Running command:\n'
-    cmd_msg += ' '.join(map(pps, cmd_args)) + '\n'
-    if env_add is not None:
-        cmd_msg += 'with environment additions:\n'
-        for k, v in sorted(env_add.items(), key=operator.itemgetter(0)):
-            cmd_msg += k + '=' + pps(v) + '\n'
-    print(cmd_msg.strip(), file=output_log_fo)  # no stdout yet
-    status_logger.info(cmd_msg.strip())
+    if cfg['print_cmds']:
+        cmd_msg = 'Running command:\n'
+        cmd_msg += ' '.join(map(pps, cmd_args)) + '\n'
+        if env_add is not None:
+            cmd_msg += 'with environment additions:\n'
+            for k, v in sorted(env_add.items(),
+                               key=operator.itemgetter(0)):
+                cmd_msg += k + '=' + pps(v) + '\n'
+        print(cmd_msg.strip(), file=output_log_fo)  # no stdout yet
+        status_logger.info(cmd_msg.strip())
 
     # run the command;
     # redirect stderr here rather than starting a separate thread so we
