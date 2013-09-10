@@ -5525,34 +5525,12 @@ def process_command_line():
     sys.exit(NO_ERROR_EXITVAL)
 
 
-##########
-# testing
-##########
+#################
+# run standalone
+#################
 
 def main():
     process_command_line()
-
-    #pp(cfg)
-    #pp(cfg['alert_emails_host'])
-    #pp(setting_walk(('alert_emails_host', 2)))
-
-    #setting_check_one_is_set(('foo', 'bar'))
-    #setting_check_type(('alert_emails_host', 2), (str, dict, bool))
-    #setting_check_type('alert_emails_host', logging.Logger)
-    #setting_check_type((''), (b))
-    #setting_check_list('output_log_num', (4, 'f'))
-    #setting_check_file_type('status_log', 'd')
-    #setting_check_file_access('status_log', 'x')
-    #setting_check_not_all_empty(('foo', 'alert_emails_host'))
-
-    #status_logger.debug('status debug')
-    #status_logger.info('status info')
-    #alert_logger.debug('alert debug')
-    #alert_logger.info('alert info')
-    #email_logger.debug('email debug')
-    #email_logger.info('email info')
-
-    #print(render_config())
 
 if __name__ == '__main__':
     main()
