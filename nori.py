@@ -26,7 +26,8 @@ For command-line usage information, run the module with '--help'.
 For config setting information, run the module with '-n create' or
 '-n createall'.
 
-For license information, run the module with 'license'.
+For license information, run the module with 'license' or see the
+LICENSE file.
 
 These will also work by default in scripts that use this module, and
 will include script-specific changes.
