@@ -3,6 +3,8 @@
 
 """
 CONTENTS:
+---------
+
     1) About Nori
     2) General Information
     3) Exit Values
@@ -12,7 +14,7 @@ CONTENTS:
     7) API Hooks
     8) Usage In Scripts
     9) Modification Notes
-    
+
 
 1) ABOUT NORI:
 --------------
