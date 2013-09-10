@@ -522,6 +522,33 @@ USAGE IN SCRIPTS:
 #   global var setup for use, incl. all with aeolus, task*,
 #     default_config_files, logging types
 
+
+MODIFICATION NOTES:
+-------------------
+
+    Settings:
+    ---------
+
+    Any change to the setting variables (additions, deletions, name
+    changes, type changes, etc.) must be reflected in the following, as
+    appropriate:
+        config_settings, config_settings_extra(), bogus_config,
+        apply_config_defaults_extra(), and validate_config()
+
+
+    Files:
+    ------
+
+    All files in the lockfile directory should have constants for their
+    names, and be listed in render_status_metadata().
+
+
+    Exit values:
+    ------------
+
+    The exit values must be kept in sync with the list in this
+    docstring.
+
 """
 
 
