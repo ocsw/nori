@@ -3260,9 +3260,6 @@ def run_with_logging(cmd_descr, cmd, include_stderr=True, env_add=None,
 
     Returns the exit value of the command.
 
-    Partly based on J.F. Sebastian's code, here:
-        http://stackoverflow.com/a/4985080
-
     Parameters:
         cmd_descr: a string describing the command, used in messages
                    like 'starting rsync backup'
@@ -3287,17 +3284,6 @@ def run_with_logging(cmd_descr, cmd, include_stderr=True, env_add=None,
         modules: copy, os, time, operator, subprocess, threading, sys
 
     """
-
-    def tee(infile, *files):
-        """Print `infile` to `files` in a separate thread."""
-        def fanout(infile, *files):
-            for line in iter(infile.readline, ''):
-                for f in files:
-                    f.write(line)
-            infile.close()
-        t = threading.Thread(target=fanout, args=(infile, ) + files)
-        t.start()
-        return t
 
     # set up the environment
     if env_add is not None:
@@ -3325,8 +3311,8 @@ def run_with_logging(cmd_descr, cmd, include_stderr=True, env_add=None,
         status_logger.info(cmd_msg.strip())
 
     # run the command;
-    # redirect stderr here rather than starting a separate thread so we
-    # get everything in the same order as we would on the command line
+    # redirect stderr so we get everything in the same order as we would
+    # on the command line
     p = subprocess.Popen(cmd,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT
@@ -3334,10 +3320,9 @@ def run_with_logging(cmd_descr, cmd, include_stderr=True, env_add=None,
                          **kwargs)
 
     # get the output
-    threads = []
-    threads.append(tee(p.stdout, output_log_fo, sys.stdout))
-    for t in threads:
-        t.join()  # wait for IO completion
+    for line in iter(p.stdout.readline, ''):
+        output_log_fo.write(line)
+        sys.stdout.write(line)
 
     # log the ending time
     output_logger.info('{0} finished {1}.' .
