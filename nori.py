@@ -2463,12 +2463,12 @@ def parentdir(file_path):
 def open_create_only(file_path):
     """
     Open a file, if and only if this causes it to be created.
-    The path may not include symlinks.
-    See
-    http://stackoverflow.com/questions/10978869/safely-create-a-file-if-and-only-if-it-does-not-exist-with-python/10979569#10979569
+    The path may not include symlinks; see:
+        http://stackoverflow.com/a/10979569
     May raise an OSError exception.
     Parameters:
-        file_path: the path to the file to create; may not include symlinks
+        file_path: the path to the file to create; may not include
+                   symlinks
     Dependencies:
         functions: fix_path()
         modules: os
@@ -2484,7 +2484,7 @@ def touch_file(file_path, file_label, times=None, use_logger=False,
     Update a file's timestamp, or create it if it doesn't exist.
     Also works on existing directories.
     Based on ephemient's code, here:
-    http://stackoverflow.com/questions/1158076/implement-touch-using-python/1160227#1160227
+        http://stackoverflow.com/a/1160227
     Parameters:
         file_path: the file to touch
         see file_error_handler() for the rest
@@ -3254,6 +3254,9 @@ def run_with_logging(cmd_descr, cmd_args, include_stderr=True, env_add=None,
 
     Returns the exit value of the command.
 
+    Partly based on J.F. Sebastian's code, here:
+        http://stackoverflow.com/a/4985080
+
     Parameters:
         cmd_descr: a string describing the command, used in messages
                    like 'starting rsync backup'
@@ -3276,9 +3279,6 @@ def run_with_logging(cmd_descr, cmd_args, include_stderr=True, env_add=None,
                  FULL_DATE_FORMAT
         functions: pps()
         modules: copy, os, time, operator, subprocess, threading, sys
-
-    Based on J.F. Sebastian's code, here:
-    http://stackoverflow.com/questions/4984428/python-subprocess-get-childrens-output-to-file-and-terminal/4985080#4985080
 
     """
 
@@ -4751,9 +4751,9 @@ def import_by_name(file_path):
     May raise exceptions: OSError, IOError, SyntaxError, or TypeError.
 
     Partly based on Anders Hammarquist's code, here:
-    http://code.activestate.com/recipes/82234-importing-a-dynamically-generated-module/
+        http://code.activestate.com/recipes/82234-importing-a-dynamically-generated-module/
     and David Wolever's code, here:
-    http://stackoverflow.com/questions/3799545/dynamically-importing-python-module/3799609#3799609
+        http://stackoverflow.com/a/3799609
 
     Parameters:
         file_path: the path to the file to import
