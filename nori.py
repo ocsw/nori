@@ -491,6 +491,24 @@ CONTENTS:
         actions.
 
 
+    SSH remote commands and tunnels:
+    --------------------------------
+
+    ###TODO
+
+
+    Database calls and manipulations:
+    ---------------------------------
+
+    ###TODO
+
+
+    Backups and file syncing:
+    --------------------------
+
+    ###TODO
+
+
 6) API CLASSES:
 ---------------
 
@@ -5509,6 +5527,27 @@ def process_command_line():
     # deal with the rest of the modes
     mode_callbacks[mode][0]()
     sys.exit(NO_ERROR_EXITVAL)
+
+
+##################################
+# SSH remote commands and tunnels
+##################################
+
+###TODO
+
+
+###################################
+# database calls and manipulations
+###################################
+
+###TODO
+
+
+###########################
+# backups and file syncing
+###########################
+
+###TODO
 
 
 #################
