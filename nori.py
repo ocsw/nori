@@ -3277,6 +3277,8 @@ def run_with_logging(cmd_descr, cmd, include_stderr=True, env_add=None,
 
     Returns the exit value of the command.
 
+    May raise exceptions: OSError or ValueError.
+
     Parameters:
         cmd_descr: a string describing the command, used in messages
                    like 'starting rsync backup'
