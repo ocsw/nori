@@ -1513,7 +1513,7 @@ The date format string for output log names.
 Recommended value: '%Y%m%d', or '%Y%m%d%H' if {0} are run
 more than once a day.
 
-(See http://docs.python.org/release/2.7.5/library/time.html#time.strftime
+(See http://docs.python.org/2/library/time.html#time.strftime
 for the format of this value.)
 
 Dates refer to when the script starts; all files created during a given
