@@ -720,7 +720,8 @@ available modes:
       blank config is printed to stdout.  If neither -f nor -n is given,
       the default config file is used (see above).
 
-      NOTE: the path given to -f cannot be a symlink.
+      NOTE: the final component of the path given to -f cannot be a
+      symlink, even if it points to a non-existent location.
 
   'createfull': like 'create', but includes a description of each
   setting, as well as the default (if any)
@@ -2463,19 +2464,19 @@ def parentdir(file_path):
 def open_create_only(file_path):
     """
     Open a file, if and only if this causes it to be created.
-    The path may not include symlinks; see:
-        http://stackoverflow.com/a/10979569
+    The final component of the path may not be a symlink, even if it
+    points to a non-existent location.
     May raise an OSError exception.
     Parameters:
-        file_path: the path to the file to create; may not include
-                   symlinks
+        file_path: the path to the file to create; may not be a symlink
     Dependencies:
         functions: fix_path()
         modules: os
     """
     # use os.open() to avoid a race condition
     return os.fdopen(os.open(fix_path(file_path),
-                             os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+                             os.O_CREAT | os.O_EXCL | os.O_RDWR),
+                     'a+')
 
 
 def touch_file(file_path, file_label, times=None, use_logger=False,
@@ -2483,8 +2484,6 @@ def touch_file(file_path, file_label, times=None, use_logger=False,
     """
     Update a file's timestamp, or create it if it doesn't exist.
     Also works on existing directories.
-    Based on ephemient's code, here:
-        http://stackoverflow.com/a/1160227
     Parameters:
         file_path: the file to touch
         see file_error_handler() for the rest
@@ -4750,11 +4749,6 @@ def import_by_name(file_path):
 
     May raise exceptions: OSError, IOError, SyntaxError, or TypeError.
 
-    Partly based on Anders Hammarquist's code, here:
-        http://code.activestate.com/recipes/82234-importing-a-dynamically-generated-module/
-    and David Wolever's code, here:
-        http://stackoverflow.com/a/3799609
-
     Parameters:
         file_path: the path to the file to import
 
@@ -5269,7 +5263,8 @@ def create_blank_config_files(full=False):
             print(msg, file=sys.stdout)
         else:
             for cfp in config_file_paths:
-                # can't have symlinks in cfp; see SCRIPT_MODES_DESCR
+                # cfp can't be a symlink; see open_create_only() and
+                # SCRIPT_MODES_DESCR
                 with open_create_only(cfp) as cf_obj:
                     print(msg, file=cf_obj)
     except (OSError, IOError) as e:
