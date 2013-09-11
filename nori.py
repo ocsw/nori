@@ -720,8 +720,9 @@ available modes:
       blank config is printed to stdout.  If neither -f nor -n is given,
       the default config file is used (see above).
 
-      NOTE: the final component of the path given to -f cannot be a
-      symlink, even if it points to a non-existent location.
+      NOTE: the final component of the path given to -f cannot be a symlink,
+      even if it points to a non-existent location.  Paths on NFS mounts may
+      be problematic.
 
   'createfull': like 'create', but includes a description of each
   setting, as well as the default (if any)
@@ -2466,9 +2467,15 @@ def open_create_only(file_path):
     Open a file, if and only if this causes it to be created.
     The final component of the path may not be a symlink, even if it
     points to a non-existent location.
+    Paths on NFS mounts may cause problems; see the documentation for
+    the open() function in your system libraries.  Specifially, the
+    Linux man page says that this is only supported with NFSv3+ and
+    kernel 2.6+, and that there is a race condition otherwise.  (The
+    race condition may or may not be a big deal, depending on the
+    context.)
     May raise an OSError exception.
     Parameters:
-        file_path: the path to the file to create; may not be a symlink
+        file_path: the path to the file to create; see above
     Dependencies:
         functions: fix_path()
         modules: os
@@ -5263,8 +5270,8 @@ def create_blank_config_files(full=False):
             print(msg, file=sys.stdout)
         else:
             for cfp in config_file_paths:
-                # cfp can't be a symlink; see open_create_only() and
-                # SCRIPT_MODES_DESCR
+                # see open_create_only() and SCRIPT_MODES_DESCR for
+                # warnings
                 with open_create_only(cfp) as cf_obj:
                     print(msg, file=cf_obj)
     except (OSError, IOError) as e:
