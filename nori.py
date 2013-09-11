@@ -2496,8 +2496,8 @@ def touch_file(file_path, file_label, times=None, use_logger=False,
         if sys.hexversion >= 0x03030000:
             with os.open(fix_path(file_path), os.O_APPEND) as f:
                 os.utime(f.fileno() if os.utime in os.supports_fd
-                            else fix_path(file_path),
-                 times)
+                                    else fix_path(file_path),
+                         times)
         elif os.path.isdir(file_path):
             # minor race condition here
             os.utime(fix_path(file_path), times)
@@ -2508,7 +2508,7 @@ def touch_file(file_path, file_label, times=None, use_logger=False,
     except OSError as e:
         # must_exist=True
         file_error_handler(e, 'touch', file_label, file_path, True,
-                       use_logger, warn_only, exit_val)
+                           use_logger, warn_only, exit_val)
 
 
 def rm_rf(rm_path, file_label, must_exist=False, use_logger=False,
