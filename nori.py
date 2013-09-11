@@ -3252,7 +3252,7 @@ def end_logging_output():
     output_log_fo.close()
 
 
-def run_with_logging(cmd_descr, cmd_args, include_stderr=True, env_add=None,
+def run_with_logging(cmd_descr, cmd, include_stderr=True, env_add=None,
                      **kwargs):
 
     """
@@ -3266,7 +3266,7 @@ def run_with_logging(cmd_descr, cmd_args, include_stderr=True, env_add=None,
     Parameters:
         cmd_descr: a string describing the command, used in messages
                    like 'starting rsync backup'
-        cmd_args: list containing the command and its arguments
+        cmd: a list containing the command and its arguments
         include_stderr: if true, include stderr in the output (but on
                         stdout)
         env_add: if not None, a dictionary of keys and values to add to
@@ -3277,7 +3277,7 @@ def run_with_logging(cmd_descr, cmd_args, include_stderr=True, env_add=None,
                  * keys that already exist in the target environment
                    will be overridden
                  * values must be strings, or a TypeError will be raised
-        kwargs: passed to subprocess.Popen()
+        kwargs: passed to subprocess.Popen(); but see env_add
 
     Dependencies:
         config_settings: print_cmds
@@ -3315,7 +3315,7 @@ def run_with_logging(cmd_descr, cmd_args, include_stderr=True, env_add=None,
     # print the command
     if cfg['print_cmds']:
         cmd_msg = 'Running command:\n'
-        cmd_msg += ' '.join(map(pps, cmd_args)) + '\n'
+        cmd_msg += ' '.join(map(pps, cmd)) + '\n'
         if env_add is not None:
             cmd_msg += 'with environment additions:\n'
             for k, v in sorted(env_add.items(),
@@ -3327,7 +3327,7 @@ def run_with_logging(cmd_descr, cmd_args, include_stderr=True, env_add=None,
     # run the command;
     # redirect stderr here rather than starting a separate thread so we
     # get everything in the same order as we would on the command line
-    p = subprocess.Popen(cmd_args,
+    p = subprocess.Popen(cmd,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT
                                 if include_stderr else None,
