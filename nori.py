@@ -610,7 +610,6 @@ import logging
 import logging.handlers
 import copy
 import subprocess
-import threading
 import re
 import pprint
 from pprint import pprint as pp  # for debugging
