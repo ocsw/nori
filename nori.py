@@ -5,19 +5,19 @@
 CONTENTS:
 ---------
 
-    1) About Nori
+    1) About and Requirements
     2) General Information
     3) Exit Values
     4) API Variables
     5) API Functions
     6) API Classes
     7) API Hooks
-    8) Usage In Scripts
+    8) Usage in Scripts
     9) Modification Notes
 
 
-1) ABOUT NORI:
---------------
+1) ABOUT AND REQUIREMENTS:
+--------------------------
 
     This is the Nori library for wrapping scripts.  It provides tools
     such as powerful lockfile checking, logging, command-line
@@ -433,8 +433,8 @@ CONTENTS:
     Startup and config file processing:
     -----------------------------------
 
-    import_by_name()
-        Import a file as a module and add it to sys.modules.
+    import_file()
+        Import an arbitrary file as a module and add it to sys.modules.
 
     import_config_by_name()
         Import a config file (module).
@@ -636,7 +636,7 @@ import collections
 import operator
 
 if sys.hexversion < 0x03040000:
-    import imp  # see import_by_name()
+    import imp  # see import_file()
 
 try:
     from StringIO import StringIO  # Python 2.x
@@ -653,7 +653,7 @@ try:
 except ImportError:
     pass
 
-### more below, after the version check ###
+### see also deferred imports, after the version check ###
 
 
 ########################################################################
@@ -913,7 +913,7 @@ pyversion_check(7, 2)
 
 
 ########################################################################
-#                           REMAINING IMPORTS
+#                           DEFERRED IMPORTS
 ########################################################################
 
 ####################
@@ -4743,10 +4743,10 @@ def clear_lockfile():
 # startup and config file processing
 #####################################
 
-def import_by_name(file_path):
+def import_file(file_path):
 
     """
-    Import a file as a module and add it to sys.modules.
+    Import an arbitrary file as a module and add it to sys.modules.
 
     Returns a tuple containing the module name and the module object.
 
@@ -4797,11 +4797,11 @@ def import_config_by_name(file_path):
         mod_path: the path to the config file
     Dependencies:
         globals: config_modules, cfg, STARTUP_EXITVAL
-        functions: import_by_name(), pps(), err_exit()
+        functions: import_file(), pps(), err_exit()
     """
     global config_modules, cfg
     try:
-        c_mod_name, c_mod = import_by_name(file_path)
+        c_mod_name, c_mod = import_file(file_path)
     except (OSError, IOError) as e:
         err_exit('Error: could not read config file {0}; exiting.\n'
                  'Details: [Errno {1}] {2}' .
@@ -5552,9 +5552,9 @@ def process_command_line():
 ###TODO
 
 
-#################
-# run standalone
-#################
+########################################################################
+#                           RUN STANDALONE
+########################################################################
 
 def main():
     process_command_line()
