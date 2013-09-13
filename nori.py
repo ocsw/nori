@@ -74,111 +74,114 @@ CONTENTS:
     (Pseudo-)Constants:
     -------------------
 
-    exit values
-        NO_ERROR_EXITVAL
-        ARGPARSE_EXITVAL
-        STARTUP_EXITVAL
-        LOCKFILE_EXITVAL
-        SSHTUNNEL_EXITVAL
-        INTERNAL_EXITVAL
+    NO_ERROR_EXITVAL
+    ARGPARSE_EXITVAL
+    STARTUP_EXITVAL
+    LOCKFILE_EXITVAL
+    SSHTUNNEL_EXITVAL
+    INTERNAL_EXITVAL
+        exit values
 
-    names of tempfiles stored in the lockfile directory
-        LF_ALERTS_SILENCED
-        SCRIPT_DISABLED
+    LF_ALERTS_SILENCED
+    SCRIPT_DISABLED
+        names of tempfiles stored in the lockfile directory
 
-    format for printing certain timestamps
-        FULL_DATE_FORMAT
+    FULL_DATE_FORMAT
+        format for printing certain timestamps
 
-    what the script does
-        TASK_ARTICLE
-        TASK_NAME
-        TASKS_NAME
+    TASK_ARTICLE
+    TASK_NAME
+    TASKS_NAME
+        what the script does
 
-    available script modes
-        SCRIPT_MODES
-        SCRIPT_MODES_DESCR
+    SCRIPT_MODES
+    SCRIPT_MODES_DESCR
+        available script modes
 
-    license message
-        LICENSE
+    LICENSE
+        license message
 
-    pretty-printer settings
-        PPS_INDENT
-        PPS_WIDTH
-        PPS_DEPTH
+    PPS_INDENT
+    PPS_WIDTH
+    PPS_DEPTH
+        pretty-printer settings
 
-    type tuples
-        NUMBER_TYPES
-        STRING_TYPES
-        STRINGISH_TYPES
-        CONTAINER_TYPES
+    NUMBER_TYPES
+    STRING_TYPES
+    STRINGISH_TYPES
+    CONTAINER_TYPES
+        type tuples
 
-    all path separator characters
-        PATH_SEP
+    PATH_SEP
+        all path separator characters
 
-    allowed suffixes for file rotation
-        ZIP_SUFFIXES
+    ZIP_SUFFIXES
+        allowed suffixes for file rotation
 
 
     Resources:
     ----------
 
-    logger objects
-        status_logger
-        alert_logger
-        email_logger
-        output_logger
+    status_logger
+    alert_logger
+    email_logger
+    output_logger
+        logger objects
 
-    output file object
-        output_log_fo
+    output_log_fo
+        output file object
 
 
     Configuration and status:
     -------------------------
 
-    name of the script
-        script_name
+    script_name
+        name of the script
 
-    name of the script without suffixes
-        script_shortname
+    script_shortname
+        name of the script without suffixes
 
-    user's local email address
-        running_as_email
+    running_as_email
+        user's local email address
 
-    starting timestamp
-        start_time
+    start_time
+        starting timestamp
 
-    dict of features supported by the module and its submodules
-        supported_features
+    supported_features
+        dict of features supported by the module and its submodules
 
-    list of features actually available on the system
-        available_features
+    available_features
+        list of features actually available on the system
 
-    header for blank config files
-        config_file_header
+    config_file_header
+        header for blank config files
 
-    default config-file path(s)
-        default_config_files
+    default_config_files
+        default config-file path(s)
 
-    paths to the user-supplied config file(s)
-        config_file_paths
+    config_file_paths
+        paths to the user-supplied config file(s)
 
-    module objects for the config file(s)
-        config_modules
+    config_modules
+        module objects for the config file(s)
 
-    names of config settings that were supplied on the command line
-        cl_config
 
-    the config settings dictionary
-        cfg
+    cl_config
+        names of config settings that were supplied on the command line
 
-    config-setting defaults that are applied to more than one setting
-        config_defaults_multiple
 
-    what config settings does this script accept?
-        config_settings
+    cfg
+        the config settings dictionary
 
-    non-existent settings that the end-user might set by accident
-        bogus_config
+    config_defaults_multiple
+        config-setting defaults that are applied to more than one setting
+
+
+    config_settings
+        what config settings does this script accept?
+
+    bogus_config
+        non-existent settings that the end-user might set by accident
 
 
 5) API FUNCTIONS:
