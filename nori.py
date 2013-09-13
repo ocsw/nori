@@ -4961,7 +4961,7 @@ def validate_config():
                    setting_check_file_type(),
                    setting_check_file_access(), setting_check_list(),
                    setting_check_no_char()
-        modules: os, socket
+        modules: socket
 
     """
 
