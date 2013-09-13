@@ -147,6 +147,12 @@ CONTENTS:
     starting timestamp
         start_time
 
+    dict of features supported by the module and its submodules
+        supported_features
+
+    list of features actually available on the system
+        available_features
+
     header for blank config files
         config_file_header
 
@@ -950,6 +956,19 @@ running_as_email = getpass.getuser() + '@' + socket.getfqdn()
 # starting timestamp (see run_mode(); listed here for centralization)
 start_time = None
 
+# dict of supported features
+# format: 'feature_name': 'feature_description'
+# see also available_features, below, and the section on submodules in
+# the module docstring, above
+supported_features = {}
+
+# list of available features
+# if a feature name is in the list, it is actually available on the
+# system, not just supported by the module
+# see also supported_features and the section on submodules in the
+# module docstring, above
+available_features = []
+
 # used by create_blank_config_files()
 config_file_header = ('# {0} config settings' .
                       format(script_shortname))
@@ -1028,6 +1047,11 @@ config_defaults_multiple = dict(
 #
 #   renderer: a function to use for printing the value of the setting;
 #             if omitted, pps() is used
+#
+#   requires: a list of supported features that must be available if
+#             this setting is set; see supported_features,
+#             available_features, and the section on submodules in the
+#             module docstring, above
 #
 #   no_print: if present and true, this setting will be omitted by
 #             render_config() and create_blank_config_files();
@@ -4893,6 +4917,31 @@ def apply_config_defaults_extra():
         apply_config_defaults_hook()
 
 
+def check_config_requirements():
+    """
+    If settings require unavailable features, exit with an error.
+    Dependencies:
+        globals: supported_features, available_features,
+                 config_settings, cfg, STARTUP_EXITVAL
+        functions: pps(), err_exit()
+    """
+    for s_name, s_dict in config_settings.items():
+        if 'requires' in s_dict and s_dict['requires'] and s_name in cfg:
+            for feature in s_dict['requires']:
+                if feature not in available_features:
+                    msg = ('Error: setting cfg[{0}] is set (to {1}), '
+                           'but it requires\n'
+                           'the {2} feature, which is not available '
+                           'on this system.' .
+                           format(*map(pps, [s_name, cfg[s_name],
+                                             feature])))
+                    if (feature in supported_features and
+                          supported_features[feature]):
+                        msg += ('\nFeature description: {0}' .
+                                format(supported_features[feature]))
+                    err_exit(msg, STARTUP_EXITVAL)
+
+
 def validate_config():
 
     """
@@ -5017,8 +5066,8 @@ def process_config(arg_ns):
 
     """
     Process the config file and settings supplied on the command line.
-    Includes applying defaults, validating values, and initializing
-    loggers (main and output).
+    Includes applying defaults, checking requirements, validating values,
+    and initializing loggers (main and output).
 
     To add initializations, define process_config_hook(), which takes no
     arguments.
@@ -5085,8 +5134,9 @@ def process_config(arg_ns):
     # check for bogus settings
     check_bogus_config()
 
-    # apply defaults and validate
+    # apply defaults, check requirements, and validate
     apply_config_defaults()
+    check_config_requirements()
     validate_config()
 
     # now that the settings are complete, initialize things
