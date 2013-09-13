@@ -35,6 +35,14 @@ except ImportError:
 from . import nori
 
 
+
+###TODO: supported_features, available_features,
+###config_settings (generator)? incl. requires
+###setting hooks
+###exitval(s), USAGE, license
+
+
+
 ##################################
 # SSH remote commands and tunnels
 ##################################
