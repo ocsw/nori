@@ -494,12 +494,6 @@ CONTENTS:
         actions.
 
 
-    SSH remote commands and tunnels:
-    --------------------------------
-
-    ###TODO
-
-
     Database calls and manipulations:
     ---------------------------------
 
@@ -5533,13 +5527,6 @@ def process_command_line():
     # deal with the rest of the modes
     mode_callbacks[mode][0]()
     sys.exit(NO_ERROR_EXITVAL)
-
-
-##################################
-# SSH remote commands and tunnels
-##################################
-
-###TODO
 
 
 ###################################
