@@ -89,17 +89,17 @@ CONTENTS:
     format for printing certain timestamps
         FULL_DATE_FORMAT
 
+    what the script does
+        TASK_ARTICLE
+        TASK_NAME
+        TASKS_NAME
+
     available script modes
         SCRIPT_MODES
         SCRIPT_MODES_DESCR
 
     license message
         LICENSE
-
-    what the script does
-        TASK_ARTICLE
-        TASK_NAME
-        TASKS_NAME
 
     pretty-printer settings
         PPS_INDENT
@@ -111,6 +111,9 @@ CONTENTS:
         STRING_TYPES
         STRINGISH_TYPES
         CONTAINER_TYPES
+
+    all path separator characters
+        PATH_SEP
 
     allowed suffixes for file rotation
         ZIP_SUFFIXES
@@ -589,7 +592,7 @@ CONTENTS:
     Any change to the setting variables (additions, deletions, name
     changes, type changes, etc.) must be reflected in the following, as
     appropriate:
-        config_settings, config_settings_extra(), bogus_config,
+        config_settings, _config_settings_extra(), bogus_config,
         apply_config_defaults_extra(), and validate_config()
 
 
@@ -798,7 +801,8 @@ else:
                        collections.ItemsView, collections.KeysView,
                        collections.ValuesView)
 
-# see config setting functions
+# all path separator characters, to account for, e.g., Windows accepting
+# both '/' and '\'; see validate_config()
 PATH_SEP = os.sep + ('/' if os.name == 'nt' else '')
 
 # internal, see file/path functions
@@ -1379,7 +1383,7 @@ logging.handlers.SYSLOG_UDP_PORT).
 Ignored if use_syslog is False.
 """
     ),
-    # see config_settings_extra()
+    # see _config_settings_extra()
     default_descr=(
 """
 if either '/dev/log' or '/var/run/syslog' works, it is used;
@@ -1400,7 +1404,7 @@ Ignored if use_syslog is False.
 """
     ),
     default=socket.SOCK_DGRAM,
-    # see also config_settings_extra()
+    # see also _config_settings_extra()
     default_descr=(
 """
 socket.SOCK_DGRAM, unless '/dev/log' or '/var/run/syslog' is
@@ -1609,7 +1613,7 @@ bogus_config = [
 # functions
 ############
 
-def config_settings_extra():
+def _config_settings_extra():
 
     """
     Fix up config settings that are platform-dependent or complicated.
@@ -1660,7 +1664,7 @@ def config_settings_extra():
             ('localhost', logging.handlers.SYSLOG_UDP_PORT)
         )
 
-config_settings_extra()
+_config_settings_extra()
 
 
 def config_settings_no_print_output_log(no_print):
