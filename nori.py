@@ -7,12 +7,11 @@ CONTENTS:
 
     1) About and Requirements
     2) General Information
-    3) Exit Values
-    4) API Variables
-    5) API Functions
-    6) API Classes
-    7) Usage in Scripts
-    8) Modification Notes
+    3) API Variables
+    4) API Functions
+    5) API Classes
+    6) Usage in Scripts
+    7) Modification Notes
 
 
 1) ABOUT AND REQUIREMENTS:
@@ -40,6 +39,8 @@ CONTENTS:
     For config setting information, run the module with '-n create' or
     '-n createall'.
 
+    For exit value information, run the module with '-n exitvals'.
+
     For license information, run the module with 'license' or see the
     LICENSE file.
 
@@ -49,25 +50,7 @@ CONTENTS:
     For more end-user information, see the USAGE file.
 
 
-3) EXIT VALUES:
----------------
-
-    0   = no error (e.g., run_every hasn't expired, or invocation was
-          completed without errors)
-
-    2   = error parsing the command line
-    10  = problem with the script invocation, the config file, or a
-          setting (also used in command modes like 'disable' as a
-          generic error value)
-    11  = previous lockfile still exists (possibly because the script
-          was manually disabled)
-
-    20  = error opening SSH tunnel
-
-    250 = internal error; should never happen
-
-
-4) API VARIABLES:
+3) API VARIABLES:
 -----------------
 
     (Pseudo-)Constants:
@@ -203,7 +186,7 @@ CONTENTS:
         Supply a task for the script, as performed by run_mode().
 
 
-5) API FUNCTIONS:
+4) API FUNCTIONS:
 -----------------
 
     Version check:
@@ -537,14 +520,14 @@ CONTENTS:
     ###TODO
 
 
-6) API CLASSES:
+5) API CLASSES:
 ---------------
 
     SMTPDiagHandler(logging.handlers.SMTPHandler)
         Override SMTPHandler to add diagnostics to the email.
 
 
-7) USAGE IN SCRIPTS:
+6) USAGE IN SCRIPTS:
 --------------------
 
     (These are some pointers for using this module; however, there are
@@ -575,7 +558,7 @@ CONTENTS:
         * add to SCRIPT_MODES
 
 
-8) MODIFICATION NOTES:
+7) MODIFICATION NOTES:
 ----------------------
 
     Settings:
