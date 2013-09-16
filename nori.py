@@ -94,7 +94,6 @@ CONTENTS:
         what the script does
 
     SCRIPT_MODES
-    SCRIPT_MODES_DESCR
         available script modes
 
     LICENSE
@@ -207,10 +206,6 @@ CONTENTS:
 
     run_mode_hooks
         Supply a task for the script, as performed by run_mode().
-
-    mode_callbacks_hooks
-        Change/add to mode_callbacks dictionary used by
-        process_command_line().
 
 
 5) API FUNCTIONS:
@@ -579,8 +574,7 @@ CONTENTS:
           config_settings['print_cmds']['no_print'] = False
 
     To add command-line modes:
-        * add to / redefine SCRIPT_MODES and SCRIPT_MODES_DESCR
-        * add a function to mode_callbacks_hooks
+        * add to SCRIPT_MODES
 
 
 8) MODIFICATION NOTES:
@@ -704,52 +698,188 @@ TASK_ARTICLE = 'a'
 TASK_NAME = 'script invocation'
 TASKS_NAME = 'script invocations'
 
-# available script modes; see create_arg_parser()
-SCRIPT_MODES = ['license', 'config', 'settings', 'status', 'statusall',
-                'silence', 'unsilence', 'stop', 'disable', 'start',
-                'enable', 'clearlock', 'unlock', 'create', 'createfull',
-                'run', ]
-SCRIPT_MODES_DESCR = ('''
-available modes:
-  'license': a license message is printed
+#
+# available script modes; see create_arg_parser() and
+# process_command_line()
+#
+# (listed in logical order, which is preserved by using OrderedDict)
+#
+# this is a dictionary; the keys are mode names, and the values
+# are dictionaries containing these keys:
+#
+#     descr: a description of the mode, used by create_arg_parser()
+#            (with leading and trailing whitespace removed)
+#            note: this will have two spaces prepended to each line;
+#            format accordingly
+#
+#     callback: the function to call when this mode is invoked;
+#               to refer to functions that haven't been defined yet,
+#               use this trick: callback=lambda: func_name()
+#
+#     req_config: a boolean indicating if this mode requires the config
+#                 file and command-line settings to be processed before
+#                 the callback is called
+#
+#     requires: a list of supported features that must be available for
+#               this mode (see supported_features, available_features,
+#               and the section on submodules in the module docstring,
+#               above); ###TODO
+#
+#     alias_of: indicates that this entry is actually an alias of
+#               another one; this element must be set to the name of the
+#               other mode, and the other elements will be ignored
+#
+SCRIPT_MODES = collections.OrderedDict()
+# if we put the values in the constructor, they are added to kwargs and
+# lose their order, so we have to be more verbose
 
-  'config' or 'settings': the current config settings are printed
+SCRIPT_MODES['license']=dict(
+    descr=(
+"""
+'license': a license message is printed
+"""
+    ),
+    callback=lambda: license_mode(),
+    req_config=False,
+)
 
-  'status': the current status, including timestamps, is printed
-  'statusall': temp files mainly relevant for debugging are also
-  included (if applicable)
+SCRIPT_MODES['config']=dict(
+    descr=(
+"""
+'config' or 'settings': the current config settings are printed
+"""
+    ),
+    callback=lambda: config_mode(),
+    req_config=True,
+)
+SCRIPT_MODES['settings']=dict(
+    alias_of='config',
+)
 
-  'silence': alerts about the lockfile existing are silenced until
-  either they are unsilenced, or the lockfile is no longer present
+SCRIPT_MODES['status']=dict(
+    descr=(
+"""
+'status': the current status, including timestamps, is printed
+"""
+    ),
+    callback=lambda: status_mode(),
+    req_config=True,
+)
 
-  'unsilence': alerts about the lockfile existing are re-enabled
+SCRIPT_MODES['statusall']=dict(
+    descr=(
+"""
+'statusall': like 'status', but temp files mainly relevant for debugging
+are also included (if applicable)
+"""
+    ),
+    callback=lambda: statusall_mode(),
+    req_config=True,
+)
 
-  'stop' or 'disable': {2} are disabled until 'start' or 'enable'
-  is used
+SCRIPT_MODES['silence']=dict(
+    descr=(
+"""
+'silence': alerts about the lockfile existing are silenced until either
+they are unsilenced, or the lockfile is no longer present
+"""
+    ),
+    callback=lambda: silence_lf_alerts(),
+    req_config=True,
+)
 
-  'start' or 'enable': {2} are re-enabled
+SCRIPT_MODES['unsilence']=dict(
+    descr=(
+"""
+'unsilence': alerts about the lockfile existing are re-enabled
+"""
+    ),
+    callback=lambda: unsilence_lf_alerts(),
+    req_config=True,
+)
 
-  'clearlock' or 'unlock': the lockfile is forcibly removed; only use
-  this if you're sure {0} {1} isn't currently running!
+SCRIPT_MODES['disable']=dict(
+    descr=(
+"""
+'disable' or 'stop': {0} are disabled until 'enable' or
+'start' is used
+""".format(TASKS_NAME)
+    ),
+    callback=lambda: disable_script(),
+    req_config=True,
+)
+SCRIPT_MODES['stop']=dict(
+    alias_of='disable',
+)
 
-  'create': a config file template is printed (all settings, in logical
-  order, commented out so that the default values will be used unless
-  otherwise specified)
+SCRIPT_MODES['enable']=dict(
+    descr=(
+"""
+'enable' or 'start': {0} are re-enabled
+""".format(TASKS_NAME)
+    ),
+    callback=lambda: enable_script(),
+    req_config=True,
+)
+SCRIPT_MODES['start']=dict(
+    alias_of='enable',
+)
 
-      If -f is given, the config file is output to the supplied path,
-      but only if the file does not already exist.  If -n is given, the
-      blank config is printed to stdout.  If neither -f nor -n is given,
-      the default config file is used (see above).
+SCRIPT_MODES['clearlock']=dict(
+    descr=(
+"""
+'clearlock' or 'unlock': the lockfile is forcibly removed; only use
+this if you're sure {0} {1} isn't currently running!
+""".format(TASK_ARTICLE, TASK_NAME)
+    ),
+    callback=lambda: clear_lockfile(),
+    req_config=True,
+)
+SCRIPT_MODES['unlock']=dict(
+  alias_of='clearlock',
+)
 
-      NOTE: the final component of the path given to -f cannot be a symlink,
-      even if it points to a non-existent location.  Paths on NFS mounts may
-      be problematic.
+SCRIPT_MODES['create']=dict(
+    descr=(
+"""
+'create': a config file template is printed (all settings, in logical
+order, commented out so that the default values will be used unless
+otherwise specified)
 
-  'createfull': like 'create', but includes a description of each
-  setting, as well as the default (if any)
+    If -f is given, the config file is output to the supplied path,
+    but only if the file does not already exist.  If -n is given, the
+    blank config is printed to stdout.  If neither -f nor -n is given,
+    the default config file is used (see above).
 
-  'run': run normally (the default)''' .
-                     format(TASK_ARTICLE, TASK_NAME, TASKS_NAME))
+    NOTE: the final component of the path given to -f cannot be a symlink,
+    even if it points to a non-existent location.  Paths on NFS mounts may
+    be problematic.
+"""
+    ),
+    callback=lambda: create_blank_config_files(),
+    req_config=False,
+)
+
+SCRIPT_MODES['createfull']=dict(
+    descr=(
+"""
+'createfull': like 'create', but includes a description of each setting,
+as well as the default (if any)
+"""
+    ),
+    callback=lambda: createfull_mode(),
+    req_config=False,
+)
+
+SCRIPT_MODES['run']=dict(
+    descr=(
+"""
+'run': run normally (the default)
+"""
+    ),
+    callback=lambda: run_mode(),
+    req_config=True,
+)
 
 # the license message; this constant is what is printed by the 'license'
 # mode of the script, so it SHOULD be changed by scripts that use this
@@ -1729,9 +1859,6 @@ create_arg_parser_hooks = []
 
 # supply a task for the script, as performed by run_mode()
 run_mode_hooks = []
-
-# change/add to mode_callbacks dictionary used by process_command_line()
-mode_callbacks_hooks = []
 
 
 ########################################################################
@@ -5348,7 +5475,7 @@ def create_blank_config_files(full=False):
             print(msg, file=sys.stdout)
         else:
             for cfp in config_file_paths:
-                # see open_create_only() and SCRIPT_MODES_DESCR for
+                # see open_create_only() and SCRIPT_MODES['create'] for
                 # warnings
                 with open_create_only(cfp) as cf_obj:
                     print(msg, file=cf_obj)
@@ -5382,9 +5509,8 @@ def create_arg_parser():
     See also process_command_line().
 
     Dependencies:
-        globals: script_name, create_arg_parser_hooks, SCRIPT_MODES,
-                 SCRIPT_MODES_DESCR
-        modules: argparse
+        globals: script_name, create_arg_parser_hooks, SCRIPT_MODES
+        modules: re, argparse
         Python: 2.7/3.2, for argparse
 
     """
@@ -5395,11 +5521,23 @@ def create_arg_parser():
                                   'the following will be tried:\n{0}' .
                                   format('\n'.join(default_config_files)))
 
+    # compile the script modes list and description
+    script_modes_list = []
+    script_modes_descr = 'available modes:\n'
+    for m_name, m_dict in SCRIPT_MODES.items():
+        script_modes_list.append(m_name)
+        if 'alias_of' not in m_dict:
+            script_modes_descr += (re.sub('^', '  ',
+                                          m_dict['descr'].strip(),
+                                          flags=re.MULTILINE) +
+                                   '\n\n')
+    script_modes_descr = script_modes_descr.strip()
+
     # the arguments we have so far
     arg_parser = argparse.ArgumentParser(
         prog=script_name,
         description=default_config_files_descr,
-        epilog=SCRIPT_MODES_DESCR,
+        epilog=script_modes_descr,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     cfg_arg_group = arg_parser.add_mutually_exclusive_group()
@@ -5416,7 +5554,7 @@ def create_arg_parser():
         help='set a config setting'
     )
     arg_parser.add_argument(
-         'mode', nargs='?', choices=SCRIPT_MODES, action='store',
+         'mode', nargs='?', choices=script_modes_list, action='store',
          default='run', metavar='MODE',
          help='mode in which to run the script; see below'
     )
@@ -5525,53 +5663,19 @@ def process_command_line():
     """
     Process the command-line arguments and do mode-dependent actions.
 
-    To change the modes the script offers, change SCRIPT_MODES and
-    SCRIPT_MODES_DESCR and add a function to mode_callbacks_hooks.  The
-    function must take and return the mode_callbacks dict.
+    To change the modes the script offers, change SCRIPT_MODES.
 
     Dependencies:
         globals: config_file_paths, default_config_files,
-                 mode_callbacks_hooks, NO_ERROR_EXITVAL
-        functions: license_mode(), config_mode(), status_mode(),
-                   statusall_mode(), silence_lf_alerts(),
-                   unsilence_lf_alerts(), disable_script(),
-                   enable_script(), clear_lockfile(),
-                   create_blank_config_files(), createfull_mode(),
-                   run_mode(), create_arg_parser(), process_config()
+                 SCRIPT_MODES, NO_ERROR_EXITVAL, INTERNAL_EXITVAL
+        functions: (mode callbacks), create_arg_parser(),
+                   process_config(), pps(), err_exit()
         modules: argparse, sys
         Python: 2.7/3.2, for argparse
 
     """
 
     global config_file_paths
-
-    # mode callback dict
-    #
-    # format is:
-    # 'mode': (function, requires_config_files_to_be_processed_first?)
-    mode_callbacks = {
-        'license': (license_mode, False),
-        'config': (config_mode, True),
-        'settings': (config_mode, True),
-        'status': (status_mode, True),
-        'statusall': (statusall_mode, True),
-        'silence': (silence_lf_alerts, True),
-        'unsilence': (unsilence_lf_alerts, True),
-        'stop': (disable_script, True),
-        'disable': (disable_script, True),
-        'start': (enable_script, True),
-        'enable': (enable_script, True),
-        'clearlock': (clear_lockfile, True),
-        'unlock': (clear_lockfile, True),
-        'create': (create_blank_config_files, False),
-        'createfull': (createfull_mode, False),
-        'run': (run_mode, True),
-    }
-
-    # hooks for adding/changing callbacks
-    for hook in mode_callbacks_hooks:
-        if callable(hook):
-        mode_callbacks = hook(mode_callbacks)
 
     # parse the command line
     arg_ns = create_arg_parser().parse_args()
@@ -5589,17 +5693,37 @@ def process_command_line():
     # get the script mode; be defensive in case the args were changed
     mode = arg_ns.mode if hasattr(arg_ns, 'mode') else 'run'
 
+    # get the mode info
+    mode_dict = None
+    mode_dict_temp = SCRIPT_MODES[mode]
+    while mode_dict == None:
+        if 'alias_of' in mode_dict_temp:
+            if mode_dict_temp['alias_of'] not in SCRIPT_MODES:
+                err_exit('Internal Error: alias pointed to a non-existent '
+                         'script mode\n({0}) while trying to look up mode '
+                         '{1}; exiting.' .
+                         format(pps(mode_dict_temp['alias_of']), pps(mode)),
+                         INTERNAL_EXITVAL)
+            mode_dict_temp = SCRIPT_MODES[mode_dict_temp['alias_of']]
+        else:
+            mode_dict = mode_dict_temp
+            if ('callback' not in mode_dict or
+                  not callable(mode_dict['callback'])):
+                err_exit('Internal Error: missing or invalid callback '
+                         'function for script mode\n{0}; exiting.' .
+                         format(pps(mode)), INTERNAL_EXITVAL)
+
     # first deal with the modes that don't require processing the
     # config file or command-line settings
-    if not mode_callbacks[mode][1]:
-        mode_callbacks[mode][0]()
+    if not mode_dict['req_config']:
+        mode_dict['callback']()
         sys.exit(NO_ERROR_EXITVAL)
 
     # process the config file and command-line settings
     process_config(arg_ns)
 
     # deal with the rest of the modes
-    mode_callbacks[mode][0]()
+    mode_dict['callback']()
     sys.exit(NO_ERROR_EXITVAL)
 
 
