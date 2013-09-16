@@ -500,7 +500,7 @@ CONTENTS:
         Create and return the command-line-argument parser.
 
     license_mode()
-        Print a license message to stderr.
+        Print a license message.
 
     exitvals_mode()
         Print the possible exit values from the script.
@@ -5641,12 +5641,11 @@ def create_arg_parser():
 
 def license_mode():
     """
-    Print a license message to stderr.
+    Print a license message.
     Dependencies:
         globals: LICENSE
-        modules: sys
     """
-    print(LICENSE, file=sys.stderr)
+    print(LICENSE)
 
 
 def exitvals_mode():
