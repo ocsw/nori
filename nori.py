@@ -502,6 +502,9 @@ CONTENTS:
     license_mode()
         Print a license message to stderr.
 
+    exitvals_mode()
+        Print the possible exit values from the script.
+
     config_mode()
         Wrapper for render_config() to add blank lines.
 
@@ -652,13 +655,23 @@ except ImportError:
 ########################################################################
 
 #
-# up here because some are needed for the version checker, below
+# the possible exit values from the script
 #
 # can be added to by submodules and/or scripts that use this library
 #
+# up here because some are needed for the version checker, below;
 # separated for readability
 #
-
+# this is a dictionary; the keys are names, and the values are
+# dictionaries containing these keys:
+#
+#     num: the actual exit value
+#
+#     descr: what this exit value is used for; printed by the exitvals
+#            mode (with leading and trailing whitespace removed)
+#            note: this will have four spaces prepended to each line;
+#            format accordingly
+#
 EXITVALS = {}
 
 EXITVALS['no_error']=dict(
@@ -860,6 +873,16 @@ SCRIPT_MODES['license']=dict(
 """
     ),
     callback=lambda: license_mode(),
+    req_config=False,
+)
+
+SCRIPT_MODES['exitvals']=dict(
+    descr=(
+"""
+'exitvals': the possible exit values from the script are printed
+"""
+    ),
+    callback=lambda: exitvals_mode(),
     req_config=False,
 )
 
@@ -5624,6 +5647,24 @@ def license_mode():
         modules: sys
     """
     print(LICENSE, file=sys.stderr)
+
+
+def exitvals_mode():
+    """
+    Print the possible exit values from the script.
+    Dependencies:
+       globals: EXITVALS
+       functions: pps()
+       modules: re
+    """
+    print('\nPossible exit values:\n')
+    for ev_name, ev_dict in sorted(EXITVALS.items(),
+                                   key=lambda x: x[1]['num']):
+        msg = '{0} ({1}): \n'.format(ev_dict['num'], pps(ev_name))
+        msg += re.sub('^', '    ', ev_dict['descr'].strip(),
+                      flags=re.MULTILINE)
+        msg += '\n'
+        print(msg)
 
 
 def config_mode():
