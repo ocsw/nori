@@ -629,7 +629,6 @@ import re
 import pprint
 from pprint import pprint as pp  # for debugging
 from types import *
-import collections
 import operator
 
 if sys.hexversion < 0x03040000:
@@ -654,7 +653,109 @@ except ImportError:
 
 
 ########################################################################
-#                               VARIABLES
+#                             EXIT VALUES
+########################################################################
+
+#
+# up here because some are needed for the version checker, below
+#
+# can be added to by submodules and/or scripts that use this library
+#
+
+# exit values; see the module's docstring for details
+# (when modifying: keep the numbers in sync with the docstring)
+NO_ERROR_EXITVAL = 0
+ARGPARSE_EXITVAL = 2  # hardcoded in the argparse module
+STARTUP_EXITVAL = 10
+LOCKFILE_EXITVAL = 11
+SSHTUNNEL_EXITVAL = 20
+INTERNAL_EXITVAL = 250
+
+#EV['INTERNAL']['NUM'] = 250
+#EV['INTERNAL']['DESCR'] = ''
+
+#EXITVALS['INTERNAL']['NUM'] = 250
+#EXITVALS['INTERNAL']['DESCR'] = ''
+
+#EXITVALS['INTERNAL'][0] = 250
+#EXITVALS['INTERNAL'][1] = ''
+
+#EXITVALS['INTERNAL'] = 250
+#EXITVALS_DESCR['INTERNAL']= ''
+
+
+########################################################################
+#                             VERSION CHECK
+########################################################################
+
+def pyversion_check(two_ver, three_ver):
+
+    """
+    Exit if we don't have a recent enough Python.
+
+    Parameters:
+        two_ver: minimum version of Python 2.x (e.g., 7)
+        three_ver: minimum version of Python 3.x (e.g., 2)
+
+        If either is negative, don't allow 2.x/3.x.
+
+    Dependencies:
+        globals: INTERNAL_EXITVAL, STARTUP_EXITVAL
+        modules: sys
+
+    """
+
+    # sanity check
+    if two_ver < 0 and three_ver < 0:
+        print('\nInternal Error: Python 2.x and 3.x are both '
+              'disallowed; exiting.\n',
+              file=sys.stderr)
+        sys.exit(INTERNAL_EXITVAL)
+
+    # build version string
+    ver_string = '\nError: This script requires Python version '
+    if two_ver >= 0:
+        ver_string += '2.' + str(two_ver) + '+'
+    if three_ver >= 0:
+        if two_ver >= 0:
+            ver_string += ' or '
+        ver_string += '3.' + str(three_ver) + '+'
+    else:
+        ver_string += ' (not including 3.x)'
+    ver_string += '; exiting.\n'
+
+    # check all cases
+    if (
+        (sys.version_info[0] < 2)  # 0.x or 1.x
+        or
+        (two_ver < 0 and sys.version_info[0] == 2)  # 2.x not allowed
+        or
+        (two_ver >= 0 and sys.version_info[0] == 2 and
+         sys.version_info[1] < two_ver)  # 2.x < two_ver
+        or
+        (three_ver < 0 and sys.version_info[0] == 3)  # 3.x not allowed
+        or
+        (three_ver >= 0 and sys.version_info[0] == 3 and
+         sys.version_info[1] < three_ver)  # 3.x < three_ver
+       ):
+        print(ver_string, file=sys.stderr)
+        sys.exit(STARTUP_EXITVAL)
+
+# call with the minimums for the imports and code below
+pyversion_check(7, 2)
+
+
+########################################################################
+#                           DEFERRED IMPORTS
+########################################################################
+
+import collections  # OrderedDict requires 2.7/3.1; also used for types
+import argparse  # requires 2.7/3.2
+import importlib  # requires 2.7/3.1
+
+
+########################################################################
+#                              VARIABLES
 ########################################################################
 
 #####################
@@ -666,15 +767,6 @@ except ImportError:
 # library (before using them!), but most of them aren't ordinarily
 # intended to be.  The ones that SHOULD be redefined are noted.
 #
-
-# exit values; see the module's docstring for details
-# (when modifying: keep the numbers in sync with the docstring)
-NO_ERROR_EXITVAL = 0
-ARGPARSE_EXITVAL = 2  # hardcoded in the argparse module
-STARTUP_EXITVAL = 10
-LOCKFILE_EXITVAL = 11
-SSHTUNNEL_EXITVAL = 20
-INTERNAL_EXITVAL = 250
 
 # names of tempfiles stored in the lockfile directory
 LF_ALERTS_SILENCED = 'lf_alerts_silenced'
@@ -983,90 +1075,9 @@ _stdout_handler = None
 _stderr_handler = None
 
 
-### see also the configuration and hooks sections, below ###
-
-
-########################################################################
-#                             VERSION CHECK
-########################################################################
-
-def pyversion_check(two_ver, three_ver):
-
-    """
-    Exit if we don't have a recent enough Python.
-
-    Parameters:
-        two_ver: minimum version of Python 2.x (e.g., 7)
-        three_ver: minimum version of Python 3.x (e.g., 2)
-
-        If either is negative, don't allow 2.x/3.x.
-
-    Dependencies:
-        globals: INTERNAL_EXITVAL, STARTUP_EXITVAL
-        modules: sys
-
-    """
-
-    # sanity check
-    if two_ver < 0 and three_ver < 0:
-        print('\nInternal Error: Python 2.x and 3.x are both '
-              'disallowed; exiting.\n',
-              file=sys.stderr)
-        sys.exit(INTERNAL_EXITVAL)
-
-    # build version string
-    ver_string = '\nError: This script requires Python version '
-    if two_ver >= 0:
-        ver_string += '2.' + str(two_ver) + '+'
-    if three_ver >= 0:
-        if two_ver >= 0:
-            ver_string += ' or '
-        ver_string += '3.' + str(three_ver) + '+'
-    else:
-        ver_string += ' (not including 3.x)'
-    ver_string += '; exiting.\n'
-
-    # check all cases
-    if (
-        (sys.version_info[0] < 2)  # 0.x or 1.x
-        or
-        (two_ver < 0 and sys.version_info[0] == 2)  # 2.x not allowed
-        or
-        (two_ver >= 0 and sys.version_info[0] == 2 and
-         sys.version_info[1] < two_ver)  # 2.x < two_ver
-        or
-        (three_ver < 0 and sys.version_info[0] == 3)  # 3.x not allowed
-        or
-        (three_ver >= 0 and sys.version_info[0] == 3 and
-         sys.version_info[1] < three_ver)  # 3.x < three_ver
-       ):
-        print(ver_string, file=sys.stderr)
-        sys.exit(STARTUP_EXITVAL)
-
-# call with the minimums for the imports and code below
-pyversion_check(7, 2)
-
-
-########################################################################
-#                           DEFERRED IMPORTS
-########################################################################
-
-####################
-# version-dependent
-####################
-
-import collections  # OrderedDict requires 2.7/3.1
-import argparse  # requires 2.7/3.2
-import importlib  # requires 2.7/3.1
-
-
-########################################################################
-#                       CONFIGURATION AND STATUS
-########################################################################
-
-############
-# variables
-############
+###########################
+# configuration and status
+###########################
 
 # get the name of the script from the invocation;
 # this isn't 100% reliable, so it should really be (re)set
@@ -1760,85 +1771,9 @@ bogus_config = [
 ]
 
 
-############
-# functions
-############
-
-def _config_settings_extra():
-
-    """
-    Fix up config settings that are platform-dependent or complicated.
-
-    In a function for namespace cleanliness; called immediately.
-
-    Dependencies:
-        globals: config_settings
-        modules: os, stat, socket, errno, logging.handlers
-
-    """
-
-    ### syslog_addr, syslog_sock_type ###
-
-    found_it = False
-
-    if hasattr(socket, 'AF_UNIX'):
-        for sock_path in ['/dev/log', '/var/run/syslog']:
-            try:
-                st_mode = os.stat(sock_path)[0]
-            except OSError:
-                continue
-            if stat.S_ISSOCK(st_mode):
-                try:
-                    s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-                    s.connect(sock_path)
-                except IOError as e:
-                    if e.errno == errno.EPROTOTYPE:
-                        try:
-                            s = socket.socket(socket.AF_UNIX,
-                                              socket.SOCK_STREAM)
-                            s.connect(sock_path)
-                        except IOError:
-                            continue
-                         # looks like this needs to be SOCK_STREAM
-                         # instead
-                        config_settings['syslog_sock_type']['default'] = (
-                            socket.SOCK_STREAM
-                        )
-                    continue
-                s.close()
-                found_it = True
-                config_settings['syslog_addr']['default'] = sock_path
-                break
-
-    if not found_it:
-        config_settings['syslog_addr']['default'] = (
-            ('localhost', logging.handlers.SYSLOG_UDP_PORT)
-        )
-
-_config_settings_extra()
-
-
-def config_settings_no_print_output_log(no_print):
-    """
-    Turn self-documentation of the output log feature on or off.
-    Parameters:
-        no_print: desired value of the no_print attribute of the
-                  output_log* settings (see notes on config_settings,
-                  above)
-    Dependencies:
-        globals: config_settings['output_log*']
-    """
-    config_settings['output_log']['no_print'] = no_print
-    config_settings['output_log_layout']['no_print'] = no_print
-    config_settings['output_log_sep']['no_print'] = no_print
-    config_settings['output_log_date']['no_print'] = no_print
-    config_settings['output_log_num']['no_print'] = no_print
-    config_settings['output_log_days']['no_print'] = no_print
-
-
-########################################################################
-#                              HOOK LISTS
-########################################################################
+#############
+# hook lists
+#############
 
 # change/add to status messages returned by render_status_messages()
 render_status_messages_hooks = []
@@ -1868,7 +1803,7 @@ run_mode_hooks = []
 ########################################################################
 
 
-### see also the version check and configuration sections, above ###
+### see also the version check section, above ###
 
 
 ###################################
@@ -3543,6 +3478,78 @@ def run_with_logging(cmd_descr, cmd, include_stderr=True, env_add=None,
 ##########################################
 # config setting checks and manipulations
 ##########################################
+
+def _config_settings_extra():
+
+    """
+    Fix up config settings that are platform-dependent or complicated.
+
+    In a function for namespace cleanliness; called immediately.
+
+    Dependencies:
+        globals: config_settings
+        modules: os, stat, socket, errno, logging.handlers
+
+    """
+
+    ### syslog_addr, syslog_sock_type ###
+
+    found_it = False
+
+    if hasattr(socket, 'AF_UNIX'):
+        for sock_path in ['/dev/log', '/var/run/syslog']:
+            try:
+                st_mode = os.stat(sock_path)[0]
+            except OSError:
+                continue
+            if stat.S_ISSOCK(st_mode):
+                try:
+                    s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+                    s.connect(sock_path)
+                except IOError as e:
+                    if e.errno == errno.EPROTOTYPE:
+                        try:
+                            s = socket.socket(socket.AF_UNIX,
+                                              socket.SOCK_STREAM)
+                            s.connect(sock_path)
+                        except IOError:
+                            continue
+                         # looks like this needs to be SOCK_STREAM
+                         # instead
+                        config_settings['syslog_sock_type']['default'] = (
+                            socket.SOCK_STREAM
+                        )
+                    continue
+                s.close()
+                found_it = True
+                config_settings['syslog_addr']['default'] = sock_path
+                break
+
+    if not found_it:
+        config_settings['syslog_addr']['default'] = (
+            ('localhost', logging.handlers.SYSLOG_UDP_PORT)
+        )
+
+_config_settings_extra()
+
+
+def config_settings_no_print_output_log(no_print):
+    """
+    Turn self-documentation of the output log feature on or off.
+    Parameters:
+        no_print: desired value of the no_print attribute of the
+                  output_log* settings (see notes on config_settings,
+                  above)
+    Dependencies:
+        globals: config_settings['output_log*']
+    """
+    config_settings['output_log']['no_print'] = no_print
+    config_settings['output_log_layout']['no_print'] = no_print
+    config_settings['output_log_sep']['no_print'] = no_print
+    config_settings['output_log_date']['no_print'] = no_print
+    config_settings['output_log_num']['no_print'] = no_print
+    config_settings['output_log_days']['no_print'] = no_print
+
 
 #
 # ### setting_names ###
