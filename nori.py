@@ -842,7 +842,8 @@ TASKS_NAME = 'script invocations'
 #     requires: a list of supported features that must be available for
 #               this mode (see supported_features, available_features,
 #               and the section on submodules in the module docstring,
-#               above); ###TODO
+#               above); if the requirements are not met, the mode will
+#               not be available or listed in the usage message
 #
 #     alias_of: indicates that this entry is actually an alias of
 #               another one; this element must be set to the name of the
@@ -5569,6 +5570,10 @@ def create_arg_parser():
     script_modes_list = []
     script_modes_descr = 'available modes:\n'
     for m_name, m_dict in SCRIPT_MODES.items():
+        if 'requires' in m_dict:
+            for feature in m_dict['requires']:
+                if feature not in available_features:
+                    continue
         script_modes_list.append(m_name)
         if 'alias_of' not in m_dict:
             script_modes_descr += (re.sub('^', '  ',
