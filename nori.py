@@ -5121,7 +5121,7 @@ def check_config_requirements():
         functions: pps(), err_exit()
     """
     for s_name, s_dict in config_settings.items():
-        if 'requires' in s_dict and s_dict['requires'] and s_name in cfg:
+        if 'requires' in s_dict and s_name in cfg:
             for feature in s_dict['requires']:
                 if feature not in available_features:
                     msg = ('Error: setting cfg[{0}] is set (to {1}), '
