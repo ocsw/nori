@@ -165,10 +165,8 @@ CONTENTS:
     config_modules
         module objects for the config file(s)
 
-
     cl_config
         names of config settings that were supplied on the command line
-
 
     cfg
         the config settings dictionary
