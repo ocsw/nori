@@ -73,12 +73,7 @@ CONTENTS:
     (Pseudo-)Constants:
     -------------------
 
-    NO_ERROR_EXITVAL
-    ARGPARSE_EXITVAL
-    STARTUP_EXITVAL
-    LOCKFILE_EXITVAL
-    SSHTUNNEL_EXITVAL
-    INTERNAL_EXITVAL
+    EXITVALS
         exit values
 
     LF_ALERTS_SILENCED
@@ -562,7 +557,7 @@ CONTENTS:
         * add a function to run_mode_hooks
 
     In most cases, these will also be necessary:
-        * add more *_EXITVAL constants
+        * add to EXITVALS
         * redefine default_config_files
         * copy and edit/expand the USAGE file, replacing 'nori' with the
           name of the script
@@ -661,27 +656,59 @@ except ImportError:
 #
 # can be added to by submodules and/or scripts that use this library
 #
+# separated for readability
+#
 
-# exit values; see the module's docstring for details
-# (when modifying: keep the numbers in sync with the docstring)
-NO_ERROR_EXITVAL = 0
-ARGPARSE_EXITVAL = 2  # hardcoded in the argparse module
-STARTUP_EXITVAL = 10
-LOCKFILE_EXITVAL = 11
-SSHTUNNEL_EXITVAL = 20
-INTERNAL_EXITVAL = 250
+EXITVALS = {}
 
-#EV['INTERNAL']['NUM'] = 250
-#EV['INTERNAL']['DESCR'] = ''
+EXITVALS['no_error']=dict(
+    num=0,
+    descr=(
+"""
+no error (e.g., run_every hasn't expired, or invocation was
+completed without errors)
+"""
+    ),
+)
 
-#EXITVALS['INTERNAL']['NUM'] = 250
-#EXITVALS['INTERNAL']['DESCR'] = ''
+EXITVALS['argparse']=dict(
+    num=2,  # hardcoded in the argparse module
+    descr=(
+"""
+error parsing the command line
+"""
+    ),
+)
 
-#EXITVALS['INTERNAL'][0] = 250
-#EXITVALS['INTERNAL'][1] = ''
+EXITVALS['startup']=dict(
+    num=10,
+    descr=(
+"""
+problem with the script invocation, the config file, or a
+setting (also used in command modes like 'disable' as a
+generic error value)
+"""
+    ),
+)
 
-#EXITVALS['INTERNAL'] = 250
-#EXITVALS_DESCR['INTERNAL']= ''
+EXITVALS['lockfile']=dict(
+    num=11,
+    descr=(
+"""
+previous lockfile still exists (possibly because the script
+was manually disabled)
+"""
+    ),
+)
+
+EXITVALS['internal']=dict(
+    num=250,
+    descr=(
+"""
+internal error; should never happen
+"""
+    ),
+)
 
 
 ########################################################################
@@ -700,7 +727,7 @@ def pyversion_check(two_ver, three_ver):
         If either is negative, don't allow 2.x/3.x.
 
     Dependencies:
-        globals: INTERNAL_EXITVAL, STARTUP_EXITVAL
+        globals: EXITVALS['internal'], EXITVALS['startup']
         modules: sys
 
     """
@@ -710,7 +737,7 @@ def pyversion_check(two_ver, three_ver):
         print('\nInternal Error: Python 2.x and 3.x are both '
               'disallowed; exiting.\n',
               file=sys.stderr)
-        sys.exit(INTERNAL_EXITVAL)
+        sys.exit(EXITVALS['internal']['num'])
 
     # build version string
     ver_string = '\nError: This script requires Python version '
@@ -739,7 +766,7 @@ def pyversion_check(two_ver, three_ver):
          sys.version_info[1] < three_ver)  # 3.x < three_ver
        ):
         print(ver_string, file=sys.stderr)
-        sys.exit(STARTUP_EXITVAL)
+        sys.exit(EXITVALS['startup']['num'])
 
 # call with the minimums for the imports and code below
 pyversion_check(7, 2)
@@ -1927,7 +1954,7 @@ def file_type_info(c):
 
 def file_error_handler(e, verb, file_label, file_path, must_exist=True,
                        use_logger=False, warn_only=False,
-                       exit_val=STARTUP_EXITVAL):
+                       exit_val=EXITVALS['startup']['num']):
 
     """
     Handle OSError/IOError exceptions with various options.
@@ -1957,7 +1984,7 @@ def file_error_handler(e, verb, file_label, file_path, must_exist=True,
                   the function doesn't actually exit the script
 
     Dependencies:
-        globals: email_logger, STARTUP_EXITVAL
+        globals: email_logger, EXITVALS['startup']
         functions: pps(), err_exit()
         modules: sys, errno
 
@@ -2007,7 +2034,7 @@ def file_error_handler(e, verb, file_label, file_path, must_exist=True,
 
 def check_file_type(file_path, file_label, type_char='f', follow_links=True,
                     must_exist=True, use_logger=False, warn_only=False,
-                    exit_val=STARTUP_EXITVAL):
+                    exit_val=EXITVALS['startup']['num']):
 
     """
     Check if a file has the correct type.
@@ -2030,7 +2057,7 @@ def check_file_type(file_path, file_label, type_char='f', follow_links=True,
         see file_error_handler() for the rest
 
     Dependencies:
-        globals: email_logger, STARTUP_EXITVAL, INTERNAL_EXITVAL
+        globals: email_logger, EXITVALS['startup'], EXITVALS['internal']
         functions: fix_path(), file_error_handler(), file_type_info(),
                    pps(), err_exit()
         modules: os, stat, sys
@@ -2068,7 +2095,7 @@ Exiting.''' .
                      format(*map(pps, [t_char, file_path, file_label,
                                        type_char, follow_links, must_exist,
                                        use_logger, warn_only, exit_val])),
-                     INTERNAL_EXITVAL
+                     EXITVALS['internal']['num']
             )
         if t_func(st_mode):
             return True
@@ -2126,7 +2153,7 @@ Exiting.''' .
 
 
 def check_file_access(file_path, file_label, file_rwx='r', use_logger=False,
-                      warn_only=False, exit_val=STARTUP_EXITVAL):
+                      warn_only=False, exit_val=EXITVALS['startup']['num']):
 
     """
     Check if a file is accessible.
@@ -2147,7 +2174,7 @@ def check_file_access(file_path, file_label, file_rwx='r', use_logger=False,
         see file_error_handler() for the rest
 
     Dependencies:
-        globals: email_logger, STARTUP_EXITVAL, INTERNAL_EXITVAL
+        globals: email_logger, EXITVALS['startup'], EXITVALS['internal']
         functions: fix_path(), file_access_const(),
                    file_error_handler(), pps(), err_exit()
         modules: os, sys
@@ -2177,7 +2204,7 @@ Exiting.''' .
                      format(*map(pps, [a_char, file_path, file_label,
                                        file_rwx, use_logger, warn_only,
                                        exit_val])),
-                     INTERNAL_EXITVAL
+                     EXITVALS['internal']['num']
             )
 
         # check access
@@ -2280,7 +2307,8 @@ Exiting.''' .
 
 def check_filedir_create(file_path, file_label, create_type='f',
                          need_rotation=False, use_logger=False,
-                         warn_only=False, exit_val=STARTUP_EXITVAL):
+                         warn_only=False,
+                         exit_val=EXITVALS['startup']['num']):
 
     """
     Check if we can create a file or directory.
@@ -2309,7 +2337,7 @@ def check_filedir_create(file_path, file_label, create_type='f',
         see file_error_handler() for the rest
 
     Dependencies:
-        globals: INTERNAL_EXITVAL
+        globals: EXITVALS['startup'], EXITVALS['internal']
         functions: fix_path(), check_file_type(), check_file_access(),
                    parentdir(), pps()
         modules: os
@@ -2330,7 +2358,7 @@ Exiting.''' .
                  format(*map(pps, [create_type, file_path, file_label,
                                    create_type, need_rotation, use_logger,
                                    warn_only, exit_val])),
-                 INTERNAL_EXITVAL
+                 EXITVALS['internal']['num']
         )
 
     # file/directory type and access
@@ -2621,7 +2649,7 @@ def open_create_only(file_path):
 
 
 def touch_file(file_path, file_label, times=None, use_logger=False,
-               warn_only=False, exit_val=STARTUP_EXITVAL):
+               warn_only=False, exit_val=EXITVALS['startup']['num']):
     """
     Update a file's timestamp, or create it if it doesn't exist.
     Also works on existing directories.
@@ -2629,7 +2657,7 @@ def touch_file(file_path, file_label, times=None, use_logger=False,
         file_path: the file to touch
         see file_error_handler() for the rest
     Dependencies:
-        globals: STARTUP_EXITVAL
+        globals: EXITVALS['startup']
         functions: fix_path(), file_error_handler()
         modules: sys, os
     """
@@ -2653,13 +2681,14 @@ def touch_file(file_path, file_label, times=None, use_logger=False,
 
 
 def rm_rf(rm_path, file_label, must_exist=False, use_logger=False,
-          warn_only=False, exit_val=STARTUP_EXITVAL):
+          warn_only=False, exit_val=EXITVALS['startup']['num']):
     """
     Remove a file or directory, recursively if necessary.
     Parameters:
         rm_path: the file/directory to remove
         see file_error_handler() for the rest
     Dependencies:
+        globals: EXITVALS['startup']
         functions: fix_path(), file_error_handler()
         modules: os, shutil
     """
@@ -2682,7 +2711,7 @@ def rm_rf(rm_path, file_label, must_exist=False, use_logger=False,
 ############################
 
 def rotate_num_files(dir_path, prefix, sep, suffix,
-                     exit_val=STARTUP_EXITVAL):
+                     exit_val=EXITVALS['startup']['num']):
 
     """
     Rotate numbered files or directories.
@@ -2702,7 +2731,7 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
         exit_val: value to exit the script with on error
 
     Dependencies:
-        globals: email_logger, STARTUP_EXITVAL, ZIP_SUFFIXES
+        globals: email_logger, EXITVALS['startup'], ZIP_SUFFIXES
         functions: fix_path(), pps()
         modules: re, os, operator, sys
 
@@ -2773,7 +2802,7 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
 
 
 def prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
-                    exit_val=STARTUP_EXITVAL):
+                    exit_val=EXITVALS['startup']['num']):
 
     """
     Prune numbered files or directories by number and date.
@@ -2797,7 +2826,7 @@ def prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
         exit_val: value to exit the script with on error
 
     Dependencies:
-        globals: email_logger, STARTUP_EXITVAL, ZIP_SUFFIXES
+        globals: email_logger, EXITVALS['startup'], ZIP_SUFFIXES
         functions: fix_path(), pps(), file_newer_than(), rm_rf()
         modules: re, os, sys
 
@@ -2856,7 +2885,7 @@ def prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
 
 
 def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
-                     exit_val=STARTUP_EXITVAL):
+                     exit_val=EXITVALS['startup']['num']):
 
     """
     Prune dated files or directories by number and date.
@@ -2886,7 +2915,7 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
         exit_val: value to exit the script with on error
 
     Dependencies:
-        globals: email_logger, STARTUP_EXITVAL, ZIP_SUFFIXES
+        globals: email_logger, EXITVALS['startup'], ZIP_SUFFIXES
         functions: fix_path(), pps(), rm_rf()
         modules: re, os, time, operator, sys
 
@@ -2940,7 +2969,7 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
 
 
 def prune_files(layout, dir_path, prefix, sep, suffix, num_f, days_f,
-                exit_val=STARTUP_EXITVAL):
+                exit_val=EXITVALS['startup']['num']):
     """
     Wrapper: prune numbered or dated files/dirs by number and date.
     Files/directories can optionally have any of the suffixes in
@@ -2949,6 +2978,7 @@ def prune_files(layout, dir_path, prefix, sep, suffix, num_f, days_f,
         layout: the layout type (see below)
         see prune_num_files() and prune_days_files() for the rest
     Dependencies:
+        globals: EXITVALS['startup']
         functions: prune_num_files(), prune_days_files()
     """
     if layout == 'single' or layout == 'singledir' or layout == 'append':
@@ -2973,7 +3003,7 @@ def rotate_prune_output_logs():
     Dependencies:
         config settings: output_log, output_log_layout, output_log_sep,
                          output_log_num, output_log_days
-        globals: cfg, status_logger, STARTUP_EXITVAL
+        globals: cfg, status_logger, EXITVALS['startup']
         functions: rotate_num_files, prune_files(), parentdir()
 
     """
@@ -2994,13 +3024,14 @@ def rotate_prune_output_logs():
     # rotate
     if cfg['output_log_layout'] == 'number':
         rotate_num_files(parentdir(cfg['output_log']), cfg['output_log'],
-                         cfg['output_log_sep'], '', STARTUP_EXITVAL)
+                         cfg['output_log_sep'], '',
+                         EXITVALS['startup']['num'])
 
     # prune
     prune_files(cfg['output_log_layout'], parentdir(cfg['output_log']),
                 cfg['output_log'], cfg['output_log_sep'], '',
                 cfg['output_log_num'], cfg['output_log_days'],
-                STARTUP_EXITVAL)
+                EXITVALS['startup']['num'])
 
 
 ########################################################################
@@ -3141,7 +3172,7 @@ def init_logging_main():
                          alert_emails_sec, quiet, use_syslog, status_log
         globals: cfg, status_logger, alert_logger, email_logger,
                  _syslog_handler, _stdout_handler, _stderr_handler,
-                 FULL_DATE_FORMAT, STARTUP_EXITVAL
+                 FULL_DATE_FORMAT, EXITVALS['startup']
         functions: init_syslog(), err_exit()
         classes: SMTPDiagHandler
         modules: logging, logging.handlers, sys
@@ -3169,7 +3200,7 @@ def init_logging_main():
             err_exit('Error: could not open the status log ({0}); '
                      'exiting.\nDetails: [Errno {1}] {2}' .
                      format(pps(cfg['status_log']), e.errno, e.strerror),
-                     STARTUP_EXITVAL)
+                     EXITVALS['startup']['num'])
         status_log_formatter = (
         logging.Formatter('%(asctime)s [%(process)d]: %(message)s',
                           FULL_DATE_FORMAT))
@@ -3309,7 +3340,7 @@ def init_logging_output():
                          output_log_date, (output_log_num),
                          (output_log_days)
         globals: cfg, output_logger, output_log_fo, email_logger,
-                 start_time, STARTUP_EXITVAL
+                 start_time, EXITVALS['startup']
         functions: fix_path(), rotate_prune_output_logs(), pps(),
                    end_logging_output
         modules: logging, sys, os, time, atexit
@@ -3327,7 +3358,7 @@ def init_logging_output():
                                               time.localtime(start_time)))
         # needed for prune_date_files(), for pruning by number
         touch_file(output_log_path, 'the output log', None, use_logger=True,
-                   warn_only=False, exit_val=STARTUP_EXITVAL)
+                   warn_only=False, exit_val=EXITVALS['startup']['num'])
 
     # rotate and prune output logs
     # (also tests in case there is no output log, and prints status
@@ -3348,7 +3379,7 @@ def init_logging_output():
                                '({0}); exiting.\nDetails: [Errno {1}] {2}' .
                                format(pps(cfg['output_log']), e.errno,
                                       e.strerror))
-            sys.exit(STARTUP_EXITVAL)
+            sys.exit(EXITVALS['startup']['num'])
         output_logger.addHandler(output_handler)
 
     # output log file object, for use by (e.g.) run_with_logging()
@@ -3370,7 +3401,7 @@ def init_logging_output():
                                       if cfg['output_log']
                                       else os.devnull,
                                   e.errno, e.strerror))
-        sys.exit(STARTUP_EXITVAL)
+        sys.exit(EXITVALS['startup']['num'])
 
     # automatically close on exit
     # (should be done anyway, but we'll be thorough)
@@ -3663,7 +3694,7 @@ def setting_check_is_set(setting_name):
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, STARTUP_EXITVAL
+        globals: cfg, EXITVALS['startup']
         functions: setting_walk(), err_exit()
 
     """
@@ -3675,7 +3706,7 @@ def setting_check_is_set(setting_name):
         # things by including the real_path
         err_exit('Error: setting {0} is not set; exiting.' .
                  format(pps(full_path)),
-                 STARTUP_EXITVAL)
+                 EXITVALS['startup']['num'])
     return (obj, full_path)
 
 
@@ -3693,7 +3724,7 @@ def setting_check_one_is_set(setting_name_list):
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, STARTUP_EXITVAL
+        globals: cfg, EXITVALS['startup']
         functions: setting_walk(), pps(), err_exit()
 
     """
@@ -3708,7 +3739,7 @@ def setting_check_one_is_set(setting_name_list):
     err_exit('Error: at least one of the following must be set:\n'
              '{0}\nExiting.' .
              format('\n'.join(setting_paths)),
-             STARTUP_EXITVAL)
+             EXITVALS['startup']['num'])
 
 
 def setting_check_type(setting_name, type_tuple):
@@ -3731,7 +3762,7 @@ def setting_check_type(setting_name, type_tuple):
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, STARTUP_EXITVAL, INTERNAL_EXITVAL
+        globals: cfg, EXITVALS['startup'], EXITVALS['internal']
         functions: setting_check_is_set(), pps(), scalar_to_tuple(),
                    type_list_string(), err_exit()
 
@@ -3756,18 +3787,18 @@ def setting_check_type(setting_name, type_tuple):
                      'setting_check_type({1}, {2})\n'
                      'Exiting.' .
                      format(*map(pps, [t, setting_name, type_tuple])),
-                     INTERNAL_EXITVAL)
+                     EXITVALS['internal']['num'])
 
     # nope, it's not an allowed type
     if len(type_tuple) == 1:
         err_exit('Error: {0} must be of type {1}; exiting.' .
                  format(obj_path, pps(type_tuple[0])),
-                 STARTUP_EXITVAL)
+                 EXITVALS['startup']['num'])
     else:
         err_exit('Error: {0} must have one of the following types:\n{1}\n'
                  'Exiting.' .
                  format(obj_path, type_list_string(type_tuple)),
-                 STARTUP_EXITVAL)
+                 EXITVALS['startup']['num'])
 
 
 def setting_check_not_empty(setting_name):
@@ -3787,7 +3818,7 @@ def setting_check_not_empty(setting_name):
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, CONTAINER_TYPES, STARTUP_EXITVAL
+        globals: cfg, CONTAINER_TYPES, EXITVALS['startup']
         functions: setting_check_is_set(), setting_check_type(),
                    err_exit()
 
@@ -3802,7 +3833,7 @@ def setting_check_not_empty(setting_name):
     # empty?
     if not obj:
         err_exit('Error: {0} may not be empty; exiting.'.format(obj_path),
-                 STARTUP_EXITVAL)
+                 EXITVALS['startup']['num'])
 
     return (obj, obj_path)
 
@@ -3827,7 +3858,7 @@ def setting_check_not_all_empty(setting_name_list):
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, CONTAINER_TYPES, STARTUP_EXITVAL
+        globals: cfg, CONTAINER_TYPES, EXITVALS['startup']
         functions: setting_walk(), setting_check_type(), err_exit()
 
     """
@@ -3850,7 +3881,7 @@ def setting_check_not_all_empty(setting_name_list):
         err_exit('Error: at least one of the following must be non-empty:\n'
                  '{0}\nExiting.' .
                  format('\n'.join(setting_paths)),
-                 STARTUP_EXITVAL)
+                 EXITVALS['startup']['num'])
 
 
 def setting_check_len(setting_name, min_len, max_len):
@@ -3873,7 +3904,8 @@ def setting_check_len(setting_name, min_len, max_len):
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, CONTAINER_TYPES, STRINGISH_TYPES, STARTUP_EXITVAL
+        globals: cfg, CONTAINER_TYPES, STRINGISH_TYPES,
+                 EXITVALS['startup']
         functions: setting_check_is_set(), setting_check_type(), pps(),
                    err_exit()
 
@@ -3891,11 +3923,11 @@ def setting_check_len(setting_name, min_len, max_len):
         if t in CONTAINER_TYPES:
             err_exit('Error: {0} contains an invalid number of elements '
                      '({1}); exiting.'.format(obj_path, pps(len(obj))),
-                     STARTUP_EXITVAL)
+                     EXITVALS['startup']['num'])
         else:
             err_exit('Error: {0} is an invalid length ({1}); '
                      'exiting.'.format(obj_path, pps(len(obj))),
-                     STARTUP_EXITVAL)
+                     EXITVALS['startup']['num'])
 
     return (obj, obj_path)
 
@@ -3917,7 +3949,7 @@ def setting_check_not_blank(setting_name, ish=False):
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, STRING_TYPES, STRINGISH_TYPES, STARTUP_EXITVAL
+        globals: cfg, STRING_TYPES, STRINGISH_TYPES, EXITVALS['startup']
         functions: setting_check_is_set(), setting_check_type(),
                    err_exit()
 
@@ -3933,7 +3965,7 @@ def setting_check_not_blank(setting_name, ish=False):
     # blank?
     if not obj:
         err_exit('Error: {0} may not be blank; exiting.'.format(obj_path),
-                 STARTUP_EXITVAL)
+                 EXITVALS['startup']['num'])
 
     return (obj, obj_path)
 
@@ -3958,7 +3990,7 @@ def setting_check_not_all_blank(setting_name_list, ish=False):
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, STRING_TYPES, STRINGISH_TYPES, STARTUP_EXITVAL
+        globals: cfg, STRING_TYPES, STRINGISH_TYPES, EXITVALS['startup']
         functions: setting_walk(), setting_check_type(), err_exit()
 
     """
@@ -3982,7 +4014,7 @@ def setting_check_not_all_blank(setting_name_list, ish=False):
         err_exit('Error: at least one of the following must be non-blank:\n'
                  '{0}\nExiting.' .
                  format('\n'.join(setting_paths)),
-                 STARTUP_EXITVAL)
+                 EXITVALS['startup']['num'])
 
 
 def setting_check_no_blanks(setting_name, ish=False):
@@ -4007,7 +4039,7 @@ def setting_check_no_blanks(setting_name, ish=False):
     Dependencies:
         config settings: (contents of setting_name)
         globals: cfg, CONTAINER_TYPES, STRING_TYPES, STRINGISH_TYPES,
-                 STARTUP_EXITVAL
+                 EXITVALS['startup']
         functions: setting_check_is_set(), setting_check_type(),
                    err_exit()
 
@@ -4024,11 +4056,11 @@ def setting_check_no_blanks(setting_name, ish=False):
         if not isinstance(subobj, STRINGISH_TYPES if ish else STRING_TYPES):
             err_exit('Error: {0} contains a non-string; Exiting.' .
                      format(obj_path),
-                     STARTUP_EXITVAL)
+                     EXITVALS['startup']['num'])
         if not subobj:
             err_exit('Error: {0} contains a blank string; Exiting.' .
                      format(obj_path),
-                     STARTUP_EXITVAL)
+                     EXITVALS['startup']['num'])
 
     return (obj, obj_path)
 
@@ -4053,7 +4085,7 @@ def setting_check_no_char(setting_name, char, ish=False):
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, STRING_TYPES, STRINGISH_TYPES, STARTUP_EXITVAL
+        globals: cfg, STRING_TYPES, STRINGISH_TYPES, EXITVALS['startup']
         functions: setting_check_is_set(), setting_check_type(),
                    scalar_to_tuple(), char_name(), err_exit()
 
@@ -4074,7 +4106,7 @@ def setting_check_no_char(setting_name, char, ish=False):
         if c in obj:
             err_exit('Error: {0} may not contain {1} characters; exiting.' .
                      format(obj_path, pps(char_name(c))),
-                     STARTUP_EXITVAL)
+                     EXITVALS['startup']['num'])
 
     return (obj, obj_path)
 
@@ -4096,7 +4128,7 @@ def setting_check_list(setting_name, list_vals):
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg
+        globals: cfg, EXITVALS['startup']
         functions: setting_check_is_set()
 
     """
@@ -4108,7 +4140,7 @@ def setting_check_list(setting_name, list_vals):
     if obj not in list_vals:
         err_exit('Error: invalid setting for {0} ({1}); exiting.' .
                  format(obj_path, pps(obj)),
-                 STARTUP_EXITVAL)
+                 EXITVALS['startup']['num'])
 
     return (obj, obj_path)
 
@@ -4132,7 +4164,7 @@ def setting_check_num(setting_name, min_val=None, max_val=None):
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, NUMBER_TYPES
+        globals: cfg, EXITVALS['startup'], NUMBER_TYPES
         functions: setting_check_is_set(), setting_check_type()
 
     """
@@ -4148,7 +4180,7 @@ def setting_check_num(setting_name, min_val=None, max_val=None):
           (max_val is not None and obj > max_val)):
         err_exit('Error: invalid setting for {0} ({1}); exiting.' .
                  format(obj_path, pps(obj)),
-                 STARTUP_EXITVAL)
+                 EXITVALS['startup']['num'])
 
     return (obj, obj_path)
 
@@ -4173,7 +4205,7 @@ def setting_check_file_type(setting_name, type_char='f', follow_links=True):
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, STARTUP_EXITVAL
+        globals: cfg, EXITVALS['startup']
         functions: setting_check_not_blank(), check_file_type()
 
     """
@@ -4184,7 +4216,7 @@ def setting_check_file_type(setting_name, type_char='f', follow_links=True):
     # check file type
     check_file_type(obj, obj_path, type_char, follow_links, must_exist=True,
                     use_logger=False, warn_only=False,
-                    exit_val=STARTUP_EXITVAL)
+                    exit_val=EXITVALS['startup']['num'])
 
     return (obj, obj_path)
 
@@ -4206,7 +4238,7 @@ def setting_check_file_access(setting_name, file_rwx='r'):
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, STARTUP_EXITVAL
+        globals: cfg, EXITVALS['startup']
         functions: setting_check_not_blank(), check_file_access()
 
     """
@@ -4216,7 +4248,7 @@ def setting_check_file_access(setting_name, file_rwx='r'):
 
     # check for access
     check_file_access(obj, obj_path, file_rwx, use_logger=False,
-                      warn_only=False, exit_val=STARTUP_EXITVAL)
+                      warn_only=False, exit_val=EXITVALS['startup']['num'])
 
     return (obj, obj_path)
 
@@ -4291,7 +4323,7 @@ def setting_check_filedir_create(setting_name, create_type='f',
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, STARTUP_EXITVAL
+        globals: cfg, EXITVALS['startup']
         functions: setting_check_not_blank(), check_filedir_create()
 
     """
@@ -4302,7 +4334,7 @@ def setting_check_filedir_create(setting_name, create_type='f',
     # check for creation
     check_filedir_create(obj, obj_path, create_type, need_rotation,
                          use_logger=False, warn_only=False,
-                         exit_val=STARTUP_EXITVAL)
+                         exit_val=EXITVALS['startup']['num'])
 
     return (obj, obj_path)
 
@@ -4348,9 +4380,9 @@ def check_status():
         config settings: run_every, last_started_file, lockfile,
                          if_running, lockfile_alert_file
         globals: cfg, status_logger, alert_logger, email_logger,
-                 TASK_NAME, TASKS_NAME, NO_ERROR_EXITVAL,
-                 STARTUP_EXITVAL, LOCKFILE_EXITVAL, LF_ALERTS_SILENCED,
-                 SCRIPT_DISABLED
+                 TASK_NAME, TASKS_NAME, EXITVALS['no_error'],
+                 EXITVALS['startup'], EXITVALS['lockfile'],
+                 LF_ALERTS_SILENCED, SCRIPT_DISABLED
         functions: fix_path(), file_newer_than(),
                    logging_email_stop_logging(),
                    logging_email_start_logging(), pps(),
@@ -4380,11 +4412,11 @@ def check_status():
                     format(pps(cfg['last_started_file']), e.errno,
                            e.strerror)
                 )
-                sys.exit(STARTUP_EXITVAL)
+                sys.exit(EXITVALS['startup']['num'])
         if nt:
             status_logger.info('{0} interval has not expired; exiting.' .
                                format(TASK_NAME.capitalize()))
-            sys.exit(NO_ERROR_EXITVAL)
+            sys.exit(EXITVALS['no_error']['num'])
         else:
             status_logger.info('{0} interval has expired; continuing.' .
                                format(TASK_NAME.capitalize()))
@@ -4403,9 +4435,9 @@ def check_status():
                 format(pps(cfg['lockfile']), e.errno,
                        e.strerror)
             )
-            # not LOCKFILE_EXITVAL because it's not about locking, it's
+            # not 'lockfile' because it's not about locking, it's
             # about the path or the filesystem or whatever
-            sys.exit(STARTUP_EXITVAL)
+            sys.exit(EXITVALS['startup']['num'])
 
         else:  # lockfile exists already
             # is it because we disabled the script?
@@ -4447,14 +4479,14 @@ def check_status():
                         format(TASK_NAME.capitalize())
                     )
                 logging_email_start_logging()
-                sys.exit(LOCKFILE_EXITVAL)
+                sys.exit(EXITVALS['lockfile']['num'])
 
             # but what about subsequent emails?
 
             # if cfg['if_running']==0, log it but don't send email
             if cfg['if_running'] == 0:
                 alert_logger.error('if_running == 0; no email sent.')
-                sys.exit(LOCKFILE_EXITVAL)
+                sys.exit(EXITVALS['lockfile']['num'])
 
             # if alerts have been silenced, log it but don't send email
             # (and don't bother checking timestamps)
@@ -4462,7 +4494,7 @@ def check_status():
                                                     LF_ALERTS_SILENCED))):
                 alert_logger.error('Alerts have been silenced; '
                                    'no email sent.')
-                sys.exit(LOCKFILE_EXITVAL)
+                sys.exit(EXITVALS['lockfile']['num'])
 
             # if cfg['lockfile_alert_file'] is newer than
             # cfg['if_running'], log it but don't send email
@@ -4477,11 +4509,11 @@ def check_status():
                     format(pps(cfg['lockfile_alert_file']), e.errno,
                            e.strerror)
                 )
-                sys.exit(STARTUP_EXITVAL)
+                sys.exit(EXITVALS['startup']['num'])
             if nt:
                 alert_logger.error('Alert interval has not expired; '
                                    'no email sent.')
-                sys.exit(LOCKFILE_EXITVAL)
+                sys.exit(EXITVALS['lockfile']['num'])
 
             # touch the semaphore
             touch_file(cfg['lockfile_alert_file'],
@@ -4505,7 +4537,7 @@ def check_status():
                     format(TASK_NAME.capitalize())
                 )
             logging_email_start_logging
-            sys.exit(LOCKFILE_EXITVAL)
+            sys.exit(EXITVALS['lockfile']['num'])
 
     # ok, got the lock
 
@@ -4524,7 +4556,7 @@ def check_status():
                 format(pps(cfg['lockfile_alert_file']), e.errno,
                        e.strerror)
             )
-            sys.exit(STARTUP_EXITVAL)
+            sys.exit(EXITVALS['startup']['num'])
         else:  # it didn't exist, ignore
             pass
     else:  # it did exist, tell the user
@@ -4683,7 +4715,7 @@ def silence_lf_alerts():
 
     Dependencies:
         config settings: lockfile
-        globals: cfg, status_logger, NO_ERROR_EXITVAL, STARTUP_EXITVAL,
+        globals: cfg, status_logger, EXITVALS['startup'],
                  LF_ALERTS_SILENCED
         functions: fix_path(), logging_stop_stdouterr(),
                    logging_start_stdouterr(), log_cl_config(), pps(),
@@ -4695,20 +4727,20 @@ def silence_lf_alerts():
     # lockfile exists?
     if not os.path.exists(fix_path(cfg['lockfile'])):
         print("\nLockfile directory doesn't exist; nothing to silence.\n")
-        sys.exit(STARTUP_EXITVAL)
+        sys.exit(EXITVALS['startup']['num'])
 
     # alerts already silenced?
     if os.path.exists(fix_path(os.path.join(cfg['lockfile'],
                                             LF_ALERTS_SILENCED))):
         print('\nLockfile alerts were already silenced.\n')
-        sys.exit(STARTUP_EXITVAL)
+        sys.exit(EXITVALS['startup']['num'])
 
     # touch the semaphore;
     # using a file in the lockfile dir means that we automatically
     # get the silencing cleared when the lockfile is removed
     touch_file(os.path.join(cfg['lockfile'], LF_ALERTS_SILENCED),
                'the semaphore file', None, use_logger=False,
-               warn_only=False, exit_val=STARTUP_EXITVAL)
+               warn_only=False, exit_val=EXITVALS['startup']['num'])
 
     # print and log status, separately
     print('\nLockfile alerts have been silenced.\n')
@@ -4726,7 +4758,7 @@ def unsilence_lf_alerts():
 
     Dependencies:
         config settings: lockfile
-        globals: cfg, status_logger, NO_ERROR_EXITVAL, STARTUP_EXITVAL,
+        globals: cfg, status_logger, EXITVALS['startup'],
                  LF_ALERTS_SILENCED
         functions: fix_path(), logging_stop_stdouterr(),
                    logging_start_stdouterr(), log_cl_config(), pps(),
@@ -4739,7 +4771,7 @@ def unsilence_lf_alerts():
     if not os.path.exists(fix_path(os.path.join(cfg['lockfile'],
                                                 LF_ALERTS_SILENCED))):
         print('\nLockfile alerts were already unsilenced.\n')
-        sys.exit(STARTUP_EXITVAL)
+        sys.exit(EXITVALS['startup']['num'])
 
     # remove the semaphore
     try:
@@ -4752,7 +4784,7 @@ def unsilence_lf_alerts():
                      format(pps(os.path.join(cfg['lockfile'],
                                              LF_ALERTS_SILENCED)),
                             e.errno, e.strerror),
-                     STARTUP_EXITVAL)
+                     EXITVALS['startup']['num'])
         else:  # it didn't exist, ignore
             pass
 
@@ -4773,8 +4805,7 @@ def disable_script():
     Dependencies:
         config settings: lockfile
         globals: cfg, status_logger, TASK_ARTICLE, TASK_NAME,
-                 TASKS_NAME, NO_ERROR_EXITVAL, STARTUP_EXITVAL,
-                 SCRIPT_DISABLED
+                 TASKS_NAME, EXITVALS['startup'], SCRIPT_DISABLED
         functions: fix_path(), logging_stop_stdouterr(),
                    logging_start_stdouterr(), log_cl_config(), pps(),
                    err_exit()
@@ -4787,7 +4818,7 @@ def disable_script():
                                             SCRIPT_DISABLED))):
         print('\n{0} were already disabled.\n' .
               format(TASKS_NAME.capitalize()))
-        sys.exit(STARTUP_EXITVAL)
+        sys.exit(EXITVALS['startup']['num'])
 
     # lockfile exists?
     if os.path.exists(fix_path(cfg['lockfile'])):
@@ -4805,12 +4836,12 @@ def disable_script():
             err_exit('\nError: could not create the lockfile directory '
                      '({0}); exiting.\nDetails: [Errno {1}] {2}\n' .
                      format(pps(cfg['lockfile']), e.errno, e.strerror),
-                     STARTUP_EXITVAL)
+                     EXITVALS['startup']['num'])
         else:  # it existed already
             pass
     touch_file(os.path.join(cfg['lockfile'], SCRIPT_DISABLED),
                'the semaphore file', None, use_logger=False,
-               warn_only=False, exit_val=STARTUP_EXITVAL)
+               warn_only=False, exit_val=EXITVALS['startup']['num'])
 
     # print and log status, separately
     print('\n{0} have been disabled; remember to re-enable them later!\n' .
@@ -4831,8 +4862,7 @@ def enable_script():
     Dependencies:
         config settings: lockfile
         globals: cfg, status_logger, TASK_ARTICLE, TASK_NAME,
-                 TASKS_NAME, NO_ERROR_EXITVAL, STARTUP_EXITVAL,
-                 SCRIPT_DISABLED
+                 TASKS_NAME, EXITVALS['startup'], SCRIPT_DISABLED
         functions: fix_path(), logging_stop_stdouterr(),
                    logging_start_stdouterr(), log_cl_config(), pps(),
                    err_exit()
@@ -4845,7 +4875,7 @@ def enable_script():
                                                 SCRIPT_DISABLED))):
         print('\n{0} were already enabled.\n' .
               format(TASKS_NAME.capitalize()))
-        sys.exit(STARTUP_EXITVAL)
+        sys.exit(EXITVALS['startup']['num'])
 
     # remove the semaphore
     try:
@@ -4857,7 +4887,7 @@ def enable_script():
                      format(pps(os.path.join(cfg['lockfile'],
                                              SCRIPT_DISABLED)),
                             e.errno, e.strerror),
-                     STARTUP_EXITVAL)
+                     EXITVALS['startup']['num'])
         else:  # it didn't exist, ignore
             pass
 
@@ -4882,7 +4912,7 @@ def clear_lockfile():
     Dependencies:
         config settings: lockfile
         globals: cfg, status_logger, TASK_ARTICLE, TASK_NAME,
-                 NO_ERROR_EXITVAL, STARTUP_EXITVAL
+                 EXITVALS['startup']
         functions: fix_path(), logging_stop_stdouterr(),
                    logging_start_stdouterr(), log_cl_config(), pps(),
                    err_exit()
@@ -4893,7 +4923,7 @@ def clear_lockfile():
     # lockfile already removed?
     if not os.path.exists(fix_path(cfg['lockfile'])):
         print('\nThe lockfile directory has already been removed.\n')
-        sys.exit(STARTUP_EXITVAL)
+        sys.exit(EXITVALS['startup']['num'])
 
     # are you sure?
     yn = raw_input("\nWARNING: the lockfile directory should only be "
@@ -4903,7 +4933,7 @@ def clear_lockfile():
                    format(TASK_ARTICLE, TASK_NAME))
     if yn.lower() != 'y':
         print('\nExiting.\n')
-        sys.exit(NO_ERROR_EXITVAL)
+        return
 
     # remove the lockfile
     try:
@@ -4913,7 +4943,7 @@ def clear_lockfile():
             err_exit('Error: could not remove the lockfile directory '
                      '({0}); exiting.\nDetails: [Errno {1}] {2}' .
                      format(pps(cfg['lockfile']), e.errno, e.strerror),
-                     STARTUP_EXITVAL)
+                     EXITVALS['startup']['num'])
         else:  # it didn't exist, ignore
             pass
 
@@ -4984,7 +5014,7 @@ def import_config_by_name(file_path):
     Parameters:
         mod_path: the path to the config file
     Dependencies:
-        globals: config_modules, cfg, STARTUP_EXITVAL
+        globals: config_modules, cfg, EXITVALS['startup']
         functions: import_file(), pps(), err_exit()
     """
     global config_modules, cfg
@@ -4994,11 +5024,11 @@ def import_config_by_name(file_path):
         err_exit('Error: could not read config file {0}; exiting.\n'
                  'Details: [Errno {1}] {2}' .
                  format(pps(file_path), e.errno, e.strerror),
-                 STARTUP_EXITVAL)
+                 EXITVALS['startup']['num'])
     except (SyntaxError, TypeError) as e:
         err_exit('Error: could not process config file {0}; exiting.\n'
                  'Details: {1}'.format(pps(file_path), e),
-                 STARTUP_EXITVAL)
+                 EXITVALS['startup']['num'])
     config_modules.append(c_mod)
     cfg.update(c_mod.cfg)
 
@@ -5009,7 +5039,7 @@ def check_bogus_config():
     If there are non-existent settings set, exit with an error.
 
     Dependencies:
-        globals: cfg, config_settings, bogus_config, STARTUP_EXITVAL
+        globals: cfg, config_settings, bogus_config, EXITVALS['startup']
         functions: setting_walk(), pps(), err_exit()
 
     """
@@ -5021,7 +5051,7 @@ def check_bogus_config():
             err_exit("Warning: cfg['{0}'] is set (to {1}), "
                      "but there is no such setting." .
                      format(setting, pps(cfg[setting])),
-                     STARTUP_EXITVAL)
+                     EXITVALS['startup']['num'])
 
     # look for specific sub-settings
     for bogus in bogus_config:
@@ -5030,7 +5060,7 @@ def check_bogus_config():
             err_exit('Warning: {0} is set (to {1}), '
                      'but there is no such setting.' .
                      format(full_path, pps(obj)),
-                     STARTUP_EXITVAL)
+                     EXITVALS['startup']['num'])
 
 
 def apply_config_defaults():
@@ -5086,7 +5116,7 @@ def check_config_requirements():
     If settings require unavailable features, exit with an error.
     Dependencies:
         globals: supported_features, available_features,
-                 config_settings, cfg, STARTUP_EXITVAL
+                 config_settings, cfg, EXITVALS['startup']
         functions: pps(), err_exit()
     """
     for s_name, s_dict in config_settings.items():
@@ -5103,7 +5133,7 @@ def check_config_requirements():
                           supported_features[feature]):
                         msg += ('\nFeature description: {0}' .
                                 format(supported_features[feature]))
-                    err_exit(msg, STARTUP_EXITVAL)
+                    err_exit(msg, EXITVALS['startup']['num'])
 
 
 def validate_config():
@@ -5242,7 +5272,7 @@ def process_config(arg_ns):
     Dependencies:
         config settings: exec_path, umask
         globals: cfg, config_file_paths, cl_config, config_settings,
-                 process_config_hooks, STARTUP_EXITVAL
+                 process_config_hooks, EXITVALS['startup']
         functions: import_config_by_name(), check_bogus_config(),
                    apply_config_defaults(), validate_config(),
                    init_logging_main(), init_logging_output(), pps(),
@@ -5262,12 +5292,14 @@ def process_config(arg_ns):
         for cfp in config_file_paths:
             if not cfp:
                 err_exit('Error: config file paths may not be empty '
-                         'strings; exiting', STARTUP_EXITVAL)
+                         'strings; exiting', EXITVALS['startup']['num'])
             check_file_type(cfp, 'config file', 'f', follow_links=True,
                             must_exist=True, use_logger=False,
-                            warn_only=False, exit_val=STARTUP_EXITVAL)
+                            warn_only=False,
+                            exit_val=EXITVALS['startup']['num'])
             check_file_access(cfp, 'config file', 'r', use_logger=False,
-                              warn_only=False, exit_val=STARTUP_EXITVAL)
+                              warn_only=False,
+                              exit_val=EXITVALS['startup']['num'])
             import_config_by_name(cfp)
 
     # process settings supplied on the command line;
@@ -5279,18 +5311,19 @@ def process_config(arg_ns):
                 err_exit('Error: non-existent setting {0} was supplied '
                          'on the command line.\nExiting.' .
                          format(pps(s_name)),
-                         STARTUP_EXITVAL)
+                         EXITVALS['startup']['num'])
             if ('cl_coercer' not in config_settings[s_name] or
                   not callable(config_settings[s_name]['cl_coercer'])):
                 err_exit('Error: setting {0} may not be supplied on the '
                          'command line.\nExiting.'.format(pps(s_name)),
-                         STARTUP_EXITVAL)
+                         EXITVALS['startup']['num'])
             try:
                 cfg[s_name] = config_settings[s_name]['cl_coercer'](s_val)
             except ValueError:
                 err_exit('Error: invalid value for setting {0} ({1}); '
                          'exiting.' .
-                         format(s_name, pps(s_val)), STARTUP_EXITVAL)
+                         format(s_name, pps(s_val)),
+                         EXITVALS['startup']['num'])
             cl_config.append(s_name)
 
     # check for bogus settings
@@ -5434,7 +5467,7 @@ def create_blank_config_files(full=False):
               the default (if any)
 
     Dependencies:
-        globals: config_file_paths, config_settings, STARTUP_EXITVAL
+        globals: config_file_paths, config_settings, EXITVALS['startup']
         functions: open_create_only(), pps(), err_exit()
         modules: sys, errno, re
 
@@ -5491,19 +5524,20 @@ def create_blank_config_files(full=False):
     except (OSError, IOError) as e:
         if (e.errno == errno.EEXIST):
             err_exit('Error: specified config file {0} already exists; '
-                     'exiting.'.format(pps(cfp)), STARTUP_EXITVAL)
+                     'exiting.'.format(pps(cfp)),
+                     EXITVALS['startup']['num'])
         else:
             if config_file_paths is None:
                 # should never happen, but...
                 err_exit('Error printing blank config file; exiting.\n'
                          'Details: [Errno {0}] {1}' .
                          format(e.errno, e.strerror),
-                         STARTUP_EXITVAL)
+                         EXITVALS['startup']['num'])
             else:
                 err_exit('Error creating blank config file {0}; exiting.\n'
                          'Details: [Errno {1}] {2}' .
                          format(pps(cfp), e.errno, e.strerror),
-                         STARTUP_EXITVAL)
+                         EXITVALS['startup']['num'])
 
 
 def create_arg_parser():
@@ -5518,7 +5552,8 @@ def create_arg_parser():
     See also process_command_line().
 
     Dependencies:
-        globals: script_name, create_arg_parser_hooks, SCRIPT_MODES
+        globals: script_name, available_features, create_arg_parser_hooks,
+                 SCRIPT_MODES
         modules: re, argparse
         Python: 2.7/3.2, for argparse
 
@@ -5618,7 +5653,7 @@ def run_mode():
         config settings: last_started_file
         globals: status_logger, output_logger, start_time, cfg,
                  run_mode_hooks, TASK_NAME, FULL_DATE_FORMAT,
-                 STARTUP_EXITVAL
+                 EXITVALS['startup']
         functions: log_cl_config(), check_status(),
                    init_logging_output(), touch_file()
         modules: time
@@ -5645,7 +5680,8 @@ def run_mode():
     # log that we're starting the task
     status_logger.info('Starting {0}.'.format(TASK_NAME))
     touch_file(cfg['last_started_file'], "cfg['last_started_file']", None,
-               use_logger=True, warn_only=False, exit_val=STARTUP_EXITVAL)
+               use_logger=True, warn_only=False,
+               exit_val=EXITVALS['startup']['num'])
     output_logger.info('{0} started {1}.' .
                        format(TASK_NAME.capitalize(),
                               time.strftime(FULL_DATE_FORMAT,
@@ -5676,7 +5712,8 @@ def process_command_line():
 
     Dependencies:
         globals: config_file_paths, default_config_files,
-                 SCRIPT_MODES, NO_ERROR_EXITVAL, INTERNAL_EXITVAL
+                 SCRIPT_MODES, EXITVALS['no_error'],
+                 EXITVALS['internal']
         functions: (mode callbacks), create_arg_parser(),
                    process_config(), pps(), err_exit()
         modules: argparse, sys
@@ -5712,7 +5749,7 @@ def process_command_line():
                          'script mode\n({0}) while trying to look up mode '
                          '{1}; exiting.' .
                          format(pps(mode_dict_temp['alias_of']), pps(mode)),
-                         INTERNAL_EXITVAL)
+                         EXITVALS['internal']['num'])
             mode_dict_temp = SCRIPT_MODES[mode_dict_temp['alias_of']]
         else:
             mode_dict = mode_dict_temp
@@ -5720,20 +5757,20 @@ def process_command_line():
                   not callable(mode_dict['callback'])):
                 err_exit('Internal Error: missing or invalid callback '
                          'function for script mode\n{0}; exiting.' .
-                         format(pps(mode)), INTERNAL_EXITVAL)
+                         format(pps(mode)), EXITVALS['internal']['num'])
 
     # first deal with the modes that don't require processing the
     # config file or command-line settings
     if not mode_dict['req_config']:
         mode_dict['callback']()
-        sys.exit(NO_ERROR_EXITVAL)
+        sys.exit(EXITVALS['no_error']['num'])
 
     # process the config file and command-line settings
     process_config(arg_ns)
 
     # deal with the rest of the modes
     mode_dict['callback']()
-    sys.exit(NO_ERROR_EXITVAL)
+    sys.exit(EXITVALS['no_error']['num'])
 
 
 ###################################

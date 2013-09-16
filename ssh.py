@@ -42,6 +42,14 @@ from . import nori
 ###exitval(s), USAGE, license
 
 
+EXITVALS['ssh_tunnel']=dict(
+    num=20,
+    descr=(
+"""
+error opening SSH tunnel
+"""
+    ),
+)
 
 ##################################
 # SSH remote commands and tunnels
