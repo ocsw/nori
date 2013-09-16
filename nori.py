@@ -1145,58 +1145,60 @@ config_defaults_multiple = dict(
 # this is a dictionary; the keys are setting names, and the values
 # are dictionaries containing these keys:
 #
-#   descr: a description of the setting, used by
-#          create_blank_config_files(full=True) (with leading and
-#          trailing whitespace removed); should be supplied for all
-#          settings, but won't cause an error if omitted
-#          note: this will have '# ' prepended to each line; format
-#          accordingly
+#     descr: a description of the setting, used by
+#            create_blank_config_files(full=True) (with leading and
+#            trailing whitespace removed); should be supplied for all
+#            settings, but won't cause an error if omitted
+#            note: this will have '# ' prepended to each line; format
+#            accordingly
 #
-#   default: the default value of the setting, applied if it is unset;
-#            can be omitted
+#     default: the default value of the setting, applied if it is unset;
+#              can be omitted
 #
-#   default_descr: a string description of the default; if this is
-#                  present, it will be used by
-#                  create_blank_config_files(full=True)
-#                  (with leading and trailing whitespace removed)
-#                  in place of the actual default
-#                  note: this will have '# Default: ' prepended to the
-#                  first line, and '# ' to the rest; format accordingly
+#     default_descr: a string description of the default; if this is
+#                    present, it will be used by
+#                    create_blank_config_files(full=True)
+#                    (with leading and trailing whitespace removed)
+#                    in place of the actual default
+#                    note: this will have '# Default: ' prepended to the
+#                    first line, and '# ' to the rest; format
+#                    accordingly
 #
-#   cl_coercer: a function that can take a value passed on the command
-#               line (as a string) and generate a value for the config
-#               setting (possibly raising a ValueError exception);
-#               if omitted, the setting cannot be supplied on the
-#               command line
-#               notes:
-#                 - conversion is safest with scalar (non-container)
-#                   values, so this is usually str, int, etc.
-#                 - see also str_to_bool(), which should be used for
-#                   boolean values
-#                 - to refer to functions that haven't been defined yet,
-#                   use this trick: cl_coercer=lambda x: str_to_bool(x)
+#     cl_coercer: a function that can take a value passed on the command
+#                 line (as a string) and generate a value for the config
+#                 setting (possibly raising a ValueError exception);
+#                 if omitted, the setting cannot be supplied on the
+#                 command line
+#                 notes:
+#                   - conversion is safest with scalar (non-container)
+#                     values, so this is usually str, int, etc.
+#                   - see also str_to_bool(), which should be used for
+#                     boolean values
+#                   - to refer to functions that haven't been defined
+#                     yet, use this trick:
+#                     cl_coercer=lambda x: str_to_bool(x)
 #
-#   renderer: a function to use for printing the value of the setting;
-#             if omitted, pps() is used
+#     renderer: a function to use for printing the value of the setting;
+#               if omitted, pps() is used
 #
-#   requires: a list of supported features that must be available if
-#             this setting is set; see supported_features,
-#             available_features, and the section on submodules in the
-#             module docstring, above
+#     requires: a list of supported features that must be available if
+#               this setting is set; see supported_features,
+#               available_features, and the section on submodules in the
+#               module docstring, above
 #
-#   no_print: if present and true, this setting will be omitted by
-#             render_config() and create_blank_config_files();
-#             this is especially useful for settings that don't apply
-#             to a particular script, but need to be left in the code
-#             so as not to break anything (for example, this is often
-#             the case with output_log*, so those settings have this set
-#             by default; see also
-#             config_settings_no_print_output_log())
+#     no_print: if present and true, this setting will be omitted by
+#               render_config() and create_blank_config_files();
+#               this is especially useful for settings that don't apply
+#               to a particular script, but need to be left in the code
+#               so as not to break anything (for example, this is often
+#               the case with output_log*, so those settings have this
+#               set by default; see also
+#               config_settings_no_print_output_log())
 #
-#   heading: if this is present, the element represents a section
-#            heading for render_config() and
-#            create_blank_config_files(), not an actual setting;
-#            the value of this key is the heading string
+#     heading: if this is present, the element represents a section
+#              heading for render_config() and
+#              create_blank_config_files(), not an actual setting;
+#              the value of this key is the heading string
 #
 config_settings = collections.OrderedDict()
 # if we put the values in the constructor, they are added to kwargs and
