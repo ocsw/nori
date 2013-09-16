@@ -686,7 +686,8 @@ INTERNAL_EXITVAL = 250
 LF_ALERTS_SILENCED = 'lf_alerts_silenced'
 SCRIPT_DISABLED = 'script_disabled'
 
-# for printing timestamps
+# format for printing certain timestamps, such as in the status and
+# output logs
 FULL_DATE_FORMAT = '%a %b %d %H:%M:%S %Z %Y'
 
 # what the script does, used in various messages;
@@ -3244,7 +3245,7 @@ def init_logging_output():
                          output_log_date, (output_log_num),
                          (output_log_days)
         globals: cfg, output_logger, output_log_fo, email_logger,
-                 start_time, STARTUP_EXITVAL, FULL_DATE_FORMAT
+                 start_time, STARTUP_EXITVAL
         functions: fix_path(), rotate_prune_output_logs(), pps(),
                    end_logging_output
         modules: logging, sys, os, time, atexit
