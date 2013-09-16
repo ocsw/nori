@@ -11,9 +11,8 @@ CONTENTS:
     4) API Variables
     5) API Functions
     6) API Classes
-    7) API Hooks
-    8) Usage in Scripts
-    9) Modification Notes
+    7) Usage in Scripts
+    8) Modification Notes
 
 
 1) ABOUT AND REQUIREMENTS:
@@ -180,6 +179,38 @@ CONTENTS:
 
     bogus_config
         non-existent settings that the end-user might set by accident
+
+
+    Hook lists:
+    -----------
+
+    render_status_messages_hooks
+        Change/add to status messages returned by
+        render_status_messages().
+
+    render_status_metadata_hooks
+        Change/add to metadata returned by render_status_metadata().
+
+    apply_config_defaults_hooks
+        Override/add to last-minute defaults applied by
+        apply_config_defaults().
+
+    validate_config_hooks
+        Add config-setting validations to validate_config().
+
+    process_config_hooks
+        Override/add to process_config() initializations.
+
+    create_arg_parser_hooks
+        Override/add to command-line parser returned by
+        create_arg_parser().
+
+    run_mode_hooks
+        Supply a task for the script, as performed by run_mode().
+
+    mode_callbacks_hooks
+        Change/add to mode_callbacks dictionary used by
+        process_command_line().
 
 
 5) API FUNCTIONS:
@@ -520,39 +551,7 @@ CONTENTS:
         Override SMTPHandler to add diagnostics to the email.
 
 
-7) API HOOKS:
--------------
-
-    render_status_messages_hook()
-        Change/add to status messages returned by
-        render_status_messages().
-
-    render_status_metadata_hook()
-        Change/add to metadata returned by render_status_metadata().
-
-    apply_config_defaults_hook()
-        Override/add to last-minute defaults applied by
-        apply_config_defaults().
-
-    validate_config_hook()
-        Add config-setting validations to validate_config().
-
-    process_config_hook()
-        Override/add to process_config() initializations.
-
-    create_arg_parser_hook()
-        Override/add to command-line parser returned by
-        create_arg_parser().
-
-    run_mode_hook()
-        Supply a task for the script, as performed by run_mode().
-
-    mode_callbacks_hook()
-        Change/add to mode_callbacks dictionary used by
-        process_command_line().
-
-
-8) USAGE IN SCRIPTS:
+7) USAGE IN SCRIPTS:
 --------------------
 
     (These are some pointers for using this module; however, there are
@@ -563,9 +562,9 @@ CONTENTS:
     done is as follows:
         * redefine TASK_ARTICLE, TASK_NAME, and TASKS_NAME
         * redefine LICENSE
-        * add to config_settings, as necessary, and define
-          validate_config_hook()
-        * define run_mode_hook()
+        * add to config_settings, as necessary, and add a function to
+          validate_config_hooks
+        * add a function to run_mode_hooks
 
     In most cases, these will also be necessary:
         * add more *_EXITVAL constants
@@ -581,10 +580,10 @@ CONTENTS:
 
     To add command-line modes:
         * add to / redefine SCRIPT_MODES and SCRIPT_MODES_DESCR
-        * define mode_callbacks_hook()
+        * add a function to mode_callbacks_hooks
 
 
-9) MODIFICATION NOTES:
+8) MODIFICATION NOTES:
 ----------------------
 
     Settings:
@@ -853,7 +852,7 @@ _stdout_handler = None
 _stderr_handler = None
 
 
-### see also the configuration section, below ###
+### see also the configuration and hooks sections, below ###
 
 
 ########################################################################
@@ -1702,6 +1701,36 @@ def config_settings_no_print_output_log(no_print):
     config_settings['output_log_date']['no_print'] = no_print
     config_settings['output_log_num']['no_print'] = no_print
     config_settings['output_log_days']['no_print'] = no_print
+
+
+########################################################################
+#                              HOOK LISTS
+########################################################################
+
+# change/add to status messages returned by render_status_messages()
+render_status_messages_hooks = []
+
+# change/add to metadata returned by render_status_metadata()
+render_status_metadata_hooks = []
+
+# override/add to last-minute defaults applied by
+# apply_config_defaults()
+apply_config_defaults_hooks = []
+
+# add config-setting validations to validate_config()
+validate_config_hooks = []
+
+# override/add to process_config() initializations
+process_config_hooks = []
+
+# override/add to command-line parser returned by create_arg_parser()
+create_arg_parser_hooks = []
+
+# supply a task for the script, as performed by run_mode()
+run_mode_hooks = []
+
+# change/add to mode_callbacks dictionary used by process_command_line()
+mode_callbacks_hooks = []
 
 
 ########################################################################
@@ -4371,9 +4400,9 @@ def render_status_messages(full=False):
     """
     Return a string with status messages about the script.
 
-    The messages can be changed or added to by redefining this function
-    or by defining render_status_messages_hook(), which must take the
-    message string and the full flag, and return a message string.
+    The messages can be changed or added to by adding a function to
+    render_status_messages_hooks.  The function must take a message
+    string and the full flag, and return a message string.
 
     Parameters:
         full: if true, include less-useful (e.g., debugging) info
@@ -4381,9 +4410,8 @@ def render_status_messages(full=False):
     Dependencies:
         config settings: last_started_file, lockfile,
                          lockfile_alert_file
-        hooks: render_status_messages_hook
-        globals: cfg, LF_ALERTS_SILENCED, SCRIPT_DISABLED, TASK_NAME,
-                 TASKS_NAME
+        globals: cfg, render_status_messages_hooks, LF_ALERTS_SILENCED,
+                 SCRIPT_DISABLED, TASK_NAME, TASKS_NAME
         functions: fix_path()
         modules: os
 
@@ -4425,10 +4453,10 @@ Status:
                 'be running).\n' .
                 format(TASKS_NAME.capitalize()))
 
-    # hook for adding more messages
-    if ('render_status_messages_hook' in globals() and
-          callable(render_status_messages_hook)):
-        msg = render_status_messages_hook(msg, full)
+    # hooks for adding more messages
+    for hook in render_status_messages_hooks:
+        if callable(hook):
+            msg = hook(msg, full)
 
     return msg
 
@@ -4438,9 +4466,9 @@ def render_status_metadata(full=False):
     """
     Return a string with metadata about lockfiles, semaphores, etc.
 
-    The metadata can be changed or added to by redefining this function
-    or by defining render_status_metadata_hook(), which must take the
-    message string and the full flag, and return a message string.
+    The metadata can be changed or added to by adding a function to
+    render_status_metadata_hooks.  The function must take a message
+    string and the full flag, and return a message string.
 
     Parameters:
         full: if true, include less-useful (e.g., debugging) info
@@ -4448,8 +4476,8 @@ def render_status_metadata(full=False):
     Dependencies:
         config settings: last_started_file, lockfile,
                          lockfile_alert_file
-        hooks: render_status_metadata_hook
-        globals: cfg, LF_ALERTS_SILENCED, SCRIPT_DISABLED
+        globals: cfg, render_status_metadata_hooks, LF_ALERTS_SILENCED,
+                 SCRIPT_DISABLED
         functions: get_file_metadata()
         modules: os
 
@@ -4485,10 +4513,10 @@ scriptdisabled:
                                     '(none)'))
           )
 
-    # hook for adding more metadata
-    if ('render_status_metadata_hook' in globals() and
-          callable(render_status_metadata_hook)):
-        msg = render_status_metadata_hook(msg, full)
+    # hooks for adding more metadata
+    for hook in render_status_metadata_hooks:
+        if callable(hook):
+            msg = hook(msg, full)
 
     return msg
 
@@ -4897,14 +4925,12 @@ def apply_config_defaults_extra():
     In particular, this is the place for defaults that depend on the
     values supplied for other settings.
 
-    To change or add to the extra setting defaults, either redefine this
-    function, or define apply_config_defaults_hook(), which takes no
-    arguments.
+    To change or add to the extra setting defaults, add a function to
+    apply_config_defaults_hooks.  The function must take no arguments.
 
     Dependencies:
         config settings: lockfile_alert_file, lockfile
-        hooks: apply_config_defaults_hook()
-        globals: cfg
+        globals: cfg, apply_config_defaults_hooks
 
     """
 
@@ -4912,10 +4938,10 @@ def apply_config_defaults_extra():
     if 'lockfile_alert_file' not in cfg:
         cfg['lockfile_alert_file'] = cfg['lockfile'] + '.alert'
 
-    # hook for adding more defaults
-    if ('apply_config_defaults_hook' in globals() and
-          callable(apply_config_defaults_hook)):
-        apply_config_defaults_hook()
+    # hooks for adding more defaults
+    for hook in apply_config_defaults_hooks:
+        if callable(hook):
+            hook()
 
 
 def check_config_requirements():
@@ -4948,13 +4974,12 @@ def validate_config():
     """
     Validate the configuration settings.
 
-    To change or add to the validation, either redefine this function,
-    or define validate_config_hook(), which takes no arguments.
+    To add to the validations, add a function to validate_config_hooks.
+    The function must take no arguments.
 
     Dependencies:
         config settings: (all of them)
-        hooks: validate_config_hook()
-        globals: cfg, STRING_TYPES, PATH_SEP
+        globals: cfg, validate_config_hooks, STRING_TYPES, PATH_SEP
         functions: setting_check_type(), setting_check_num(),
                    setting_check_filedir_create(),
                    setting_check_not_blank(), setting_check_no_blanks(),
@@ -5057,21 +5082,21 @@ def validate_config():
             setting_check_num('output_log_num', 0)
             setting_check_num('output_log_days', 0)
 
-    # hook for adding more validation
-    if ('validate_config_hook' in globals() and
-          callable(validate_config_hook)):
-        validate_config_hook()
+    # hooks for adding more validations
+    for hook in validate_config_hooks:
+        if callable(hook):
+            hook()
 
 
 def process_config(arg_ns):
 
     """
     Process the config file and settings supplied on the command line.
-    Includes applying defaults, checking requirements, validating values,
-    and initializing loggers (main and output).
+    Includes applying defaults, checking requirements, validating
+    values, and initializing loggers (main and output).
 
-    To add initializations, define process_config_hook(), which takes no
-    arguments.
+    To add initializations, add a function to process_config_hooks.  The
+    function must take no arguments.
 
     Parameters:
         arg_ns: the Namespace object returned by an argument parser
@@ -5079,9 +5104,8 @@ def process_config(arg_ns):
 
     Dependencies:
         config settings: exec_path, umask
-        hooks: process_config_hook()
         globals: cfg, config_file_paths, cl_config, config_settings,
-                 STARTUP_EXITVAL
+                 process_config_hooks, STARTUP_EXITVAL
         functions: import_config_by_name(), check_bogus_config(),
                    apply_config_defaults(), validate_config(),
                    init_logging_main(), init_logging_output(), pps(),
@@ -5148,10 +5172,10 @@ def process_config(arg_ns):
     if 'umask' in cfg:
         os.umask(cfg['umask'])
 
-    # hook for adding more initializations
-    if ('process_config_hook' in globals() and
-          callable(process_config_hook)):
-        process_config_hook()
+    # hooks for adding more initializations
+    for hook in process_config_hooks:
+        if  callable(hook):
+            hook()
 
 
 def render_config():
@@ -5350,15 +5374,15 @@ def create_arg_parser():
     """
     Create and return the command-line-argument parser.
 
-    To change the arguments the script takes, either redefine this
-    function, or define create_arg_parser_hook(), which must take and
-    return an ArgumentParser object.
+    To add to the arguments the script takes, add a function to
+    create_arg_parser_hooks.  The function must take and return an
+    ArgumentParser object.
 
     See also process_command_line().
 
     Dependencies:
-        hooks: create_arg_parser_hook()
-        globals: script_name, SCRIPT_MODES, SCRIPT_MODES_DESCR
+        globals: script_name, create_arg_parser_hooks, SCRIPT_MODES,
+                 SCRIPT_MODES_DESCR
         modules: argparse
         Python: 2.7/3.2, for argparse
 
@@ -5396,10 +5420,10 @@ def create_arg_parser():
          help='mode in which to run the script; see below'
     )
 
-    # hook for adding more arguments
-    if ('create_arg_parser_hook' in globals() and
-          callable(create_arg_parser_hook)):
-        arg_parser = create_arg_parser_hook(arg_parser)
+    # hooks for adding more arguments
+    for hook in create_arg_parser_hooks:
+        if callable(hook):
+            arg_parser = hook(arg_parser)
 
     return arg_parser
 
@@ -5439,15 +5463,14 @@ def run_mode():
     """
     Do the actual business of the script.
 
-    To supply a task for the script to do, this function can be
-    redefined, or you can define run_mode_hook(), which takes no
-    arguments.
+    To supply a task for the script to do, add a function to
+    run_mode_hooks.  The function must take no arguments.
 
     Dependencies:
         config settings: last_started_file
         globals: status_logger, output_logger, start_time, cfg,
-                 TASK_NAME, FULL_DATE_FORMAT, STARTUP_EXITVAL
-        hooks: run_mode_hook()
+                 run_mode_hooks, TASK_NAME, FULL_DATE_FORMAT,
+                 STARTUP_EXITVAL
         functions: log_cl_config(), check_status(),
                    init_logging_output(), touch_file()
         modules: time
@@ -5480,12 +5503,12 @@ def run_mode():
                               time.strftime(FULL_DATE_FORMAT,
                                             time.localtime())))
 
-    # hook for supplying a task
-    if ('run_mode_hook' in globals() and
-          callable(run_mode_hook)):
-        run_mode_hook()
+    # hooks for supplying tasks
+    for hook in run_mode_hooks:
+        if callable(hook):
+            hook()
     else:
-        status_logger.warning('Warning: no task supplied; '
+        status_logger.warning('Warning: no tasks supplied; '
                               'not doing anything.')
 
     # log that we've finished the task
@@ -5502,13 +5525,12 @@ def process_command_line():
     Process the command-line arguments and do mode-dependent actions.
 
     To change the modes the script offers, change SCRIPT_MODES and
-    SCRIPT_MODES_DESCR and define mode_callbacks_hook(), which must take
-    and return the mode_callbacks dict.
+    SCRIPT_MODES_DESCR and add a function to mode_callbacks_hooks.  The
+    function must take and return the mode_callbacks dict.
 
     Dependencies:
-        hooks: mode_callbacks_hook()
         globals: config_file_paths, default_config_files,
-                 NO_ERROR_EXITVAL
+                 mode_callbacks_hooks, NO_ERROR_EXITVAL
         functions: license_mode(), config_mode(), status_mode(),
                    statusall_mode(), silence_lf_alerts(),
                    unsilence_lf_alerts(), disable_script(),
@@ -5545,10 +5567,10 @@ def process_command_line():
         'run': (run_mode, True),
     }
 
-    # hook for adding/changing callbacks
-    if ('mode_callbacks_hook' in globals() and
-          callable(mode_callbacks_hook)):
-        mode_callbacks = mode_callbacks_hook(mode_callbacks)
+    # hooks for adding/changing callbacks
+    for hook in mode_callbacks_hooks:
+        if callable(hook):
+        mode_callbacks = hook(mode_callbacks)
 
     # parse the command line
     arg_ns = create_arg_parser().parse_args()
