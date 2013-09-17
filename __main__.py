@@ -97,6 +97,7 @@ DOCSTRING CONTENTS:
           validate_config_hooks (and possibly adding to bogus_config
           and apply_default_hooks)
         * expanding the USAGE file
+        * adding the submodule to the imports, below
 
     This is not an exhaustive list; see, for example, the other hooks
     in nori.py.
