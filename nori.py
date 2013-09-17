@@ -2,55 +2,20 @@
 
 
 """
-CONTENTS:
----------
-
-    1) About and Requirements
-    2) General Information
-    3) API Variables
-    4) API Functions
-    5) API Classes
-    6) Usage in Scripts
-    7) Modification Notes
+This is the core module for the nori library; see __main__.py for
+license and usage information.
 
 
-1) ABOUT AND REQUIREMENTS:
---------------------------
+DOCSTRING CONTENTS:
+-------------------
 
-    This is the Nori library for wrapping scripts.  It provides tools
-    such as powerful lockfile checking, logging, command-line
-    processing, and config setting validation, and is particularly
-    helpful for scripts that need to be run from cron with minimal
-    intervention and maximal stability (although it can also be helpful
-    in other cases.)
-
-    It was originally factored out of the Aeolus backup script, then
-    ported to Python; the original and the port are by Daniel Malament.
-
-    The module requires Python 2.7/3.2, and will exit the script upon
-    import (with an error message) if this requirement is not met.
+    1) API Variables
+    2) API Functions
+    3) API Classes
+    4) Modification Notes
 
 
-2) GENERAL INFORMATION:
------------------------
-
-    For command-line usage information, run the module with '--help'.
-
-    For config setting information, run the module with '-n create' or
-    '-n createall'.
-
-    For exit value information, run the module with 'exitvals'.
-
-    For license information, run the module with 'license' or see the
-    LICENSE file.
-
-    These will also work by default in scripts that use this module, and
-    will include script-specific changes.
-
-    For more end-user information, see the USAGE file.
-
-
-3) API VARIABLES:
+1) API VARIABLES:
 -----------------
 
     Constants:
@@ -190,7 +155,7 @@ CONTENTS:
         output file object
 
 
-4) API FUNCTIONS:
+2) API FUNCTIONS:
 -----------------
 
     Python version check:
@@ -511,56 +476,15 @@ CONTENTS:
         actions.
 
 
-5) API CLASSES:
+3) API CLASSES:
 ---------------
 
     SMTPDiagHandler(logging.handlers.SMTPHandler)
         Override SMTPHandler to add diagnostics to the email.
 
 
-6) USAGE IN SCRIPTS:
---------------------
-
-    (These are some pointers for using this module; however, there are
-    many features and options left out.  See the comments and
-    docstrings, below, for more information.)
-
-    To use this module to wrap a task, the minimum setup that should be
-    done is as follows:
-        * redefine task_article, task_name, and tasks_name
-        * redefine license_str
-        * add to config_settings, as necessary, and add a function to
-          validate_config_hooks
-        * add a function to run_mode_hooks
-
-    In most cases, these will also be necessary:
-        * add to exitvals
-        * redefine default_config_files
-        * copy and edit/expand the USAGE file, replacing 'nori' with the
-          name of the script
-
-    To use the output log feature:
-        * run config_settings_no_print_output_log(False)
-        * set these (in most cases):
-          config_settings['exec_path']['no_print'] = False
-          config_settings['print_cmds']['no_print'] = False
-
-    To add command-line modes:
-        * add to script_modes
-
-
-7) MODIFICATION NOTES:
+4) MODIFICATION NOTES:
 ----------------------
-
-    Settings:
-    ---------
-
-    Any change to the config settings (additions, deletions, name
-    changes, type changes, etc.) must be reflected in the following, as
-    appropriate:
-        config_settings, _config_settings_extra(), bogus_config,
-        apply_config_defaults_extra(), and validate_config()
-
 
     Files:
     ------
@@ -1215,6 +1139,17 @@ config_defaults_multiple = dict(
 #              heading for render_config() and
 #              create_blank_config_files(), not an actual setting;
 #              the value of this key is the heading string
+#
+# any change to the values below (additions, deletions, name changes,
+# type changes, etc.) must be reflected in the following, as
+# appropriate:
+#     _config_settings_extra(), bogus_config,
+#     apply_config_defaults_extra(), and validate_config()
+#
+# changes made by other submodules, or scripts that use this library,
+# must be reflected in (as appropriate):
+#     bogus_config, apply_config_defaults_hooks, and
+#     validate_config_hooks
 #
 config_settings = collections.OrderedDict()
 # if we put the values in the constructor, they are added to kwargs and
