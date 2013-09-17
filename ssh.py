@@ -9,20 +9,39 @@ license and usage information.
 DOCSTRING CONTENTS:
 -------------------
 
+1) About and Requirements
+2) API Variables
+3) API Functions
+4) API Classes
+5) Usage in Scripts
+6) Modification Notes
 
-Requirements
-API Variables
-API Functions
-API Classes
-usage
-Modification Notes
 
-
-1) REQUIREMENTS:
-----------------
-
+1) ABOUT AND REQUIREMENTS:
+--------------------------
     The SSH functions require the paramiko module:
         https://github.com/paramiko/paramiko
+
+
+2) API VARIABLES:
+-----------------
+
+
+3) API FUNCTIONS:
+-----------------
+
+
+4) API CLASSES:
+---------------
+
+
+5) USAGE IN SCRIPTS:
+--------------------
+
+
+6) MODIFICATION NOTES:
+----------------------
+
 
 """
 
@@ -53,23 +72,79 @@ except ImportError:
 
 from . import nori
 
-nori.supported_features['ssh'] = 'ssh stuff'
-nori.available_features.append('ssh')
 
-###TODO: supported_features, available_features,
-###config_settings (generator)? incl. requires
-###setting hooks
-###exitval(s), USAGE
+########################################################################
+#                              VARIABLES
+########################################################################
+
+############
+# constants
+############
 
 
-nori.exitvals['ssh_tunnel']=dict(
-    num=20,
+##################
+# status and meta
+##################
+
+# submodule-specific exit values
+nori.exitvals['submodule']=dict(
+    num=999,
     descr=(
 """
-error opening SSH tunnel
+error doing submodule stuff
 """
     ),
 )
+
+# submodule-specific features
+nori.supported_features['submodule'] = 'submodule stuff'
+if paramiko in sys.modules:
+    nori.available_features.append('submodule')
+
+
+#########################
+# configuration settings
+#########################
+
+#
+# submodule-specific config settings
+#
+
+config_settings['submodule_setting'] = dict(
+    descr=(
+"""
+Submodule stuff.
+"""
+    ),
+    default='submodule stuff',
+    requires='submodule',
+)
+
+
+#############
+# hook lists
+#############
+
+
+############
+# resources
+############
+
+
+########################################################################
+#                               FUNCTIONS
+########################################################################
+
+#####################################
+# startup and config file processing
+#####################################
+
+def validate_config():
+    """
+    Validate submodule-specific config settings.
+    """
+    pass
+
 
 ##################################
 # SSH remote commands and tunnels
@@ -108,3 +183,13 @@ def check_ssh_is_supported():
 #    for line in stdout:
 #        print '... ' + line.strip('\n')
 #    client.close()
+
+########################################################################
+#                           RUN STANDALONE
+########################################################################
+
+def main():
+    process_command_line()
+
+if __name__ == '__main__':
+    main()
