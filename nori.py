@@ -5725,9 +5725,10 @@ def run_mode():
                                             time.localtime())))
 
     # hooks for supplying tasks
-    for hook in run_mode_hooks:
-        if callable(hook):
-            hook()
+    if run_mode_hooks:
+        for hook in run_mode_hooks:
+            if callable(hook):
+                hook()
     else:
         status_logger.warning('Warning: no tasks supplied; '
                               'not doing anything.')
