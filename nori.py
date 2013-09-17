@@ -529,12 +529,12 @@ except ImportError:
     from io import StringIO  # Python 3.x
 
 try:
-    import pwd  # Unix
+    import pwd  # Unix; see get_file_metadata()
 except ImportError:
     pass
 
 try:
-    import grp  # Unix
+    import grp  # Unix; see get_file_metadata()
 except ImportError:
     pass
 
