@@ -3347,7 +3347,7 @@ def init_logging_output():
 
     """
 
-    global output_logger, output_log_fo, _stdout_handler
+    global output_logger, output_log_fo
 
     # assemble the complete path, including datestring if applicable
     if cfg['output_log']:
