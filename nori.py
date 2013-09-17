@@ -508,18 +508,6 @@ CONTENTS:
         actions.
 
 
-    Database calls and manipulations:
-    ---------------------------------
-
-    ###TODO
-
-
-    Backups and file syncing:
-    --------------------------
-
-    ###TODO
-
-
 5) API CLASSES:
 ---------------
 
@@ -5824,20 +5812,6 @@ def process_command_line():
     # deal with the rest of the modes
     mode_dict['callback']()
     sys.exit(EXITVALS['no_error']['num'])
-
-
-###################################
-# database calls and manipulations
-###################################
-
-###TODO
-
-
-###########################
-# backups and file syncing
-###########################
-
-###TODO
 
 
 ########################################################################
