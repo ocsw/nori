@@ -2,8 +2,28 @@
 
 
 """
+This is the SSH submodule for the nori library; see __main__.py for
+license and usage information.
+
+
+DOCSTRING CONTENTS:
+-------------------
+
+
+Requirements
+API Variables
+API Functions
+API Classes
+usage
+Modification Notes
+
+
+1) REQUIREMENTS:
+----------------
+
     The SSH functions require the paramiko module:
         https://github.com/paramiko/paramiko
+
 """
 
 ########################################################################
@@ -31,18 +51,18 @@ except ImportError:
 # this package
 ###############
 
-# main module
 from . import nori
 
-
+nori.supported_features['ssh'] = 'ssh stuff'
+nori.available_features.append('ssh')
 
 ###TODO: supported_features, available_features,
 ###config_settings (generator)? incl. requires
 ###setting hooks
-###exitval(s), USAGE, license
+###exitval(s), USAGE
 
 
-EXITVALS['ssh_tunnel']=dict(
+nori.exitvals['ssh_tunnel']=dict(
     num=20,
     descr=(
 """
