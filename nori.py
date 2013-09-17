@@ -859,6 +859,16 @@ SCRIPT_MODES['license']=dict(
     req_config=False,
 )
 
+SCRIPT_MODES['features']=dict(
+    descr=(
+"""
+'features': the available (installed) optional features are printed
+"""
+    ),
+    callback=lambda: features_mode(),
+    req_config=False,
+)
+
 SCRIPT_MODES['exitvals']=dict(
     descr=(
 """
@@ -1136,7 +1146,7 @@ start_time = None
 # format: 'feature_name': 'feature_description'
 # see also available_features, below, and the section on submodules in
 # the module docstring, above
-supported_features = {}
+supported_features = collections.OrderedDict()
 
 # list of available features
 # if a feature name is in the list, it is actually available on the
@@ -5629,6 +5639,21 @@ def license_mode():
         globals: LICENSE
     """
     print(LICENSE)
+
+
+def features_mode():
+    """
+    Print the available features.
+    Dependencies:
+        globals: supported_features, available_features
+    """
+    print('\nAvailable (installed) optional features:\n')
+    if not supported_features:
+        print('(none)\n')
+    else:
+        for f_name, f_descr in supported_features.items():
+            if f_name in available_features:
+                print('{0}: {1}\n'.format(pps(f_name), f_descr.strip()))
 
 
 def exitvals_mode():
