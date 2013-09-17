@@ -39,7 +39,7 @@ CONTENTS:
     For config setting information, run the module with '-n create' or
     '-n createall'.
 
-    For exit value information, run the module with '-n exitvals'.
+    For exit value information, run the module with 'exitvals'.
 
     For license information, run the module with 'license' or see the
     LICENSE file.
