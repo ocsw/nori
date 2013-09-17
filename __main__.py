@@ -108,6 +108,20 @@ DOCSTRING CONTENTS:
 #                               IMPORTS
 ########################################################################
 
+#########
+# system
+#########
+
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+
+
+###############
+# this package
+###############
+
 #
 # add all submodules here; the global namespace of this module will be
 # accessible as 'nori' after doing 'import nori' in a script
