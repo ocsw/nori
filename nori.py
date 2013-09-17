@@ -641,7 +641,7 @@ except ImportError:
 #
 exitvals = {}
 
-exitvals['no_error']=dict(
+exitvals['no_error'] = dict(
     num=0,
     descr=(
 """
@@ -651,7 +651,7 @@ completed without errors)
     ),
 )
 
-exitvals['argparse']=dict(
+exitvals['argparse'] = dict(
     num=2,  # hardcoded in the argparse module
     descr=(
 """
@@ -660,7 +660,7 @@ error parsing the command line
     ),
 )
 
-exitvals['startup']=dict(
+exitvals['startup'] = dict(
     num=10,
     descr=(
 """
@@ -671,7 +671,7 @@ generic error value)
     ),
 )
 
-exitvals['lockfile']=dict(
+exitvals['lockfile'] = dict(
     num=11,
     descr=(
 """
@@ -681,7 +681,7 @@ was manually disabled)
     ),
 )
 
-exitvals['internal']=dict(
+exitvals['internal'] = dict(
     num=250,
     descr=(
 """
@@ -910,7 +910,7 @@ script_modes = collections.OrderedDict()
 # if we put the values in the constructor, they are added to kwargs and
 # lose their order, so we have to be more verbose
 
-script_modes['license']=dict(
+script_modes['license'] = dict(
     descr=(
 """
 'license': a license message is printed
@@ -920,7 +920,7 @@ script_modes['license']=dict(
     req_config=False,
 )
 
-script_modes['features']=dict(
+script_modes['features'] = dict(
     descr=(
 """
 'features': the available (installed) optional features are printed
@@ -930,7 +930,7 @@ script_modes['features']=dict(
     req_config=False,
 )
 
-script_modes['exitvals']=dict(
+script_modes['exitvals'] = dict(
     descr=(
 """
 'exitvals': the possible exit values from the script are printed
@@ -940,7 +940,7 @@ script_modes['exitvals']=dict(
     req_config=False,
 )
 
-script_modes['config']=dict(
+script_modes['config'] = dict(
     descr=(
 """
 'config' or 'settings': the current config settings are printed
@@ -949,11 +949,11 @@ script_modes['config']=dict(
     callback=lambda: config_mode(),
     req_config=True,
 )
-script_modes['settings']=dict(
+script_modes['settings'] = dict(
     alias_of='config',
 )
 
-script_modes['status']=dict(
+script_modes['status'] = dict(
     descr=(
 """
 'status': the current status, including timestamps, is printed
@@ -963,7 +963,7 @@ script_modes['status']=dict(
     req_config=True,
 )
 
-script_modes['statusall']=dict(
+script_modes['statusall'] = dict(
     descr=(
 """
 'statusall': like 'status', but temp files mainly relevant for debugging
@@ -974,7 +974,7 @@ are also included (if applicable)
     req_config=True,
 )
 
-script_modes['silence']=dict(
+script_modes['silence'] = dict(
     descr=(
 """
 'silence': alerts about the lockfile existing are silenced until either
@@ -985,7 +985,7 @@ they are unsilenced, or the lockfile is no longer present
     req_config=True,
 )
 
-script_modes['unsilence']=dict(
+script_modes['unsilence'] = dict(
     descr=(
 """
 'unsilence': alerts about the lockfile existing are re-enabled
@@ -995,7 +995,7 @@ script_modes['unsilence']=dict(
     req_config=True,
 )
 
-script_modes['disable']=dict(
+script_modes['disable'] = dict(
     descr=(
 """
 'disable' or 'stop': {0} are disabled until 'enable' or
@@ -1005,11 +1005,11 @@ script_modes['disable']=dict(
     callback=lambda: disable_script(),
     req_config=True,
 )
-script_modes['stop']=dict(
+script_modes['stop'] = dict(
     alias_of='disable',
 )
 
-script_modes['enable']=dict(
+script_modes['enable'] = dict(
     descr=(
 """
 'enable' or 'start': {0} are re-enabled
@@ -1018,11 +1018,11 @@ script_modes['enable']=dict(
     callback=lambda: enable_script(),
     req_config=True,
 )
-script_modes['start']=dict(
+script_modes['start'] = dict(
     alias_of='enable',
 )
 
-script_modes['clearlock']=dict(
+script_modes['clearlock'] = dict(
     descr=(
 """
 'clearlock' or 'unlock': the lockfile is forcibly removed; only use
@@ -1032,11 +1032,11 @@ this if you're sure {0} {1} isn't currently running!
     callback=lambda: clear_lockfile(),
     req_config=True,
 )
-script_modes['unlock']=dict(
+script_modes['unlock'] = dict(
   alias_of='clearlock',
 )
 
-script_modes['create']=dict(
+script_modes['create'] = dict(
     descr=(
 """
 'create': a config file template is printed (all settings, in logical
@@ -1057,7 +1057,7 @@ otherwise specified)
     req_config=False,
 )
 
-script_modes['createfull']=dict(
+script_modes['createfull'] = dict(
     descr=(
 """
 'createfull': like 'create', but includes a description of each setting,
@@ -1068,7 +1068,7 @@ as well as the default (if any)
     req_config=False,
 )
 
-script_modes['run']=dict(
+script_modes['run'] = dict(
     descr=(
 """
 'run': run normally (the default)
@@ -5779,7 +5779,7 @@ def process_command_line():
     # get the mode info
     mode_dict = None
     mode_dict_temp = script_modes[mode]
-    while mode_dict == None:
+    while mode_dict is None:
         if 'alias_of' in mode_dict_temp:
             if mode_dict_temp['alias_of'] not in script_modes:
                 err_exit('Internal Error: alias pointed to a non-existent '
