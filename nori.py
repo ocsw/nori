@@ -5318,7 +5318,7 @@ def render_config():
         for s_name, s_dict in config_settings.items():
             if 'no_print' in s_dict and s_dict['no_print']:
                 continue
-            if 'heading' in s_dict:
+            if 'heading' in s_dict and s_dict['heading']:
                 msg += '\n' + s_dict['heading'] + ':\n'
                 continue
             if s_name in cfg:
@@ -5415,7 +5415,7 @@ def create_blank_config_files(full=False):
         for s_name, s_dict in config_settings.items():
             if 'no_print' in s_dict and s_dict['no_print']:
                 continue
-            if 'heading' in s_dict:
+            if 'heading' in s_dict and s_dict['heading']:
                 msg += '\n\n### {0} ###\n\n'.format(s_dict['heading'])
                 continue
             msg += "#cfg['" + s_name + "'] = \n"
@@ -5424,7 +5424,7 @@ def create_blank_config_files(full=False):
         for s_name, s_dict in config_settings.items():
             if 'no_print' in s_dict and s_dict['no_print']:
                 continue
-            if 'heading' in s_dict:
+            if 'heading' in s_dict and s_dict['heading']:
                 msg += ('\n{0}\n{1}\n{0}\n\n' .
                         format('#' * (len(s_dict['heading']) + 3),
                                '# ' + s_dict['heading']))
