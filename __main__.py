@@ -14,7 +14,7 @@ DOCSTRING CONTENTS:
 1) ABOUT AND REQUIREMENTS:
 --------------------------
 
-    This is the Nori library for wrapping scripts.  It provides tools
+    This is the nori library for wrapping scripts.  It provides tools
     such as powerful lockfile checking, logging, command-line
     processing, and config setting validation, and is particularly
     helpful for scripts that need to be run from cron with minimal
