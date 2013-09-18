@@ -5060,10 +5060,9 @@ def check_config_requirements():
         if 'requires' in s_dict and s_name in cfg:
             for feature in s_dict['requires']:
                 if feature not in available_features:
-                    msg = ('Error: setting cfg[{0}] is set (to {1}), '
-                           'but it requires\n'
-                           'the {2} feature, which is not available '
-                           'on this system.' .
+                    msg = ('Error: setting cfg[{0}] is set (to {1}),\n'
+                           'but it requires the {2} feature, which is not '
+                           'available on\nthis system.' .
                            format(*map(pps, [s_name, cfg[s_name],
                                              feature])))
                     if (feature in supported_features and
