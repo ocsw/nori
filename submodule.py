@@ -129,6 +129,10 @@ if 'paramiko' in sys.modules:
 #
 
 if 'submodule' in nori.available_features:
+    nori.config_settings['submodule_heading'] = dict(
+        heading='Submodule',
+    )
+
     nori.config_settings['submodule_setting'] = dict(
         descr=(
 """
