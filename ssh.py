@@ -81,7 +81,7 @@ except ImportError:
 # this package
 ###############
 
-from . import nori
+from . import core
 
 
 ########################################################################
@@ -96,7 +96,7 @@ from . import nori
 # exit values
 #
 
-nori.exitvals['ssh_connect']=dict(
+core.exitvals['ssh_connect']=dict(
     num=20,
     descr=(
 """
@@ -105,7 +105,7 @@ error establishing SSH connection (including timeouts)
     ),
 )
 
-nori.exitvals['ssh_host_key']=dict(
+core.exitvals['ssh_host_key']=dict(
     num=21,
     descr=(
 """
@@ -114,7 +114,7 @@ host key problem while establishing SSH connection
     ),
 )
 
-nori.exitvals['ssh_auth']=dict(
+core.exitvals['ssh_auth']=dict(
     num=22,
     descr=(
 """
@@ -123,7 +123,7 @@ authentication problem while establishing SSH connection
     ),
 )
 
-nori.exitvals['ssh_command']=dict(
+core.exitvals['ssh_command']=dict(
     num=23,
     descr=(
 """
@@ -132,7 +132,7 @@ error running remote command over SSH
     ),
 )
 
-nori.exitvals['ssh_tunnel']=dict(
+core.exitvals['ssh_tunnel']=dict(
     num=24,
     descr=(
 """
@@ -142,9 +142,9 @@ error establishing SSH tunnel
 )
 
 # supported / available features
-nori.supported_features['ssh'] = 'SSH command and tunnel support'
+core.supported_features['ssh'] = 'SSH command and tunnel support'
 if 'paramiko' in sys.modules:
-    nori.available_features.append('ssh')
+    core.available_features.append('ssh')
 
 
 #########################
@@ -160,7 +160,7 @@ _config_blocks = []
 # hook lists
 #############
 
-nori.validate_config_hooks.append(lambda: validate_config())
+core.validate_config_hooks.append(lambda: validate_config())
 
 
 ########################################################################
@@ -200,16 +200,16 @@ def create_ssh_settings(prefix, delim='_', heading='', extra_text='',
 
     Dependencies:
         globals: _config_blocks
-        modules: getpass, nori
+        modules: getpass, core
 
     """
 
     if heading:
-        nori.config_settings[prefix + delim + 'heading'] = dict(
+        core.config_settings[prefix + delim + 'heading'] = dict(
             heading=heading,
         )
 
-    nori.config_settings[prefix + delim + 'ssh_host'] = dict(
+    core.config_settings[prefix + delim + 'ssh_host'] = dict(
         descr=(
 """
 The hostname of the remote SSH host.
@@ -220,7 +220,7 @@ The hostname of the remote SSH host.
         requires=['ssh'],
     )
 
-    nori.config_settings[prefix + delim + 'ssh_port'] = dict(
+    core.config_settings[prefix + delim + 'ssh_port'] = dict(
         descr=(
 """
 The SSH port on the remote host.
@@ -236,7 +236,7 @@ The SSH port on the remote host.
         requires=['ssh'],
     )
 
-    nori.config_settings[prefix + delim + 'ssh_user'] = dict(
+    core.config_settings[prefix + delim + 'ssh_user'] = dict(
         descr=(
 """
 Username on the remote SSH host.
@@ -252,7 +252,7 @@ the username the script is run by
         requires=['ssh'],
     )
 
-    nori.config_settings[prefix + delim + 'ssh_key_file'] = dict(
+    core.config_settings[prefix + delim + 'ssh_key_file'] = dict(
         descr=(
 """
 The path to the SSH key file.
@@ -270,7 +270,7 @@ any key available through an SSH agent, or ~/.ssh/id_rsa, or
         requires=['ssh'],
     )
 
-    nori.config_settings[prefix + delim + 'ssh_allow_agent'] = dict(
+    core.config_settings[prefix + delim + 'ssh_allow_agent'] = dict(
         descr=(
 """
 Look for an SSH agent if a key file is not supplied?
@@ -283,7 +283,7 @@ Can be True or False.
         requires=['ssh'],
     )
 
-    nori.config_settings[prefix + delim + 'ssh_look_for_keys'] = dict(
+    core.config_settings[prefix + delim + 'ssh_look_for_keys'] = dict(
         descr=(
 """
 Look for ~/.ssh/id_rsa and ~/.ssh/id_dsa if a key file is not supplied?
@@ -312,7 +312,7 @@ Can be True or False.
 
 ###TODO password auth?  password for key?
 ###TODO host key policy / files
-#    nori.config_settings[prefix + delim + 'ssh_'] = dict(
+#    core.config_settings[prefix + delim + 'ssh_'] = dict(
 #        descr=(
 #"""
 #"""
@@ -322,7 +322,7 @@ Can be True or False.
 #        requires=['ssh'],
 #    )
 
-    nori.config_settings[prefix + delim + 'ssh_compress'] = dict(
+    core.config_settings[prefix + delim + 'ssh_compress'] = dict(
         descr=(
 """
 Use SSH compression?
@@ -335,7 +335,7 @@ Can be True or False.
         requires=['ssh'],
     )
 
-    nori.config_settings[prefix + delim + 'ssh_timeout'] = dict(
+    core.config_settings[prefix + delim + 'ssh_timeout'] = dict(
         descr=(
 """
 Timeout for establishing the SSH connection, in seconds.
@@ -349,7 +349,7 @@ Can be None, to wait forever.
     )
 
     if tunnel:
-        nori.config_settings[prefix + delim + 'local_host'] = dict(
+        core.config_settings[prefix + delim + 'local_host'] = dict(
             descr=(
 """
 The hostname on the local end of the SSH tunnel.
@@ -363,7 +363,7 @@ or '::1'.
             requires=['ssh'],
         )
 
-        nori.config_settings[prefix + delim + 'local_port'] = dict(
+        core.config_settings[prefix + delim + 'local_port'] = dict(
             descr=(
 """
 The port number on the local end of the SSH tunnel.
@@ -376,7 +376,7 @@ Can be any valid unused port.
             requires=['ssh'],
         )
 
-        nori.config_settings[prefix + delim + 'remote_host'] = dict(
+        core.config_settings[prefix + delim + 'remote_host'] = dict(
             descr=(
 """
 The hostname on the remote end of the SSH tunnel.
@@ -394,7 +394,7 @@ cannot be made directly to the necessary server.
             requires=['ssh'],
         )
 
-        nori.config_settings[prefix + delim + 'remote_port'] = dict(
+        core.config_settings[prefix + delim + 'remote_port'] = dict(
             descr=(
 """
 The port number on the remote end of the SSH tunnel.
@@ -416,7 +416,7 @@ The port number on the remote end of the SSH tunnel.
                 'local_host', 'local_port', 'remote_host',  'remote_port',
             ]
         for s_name in setting_list:
-            nori.config_settings[prefix + delim + s_name]['descr'] += (
+            core.config_settings[prefix + delim + s_name]['descr'] += (
                 '\n' + extra_text
             )
 
@@ -428,25 +428,25 @@ def validate_config():
     Validate all SSH config settings.
     Dependencies:
         globals: _config_blocks
-        modules: types, nori
+        modules: types, core
     """
     for pd, tunnel in _config_blocks:
-        nori.setting_check_not_blank(pd + 'ssh_host')
-        nori.setting_check_num(pd + 'ssh_port', 1, 65535)
-        nori.setting_check_not_blank(pd + 'ssh_user')
-        nori.setting_check_file_read(pd + 'ssh_key_file')
-        nori.setting_check_type(pd + 'ssh_allow_agent', bool)
-        nori.setting_check_type(pd + 'ssh_look_for_keys', bool)
-        nori.setting_check_type(pd + 'ssh_compress', bool)
-        if (nori.setting_check_type(pd + 'ssh_timeout',
-                                    nori.NUMBER_TYPES + (NoneType, ))
+        core.setting_check_not_blank(pd + 'ssh_host')
+        core.setting_check_num(pd + 'ssh_port', 1, 65535)
+        core.setting_check_not_blank(pd + 'ssh_user')
+        core.setting_check_file_read(pd + 'ssh_key_file')
+        core.setting_check_type(pd + 'ssh_allow_agent', bool)
+        core.setting_check_type(pd + 'ssh_look_for_keys', bool)
+        core.setting_check_type(pd + 'ssh_compress', bool)
+        if (core.setting_check_type(pd + 'ssh_timeout',
+                                    core.NUMBER_TYPES + (NoneType, ))
               is not NoneType):
-            nori.setting_check_num(pd + 'ssh_timeout', 0)
+            core.setting_check_num(pd + 'ssh_timeout', 0)
         if tunnel:
-            nori.setting_check_not_blank(pd + 'local_host')
-            nori.setting_check_num(pd + 'local_port', 1, 65535)
-            nori.setting_check_not_blank(pd + 'remote_host')
-            nori.setting_check_num(pd + 'remote_port', 1, 65535)
+            core.setting_check_not_blank(pd + 'local_host')
+            core.setting_check_num(pd + 'local_port', 1, 65535)
+            core.setting_check_not_blank(pd + 'remote_host')
+            core.setting_check_num(pd + 'remote_port', 1, 65535)
 
 
 ##################################
@@ -455,10 +455,10 @@ def validate_config():
 
 # error handler
 
-#    if 'ssh' not in nori.available_features:
-#        nori.err_exit('Internal Error: SSH function called, but '
+#    if 'ssh' not in core.available_features:
+#        core.err_exit('Internal Error: SSH function called, but '
 #                      'there is no SSH support; exiting.',
-#                      nori.exitvals['internal']['num'])
+#                      core.exitvals['internal']['num'])
 
 
 #    client = paramiko.SSHClient()
@@ -475,7 +475,7 @@ def validate_config():
 ########################################################################
 
 def main():
-    nori.process_command_line()
+    core.process_command_line()
 
 if __name__ == '__main__':
     main()

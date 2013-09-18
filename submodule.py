@@ -76,7 +76,7 @@ except ImportError:
 # this package
 ###############
 
-from . import nori
+from . import core
 
 
 ########################################################################
@@ -106,7 +106,7 @@ pyversion_check(7, 2)
 ##################
 
 # submodule-specific exit values
-nori.exitvals['submodule']=dict(
+core.exitvals['submodule']=dict(
     num=999,
     descr=(
 """
@@ -116,9 +116,9 @@ error doing submodule stuff
 )
 
 # submodule-specific features
-nori.supported_features['submodule'] = 'submodule stuff'
+core.supported_features['submodule'] = 'submodule stuff'
 if 'paramiko' in sys.modules:
-    nori.available_features.append('submodule')
+    core.available_features.append('submodule')
 
 
 #########################
@@ -129,12 +129,12 @@ if 'paramiko' in sys.modules:
 # submodule-specific config settings
 #
 
-if 'submodule' in nori.available_features:
-    nori.config_settings['submodule_heading'] = dict(
+if 'submodule' in core.available_features:
+    core.config_settings['submodule_heading'] = dict(
         heading='Submodule',
     )
 
-    nori.config_settings['submodule_setting'] = dict(
+    core.config_settings['submodule_setting'] = dict(
         descr=(
 """
 Submodule stuff.
@@ -180,7 +180,7 @@ def validate_config():
 ########################################################################
 
 def main():
-    nori.process_command_line()
+    core.process_command_line()
 
 if __name__ == '__main__':
     main()

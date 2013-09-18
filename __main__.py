@@ -100,7 +100,19 @@ DOCSTRING CONTENTS:
         * adding the submodule to the imports, below
 
     This is not an exhaustive list; see, for example, the other hooks
-    in nori.py.
+    in core.py.
+
+    Note that references from one submodule to another should be done
+    with:
+        from . import submodule
+        submodule.function()
+    so that it's clear which function is in which module.  However, this
+    module (__main__) should put all of the other submodules' namespaces
+    directly in its own, so that scripts that use the library can do:
+        import nori
+        nori.function()
+    regardless of which module the function is in.  See the imports
+    section, below.
 
 """
 
@@ -128,10 +140,10 @@ from pprint import pprint as pp  # for debugging
 # add all submodules here; the global namespace of this module will be
 # accessible as 'nori' after doing 'import nori' in a script
 #
-# use absolute imports (e.g., .nori), and import *
+# use absolute imports (e.g., .core), and import *
 #
 
-from .nori import *
+from .core import *
 from .ssh import *
 
 

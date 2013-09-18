@@ -1203,7 +1203,7 @@ Environment variables added to the commands are also printed, one per line.
 For example:
 
     Running command:
-    'ls' '-l' 'nori.py'
+    'ls' '-l' 'nori'
     with environment additions:
     A='B'
     PATH='/bin/:/usr/bin/'
