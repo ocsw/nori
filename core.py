@@ -4985,7 +4985,7 @@ def check_bogus_config():
     for setting in cfg:
         if (setting not in config_settings or
               'heading' in config_settings[setting]):
-            err_exit("Warning: cfg['{0}'] is set (to {1}), "
+            err_exit("Warning: cfg['{0}'] is set (to {1}),\n"
                      "but there is no such setting." .
                      format(setting, pps(cfg[setting])),
                      exitvals['startup']['num'])
@@ -4994,7 +4994,7 @@ def check_bogus_config():
     for bogus in bogus_config:
         ret, obj, full_path, real_path = setting_walk(bogus)
         if ret:
-            err_exit('Warning: {0} is set (to {1}), '
+            err_exit('Warning: {0} is set (to {1}),\n'
                      'but there is no such setting.' .
                      format(full_path, pps(obj)),
                      exitvals['startup']['num'])
