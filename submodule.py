@@ -116,7 +116,7 @@ error doing submodule stuff
 
 # submodule-specific features
 nori.supported_features['submodule'] = 'submodule stuff'
-if paramiko in sys.modules:
+if 'paramiko' in sys.modules:
     nori.available_features.append('submodule')
 
 
@@ -128,15 +128,16 @@ if paramiko in sys.modules:
 # submodule-specific config settings
 #
 
-config_settings['submodule_setting'] = dict(
-    descr=(
+if 'submodule' in nori.available_features:
+    nori.config_settings['submodule_setting'] = dict(
+        descr=(
 """
 Submodule stuff.
 """
-    ),
-    default='submodule stuff',
-    requires='submodule',
-)
+        ),
+        default='submodule stuff',
+        requires=['submodule'],
+    )
 
 
 #############
@@ -174,7 +175,7 @@ def validate_config():
 ########################################################################
 
 def main():
-    process_command_line()
+    nori.process_command_line()
 
 if __name__ == '__main__':
     main()
