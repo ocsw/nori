@@ -69,7 +69,7 @@ import sys
 try:
     import paramiko
 except ImportError:
-    pass  # see status and meta variables section
+    pass  # see the status and meta variables section
 
 
 ###############
