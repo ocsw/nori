@@ -31,7 +31,7 @@ execution and tunnels.  It requires the paramiko module:
     create_ssh_settings
         Add a block of SSH config settings to the script.
 
-    validate_config
+    validate_ssh_config
         Validate all SSH config settings.
 
 
@@ -160,7 +160,7 @@ _config_blocks = []
 # hook lists
 #############
 
-core.validate_config_hooks.append(lambda: validate_config())
+core.validate_config_hooks.append(lambda: validate_ssh_config())
 
 
 ########################################################################
@@ -423,7 +423,7 @@ The port number on the remote end of the SSH tunnel.
     _config_blocks.append((prefix + delim, tunnel))
 
 
-def validate_config():
+def validate_ssh_config():
     """
     Validate all SSH config settings.
     Dependencies:
