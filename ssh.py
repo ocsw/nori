@@ -18,8 +18,10 @@ DOCSTRING CONTENTS:
 --------------------------
 
 This submodule provides SSH functionality, including remote command
-execution and tunnels.  It requires the paramiko module:
-    https://github.com/paramiko/paramiko
+execution and tunnels.  It requires the 'ssh' command line utility,
+which must be in the execution search path.
+
+###TODO
 
 
 2) API FUNCTIONS:
@@ -37,6 +39,13 @@ execution and tunnels.  It requires the paramiko module:
 
     SSH remote commands and tunnels:
     --------------------------------
+
+    get_ssh_cmd()
+        Assemble a list containing the ssh command and its arguments.
+
+    get_ssh_tunnel_cmd(prefix, delim='_'):
+        Assemble a list containing the ssh tunnel command and its
+        arguments.
 
     ###TODO
 
@@ -64,18 +73,8 @@ from __future__ import print_function
 from pprint import pprint as pp  # for debugging
 
 import sys
-import getpass
 from types import *
-
-
-#########
-# add-on
-#########
-
-try:
-    import paramiko
-except ImportError:
-    pass  # see the status and meta variables section
+import shlex
 
 
 ###############
@@ -83,6 +82,7 @@ except ImportError:
 ###############
 
 from . import core
+from . import which
 
 
 ########################################################################
@@ -101,40 +101,13 @@ core.exitvals['ssh_connect']=dict(
     num=20,
     descr=(
 """
-error establishing SSH connection (including timeouts)
-"""
-    ),
-)
-
-core.exitvals['ssh_host_key']=dict(
-    num=21,
-    descr=(
-"""
-host key problem while establishing SSH connection
-"""
-    ),
-)
-
-core.exitvals['ssh_auth']=dict(
-    num=22,
-    descr=(
-"""
-authentication problem while establishing SSH connection
-"""
-    ),
-)
-
-core.exitvals['ssh_command']=dict(
-    num=23,
-    descr=(
-"""
-error running remote command over SSH
+error establishing SSH connection
 """
     ),
 )
 
 core.exitvals['ssh_tunnel']=dict(
-    num=24,
+    num=21,
     descr=(
 """
 error establishing SSH tunnel
@@ -144,7 +117,7 @@ error establishing SSH tunnel
 
 # supported / available features
 core.supported_features['ssh'] = 'SSH command and tunnel support'
-if 'paramiko' in sys.modules:
+if which.which('ssh'):
     core.available_features.append('ssh')
 
 
@@ -152,7 +125,7 @@ if 'paramiko' in sys.modules:
 # configuration settings
 #########################
 
-# list of tuples: (prefix + delim, tunnel?)
+# list of tuples: (prefix+delim, tunnel?)
 # see config functions
 _config_blocks = []
 
@@ -179,6 +152,12 @@ def create_ssh_settings(prefix, delim='_', heading='', extra_text='',
     """
     Add a block of SSH config settings to the script.
 
+    If you're calling this function, you will almost certainly want to
+    do these as well:
+        core.config_settings_no_print_output_log(False)
+        core.config_settings['exec_path']['no_print'] = False
+        core.config_settings['print_cmds']['no_print'] = False
+
     When modifying, remember to keep the setting_list at the bottom and
     validate_config() in sync with the config settings.
 
@@ -200,17 +179,21 @@ def create_ssh_settings(prefix, delim='_', heading='', extra_text='',
                              be set)
 
     Dependencies:
+        config settings: [prefix+delim+:] (heading), ssh_host, ssh_port,
+                         ssh_user, ssh_key_file, ssh_options,
+                         local_host, local_port, remote_host,
+                         remote_port, tun_timeout
         globals: _config_blocks
         modules: getpass, core
 
     """
 
     if heading:
-        core.config_settings[prefix + delim + 'heading'] = dict(
+        core.config_settings[prefix+delim+'heading'] = dict(
             heading=heading,
         )
 
-    core.config_settings[prefix + delim + 'ssh_host'] = dict(
+    core.config_settings[prefix+delim+'ssh_host'] = dict(
         descr=(
 """
 The hostname of the remote SSH host.
@@ -221,136 +204,71 @@ The hostname of the remote SSH host.
         requires=['ssh'],
     )
 
-    core.config_settings[prefix + delim + 'ssh_port'] = dict(
+    core.config_settings[prefix+delim+'ssh_port'] = dict(
         descr=(
 """
 The SSH port on the remote host.
 """
         ),
-        default=22,
+        # no default
         default_descr=(
 """
-22 (the standard port)
+the ssh utility's default (generally 22, the standard port)
 """
         ),
         cl_coercer=int,
         requires=['ssh'],
     )
 
-    core.config_settings[prefix + delim + 'ssh_user'] = dict(
+    core.config_settings[prefix+delim+'ssh_user'] = dict(
         descr=(
 """
-Username on the remote SSH host.
+The username on the remote SSH host.
 """
         ),
-        default=getpass.getuser(),
+        # no default
         default_descr=(
 """
-the username the script is run by
+the ssh utility's default (generally the username the script is run by)
 """
         ),
         cl_coercer=str,
         requires=['ssh'],
     )
 
-    core.config_settings[prefix + delim + 'ssh_key_file'] = dict(
+    core.config_settings[prefix+delim+'ssh_key_file'] = dict(
         descr=(
 """
 The path to the SSH key file.
 """
         ),
-        default=None,
+        # no default
         default_descr=(
 """
-any key available through an SSH agent, or ~/.ssh/id_rsa, or
-~/.ssh/id_dsa, (in that order), subject to the values of the
-{0}ssh_allow_agent and {0}ssh_look_for_keys settings
-""".format(prefix + delim)
+the ssh utility's default (generally ~/.ssh/id_*)
+""".format(prefix+delim)
         ),
         cl_coercer=str,
         requires=['ssh'],
     )
 
-    core.config_settings[prefix + delim + 'ssh_allow_agent'] = dict(
+    core.config_settings[prefix+delim+'ssh_options'] = dict(
         descr=(
 """
-Look for an SSH agent if a key file is not supplied?
+The options to pass to the ssh utility.
 
-Can be True or False.
+This can be a string or a list of strings.  A string can be passed on the
+command line, but this isn't recommended unless it is very simple, due to
+quoting issues.
 """
         ),
-        default=True,
-        cl_coercer=lambda x: str_to_bool(x),
-        requires=['ssh'],
-    )
-
-    core.config_settings[prefix + delim + 'ssh_look_for_keys'] = dict(
-        descr=(
-"""
-Look for ~/.ssh/id_rsa and ~/.ssh/id_dsa if a key file is not supplied?
-
-Can be True or False.
-"""
-        ),
-        default=True,
-        cl_coercer=lambda x: str_to_bool(x),
-        requires=['ssh'],
-    )
-
-#set_combine_stderr(self, combine)
-#Set whether stderr should be combined into stdout on this channel.
-
-#set_name(self, name)
-#Set a name for this channel.
-
-#setblocking(self, blocking)
-#Set blocking or non-blocking mode of the channel: if blocking is 0, the
-#channel is set to non-blocking mode; otherwise it's set to blocking mode.
-
-#settimeout(self, timeout)
-#Set a timeout on blocking read/write operations.
-
-
-###TODO password auth?  password for key?
-###TODO host key policy / files
-#    core.config_settings[prefix + delim + 'ssh_'] = dict(
-#        descr=(
-#"""
-#"""
-#        ),
-#        default=,
-#        cl_coercer=str,
-#        requires=['ssh'],
-#    )
-
-    core.config_settings[prefix + delim + 'ssh_compress'] = dict(
-        descr=(
-"""
-Use SSH compression?
-
-Can be True or False.
-"""
-        ),
-        default=False,
-        cl_coercer=lambda x: str_to_bool(x),
-        requires=['ssh'],
-    )
-
-    core.config_settings[prefix + delim + 'ssh_timeout'] = dict(
-        descr=(
-"""
-Timeout for establishing the SSH connection, in seconds.
-
-Can be None, to wait forever.
-"""
-        ),
-        default=15,
-        cl_coercer=lambda x: None if x == 'None' or x == 'none' else int(x),
+        # no default
+        cl_coercer=str,  # can also be a list, but not from the cli
         requires=['ssh'],
     )
 
     if tunnel:
-        core.config_settings[prefix + delim + 'local_host'] = dict(
+        core.config_settings[prefix+delim+'local_host'] = dict(
             descr=(
 """
 The hostname on the local end of the SSH tunnel.
@@ -364,7 +282,7 @@ or '::1'.
             requires=['ssh'],
         )
 
-        core.config_settings[prefix + delim + 'local_port'] = dict(
+        core.config_settings[prefix+delim+'local_port'] = dict(
             descr=(
 """
 The port number on the local end of the SSH tunnel.
@@ -377,7 +295,7 @@ Can be any valid unused port.
             requires=['ssh'],
         )
 
-        core.config_settings[prefix + delim + 'remote_host'] = dict(
+        core.config_settings[prefix+delim+'remote_host'] = dict(
             descr=(
 """
 The hostname on the remote end of the SSH tunnel.
@@ -395,7 +313,7 @@ cannot be made directly to the necessary server.
             requires=['ssh'],
         )
 
-        core.config_settings[prefix + delim + 'remote_port'] = dict(
+        core.config_settings[prefix+delim+'remote_port'] = dict(
             descr=(
 """
 The port number on the remote end of the SSH tunnel.
@@ -406,69 +324,126 @@ The port number on the remote end of the SSH tunnel.
             requires=['ssh'],
         )
 
+
+        core.config_settings[prefix+delim+'tun_timeout'] = dict(
+            descr=(
+"""
+Timeout for establishing the SSH tunnel, in seconds.
+
+Can be None, to wait forever, or a number >= 1.
+"""
+            ),
+            default=15,
+            cl_coercer=(lambda x: None if x == 'None' or x == 'none'
+                                       else int(x)),
+            requires=['ssh'],
+        )
+
     if extra_text:
         setting_list = [
             'ssh_host', 'ssh_port', 'ssh_user', 'ssh_key_file',
-            'ssh_allow_agent', 'ssh_look_for_keys', 'ssh_compress',
-            'ssh_timeout',
+            'ssh_options',
         ]
         if tunnel:
             setting_list += [
                 'local_host', 'local_port', 'remote_host',  'remote_port',
+                'tun_timeout',
             ]
         for s_name in setting_list:
-            core.config_settings[prefix + delim + s_name]['descr'] += (
+            core.config_settings[prefix+delim+s_name]['descr'] += (
                 '\n' + extra_text
             )
 
-    _config_blocks.append((prefix + delim, tunnel))
+    _config_blocks.append((prefix+delim, tunnel))
 
 
 def validate_ssh_config():
     """
     Validate all SSH config settings.
     Dependencies:
+        config settings: [prefix+delim+:] (heading), ssh_host, ssh_port,
+                         ssh_user, ssh_key_file, ssh_options,
+                         local_host, local_port, remote_host,
+                         remote_port, tun_timeout
         globals: _config_blocks
         modules: types, core
     """
     for pd, tunnel in _config_blocks:
-        core.setting_check_not_blank(pd + 'ssh_host')
-        core.setting_check_num(pd + 'ssh_port', 1, 65535)
-        core.setting_check_not_blank(pd + 'ssh_user')
-        core.setting_check_file_read(pd + 'ssh_key_file')
-        core.setting_check_type(pd + 'ssh_allow_agent', bool)
-        core.setting_check_type(pd + 'ssh_look_for_keys', bool)
-        core.setting_check_type(pd + 'ssh_compress', bool)
-        if (core.setting_check_type(pd + 'ssh_timeout',
-                                    core.NUMBER_TYPES + (NoneType, ))
-              is not NoneType):
-            core.setting_check_num(pd + 'ssh_timeout', 0)
+        core.setting_check_not_blank(pd+'ssh_host')
+        core.setting_check_num(pd+'ssh_port', 1, 65535)
+        core.setting_check_not_blank(pd+'ssh_user')
+        core.setting_check_file_read(pd+'ssh_key_file')
+        if (core.setting_check_type(pd+'ssh_options',
+                                    core.STRING_TYPES + (list, ))
+              is list):
+            core.setting_check_not_empty(pd+'ssh_options')
+            for i, o in enumerate(core.cfg[pd+'ssh_options']):
+                core.setting_check_type((pd+'ssh_options', i),
+                                        core.STRING_TYPES)
+        else:
+            core.setting_check_not_blank(pd+'ssh_options')
         if tunnel:
-            core.setting_check_not_blank(pd + 'local_host')
-            core.setting_check_num(pd + 'local_port', 1, 65535)
-            core.setting_check_not_blank(pd + 'remote_host')
-            core.setting_check_num(pd + 'remote_port', 1, 65535)
+            core.setting_check_not_blank(pd+'local_host')
+            core.setting_check_num(pd+'local_port', 1, 65535)
+            core.setting_check_not_blank(pd+'remote_host')
+            core.setting_check_num(pd+'remote_port', 1, 65535)
+            if (core.setting_check_type(pd+'tun_timeout',
+                                        core.NUMBER_TYPES + (NoneType, ))
+                  is not NoneType):
+                core.setting_check_num(pd+'tun_timeout', 0)
 
 
 ##################################
 # SSH remote commands and tunnels
 ##################################
 
-# error handler
+def get_ssh_cmd(prefix, delim='_'):
+    """
+    Assemble a list containing the ssh command and its arguments.
+    For remote commands, add the remote command/argument list to the
+    list returned from this function.
+    See also get_ssh_tunnel_cmd().
+    Parameters:
+        prefix, delim: prefix and delimiter that start the setting names
+    Dependencies:
+        config settings: [prefix+delim+:] ssh_host, ssh_port,
+                         ssh_user, ssh_key_file, ssh_options
+        modules: shlex, core
+    """
+    cmd = ['ssh']
+    if prefix+delim+'ssh_port' in core.cfg:
+        cmd += ['-p', str(core.cfg[prefix+delim+'ssh_port'])]
+    if prefix+delim+'ssh_key_file' in core.cfg:
+        cmd += ['-i', core.cfg[prefix+delim+'ssh_key_file']]
+    if prefix+delim+'ssh_options' in core.cfg:
+        if isinstance(core.cfg[prefix+delim+'ssh_options'], list):
+            cmd += core.cfg[prefix+delim+'ssh_options']
+        else:
+            cmd += shlex.split(core.cfg[prefix+delim+'ssh_options'])
+    if prefix+delim+'ssh_user' in core.cfg:
+        cmd += ['-l', core.cfg[prefix+delim+'ssh_user']]
+    cmd.append(core.cfg[prefix+delim+'ssh_host'])
+    return cmd
 
-#    if 'ssh' not in core.available_features:
-#        core.err_exit('Internal Error: SSH function called, but '
-#                      'there is no SSH support; exiting.',
-#                      core.exitvals['internal']['num'])
 
-
-#    client = paramiko.SSHClient()
-#    client.load_system_host_keys()
-#    client.connect('ssh.example.com', username='strongbad', password='thecheat')
-#    stdin, stdout, stderr = client.exec_command('ls')
-#    for line in stdout:
-#        print '... ' + line.strip('\n')
-#    client.close()
+def get_ssh_tunnel_cmd(prefix, delim='_'):
+    """
+    Assemble a list containing the ssh tunnel command and its arguments.
+    Parameters:
+        prefix, delim: prefix and delimiter that start the setting names
+    Dependencies:
+        config settings: [prefix+delim+:] local_port, remote_host,
+                         remote_port
+        functions: get_ssh_cmd()
+        modules: core
+    """
+    tunnel_arg = ['-L']
+    tunnel_arg.append(':'.join(core.cfg[prefix+delim+'local_port'],
+                               core.cfg[prefix+delim+'remote_host'],
+                               core.cfg[prefix+delim+'remote_port']))
+    tunnel_arg.append('-N')
+    cmd = get_ssh_cmd(prefix, delim)
+    return cmd[0] + tunnel_arg + cmd[1:]
 
 
 ########################################################################
