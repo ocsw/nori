@@ -503,6 +503,8 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 
+from pprint import pprint as pp  # for debugging
+
 import sys
 import atexit
 import os
@@ -518,7 +520,6 @@ import copy
 import subprocess
 import re
 import pprint
-from pprint import pprint as pp  # for debugging
 from types import *
 import operator
 
