@@ -1503,7 +1503,7 @@ config_settings['syslog_sock_type'] = dict(
 What kind of socket to use for syslog.
 
 This can be socket.SOCK_DGRAM for UDP (the default), or
-socket.SOCK_STREAM for TCP.
+socket.SOCK_STREAM for TCP.  (Remember to 'import socket'.)
 
 Ignored if use_syslog is False.
 """
