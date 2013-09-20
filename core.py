@@ -4604,10 +4604,10 @@ lockfile:
 lockfile_alert_file:
 {2}
 
-lfalertssilenced:
+lf_alerts_silenced:
 {3}
 
-scriptdisabled:
+script_disabled:
 {4}''' .
            format(get_file_metadata(cfg['last_started_file'], '(none)'),
                   get_file_metadata(cfg['lockfile'], '(none)'),
