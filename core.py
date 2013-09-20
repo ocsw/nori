@@ -177,6 +177,9 @@ DOCSTRING CONTENTS:
     scalar_to_tuple()
         If a value is a scalar (non-container), convert it to a tuple.
 
+    scalar_to_list()
+        If a value is a scalar (non-container), convert it to a list.
+
     re_repl_escape()
         Escape backreferences in a string, for the second arg of re.sub.
 
@@ -292,6 +295,17 @@ DOCSTRING CONTENTS:
 
     end_logging_output()
         Close the output log file object.
+
+
+    Running External Commands:
+    --------------------------
+
+    multi_fan_out()
+        Copy data from multiple streams to multiple streams, line by
+        line.
+
+    run_command()
+        Run an external command, with flexible input/output targeting.
 
     run_with_logging()
         Run a command and log its output to the output log and stdout.
@@ -518,6 +532,7 @@ import logging
 import logging.handlers
 import copy
 import subprocess
+import select
 import re
 import pprint
 import operator
@@ -616,6 +631,16 @@ exitvals['internal'] = dict(
     descr=(
 """
 internal error; should never happen
+"""
+    ),
+)
+
+exitvals['external'] = dict(
+    num=251,
+    descr=(
+"""
+problem with the OS or hardware (e.g., misconfiguration, out of RAM,
+etc.), that isn't covered by another exit value
 """
     ),
 )
@@ -1769,6 +1794,9 @@ _syslog_handler = None
 _stdout_handler = None
 _stderr_handler = None
 
+# internal, see run_command()
+_devnull_fo = None
+
 
 ########################################################################
 #                               FUNCTIONS
@@ -1824,6 +1852,17 @@ def scalar_to_tuple(v):
         globals: CONTAINER_TYPES
     """
     return v if isinstance(v, CONTAINER_TYPES) else (v, )
+
+
+def scalar_to_list(v):
+    """
+    If a value is a scalar (non-container), convert it to a list.
+    Parameters:
+        v: the value to check
+    Dependencies:
+        globals: CONTAINER_TYPES
+    """
+    return v if isinstance(v, CONTAINER_TYPES) else [v]
 
 
 def re_repl_escape(s):
@@ -3356,28 +3395,117 @@ def init_logging_output():
 def end_logging_output():
     """
     Close the output log file object.
+    Ignore errors; we're probably exiting anyway.
     Dependencies:
         globals: output_log_fo
     """
     output_log_fo.close()
 
 
-def run_with_logging(cmd_descr, cmd, include_stderr=True, env_add=None,
-                     **kwargs):
+### see also run_with_logging() and rotate_prune_output_logs() ###
+
+
+############################
+# running external commands
+############################
+
+def multi_fan_out(stream_tuples):
 
     """
-    Run a command and log its output to the output log and stdout.
+    Copy data from multiple streams to multiple streams, line by line.
 
-    Returns the exit value of the command.
+    Parameters:
+        stream_tuples: a list of tuples, each of which must have two
+                       elements (input and output); the first element of
+                       each tuple must be a file descriptor or file
+                       object, and the second must be a list of file
+                       descriptors and/or file objects
+                       * file-like objects are also allowed; for input,
+                         they must have a readline() method, and for
+                         output, they must have write() and flush()
+                         methods
+
+    Dependencies:
+        modules: os, select
+
+    """
+
+    stream_dict = {}
+    for i, out_list in stream_tuples:
+        if isinstance(i, int):
+            # have to use {} notation to have expressions as keys
+            stream_dict.update({
+                i: dict(
+                    out_list=[os.fdopen(o, 'a') if isinstance(o, int) else o
+                                                for o in out_list],
+                    in_obj=os.fdopen(i, 'r'),
+                    in_eof=False,
+                )
+            })
+        else:
+            # have to use {} notation to have expressions as keys
+            stream_dict.update({
+                i.fileno(): dict(
+                    out_list=[os.fdopen(o, 'a') if isinstance(o, int) else o
+                                                for o in out_list],
+                    in_obj=i,
+                    in_eof=False,
+                )
+            })
+
+    while True:
+        sel = select.select([i for i in stream_dict], [], [])
+        for i in sel[0]:
+            line = stream_dict[i]['in_obj'].readline()
+            if not line:
+                stream_dict[i]['in_eof'] = True
+                continue
+            for o in stream_dict[i]['out_list']:
+                o.write(line)
+                o.flush()
+        if True in [i_dict['in_eof'] for i, i_dict in stream_dict.items()]:
+            break;
+
+
+def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
+                env_add=None, **kwargs):
+
+    """
+    Run an external command, with flexible input/output targeting.
+
+    Returns the command's exit value if bg is false.  If bg is true,
+    returns the Popen object for the process; the caller must ensure
+    that its wait() method is eventually called.
 
     May raise exceptions: OSError or ValueError.
 
+    WARNING: use keyword args when calling; the interface is in flux
+
     Parameters:
-        cmd_descr: a string describing the command, used in messages
-                   like 'starting rsync backup'
         cmd: a list containing the command and its arguments
-        include_stderr: if true, include stderr in the output (but on
-                        stdout)
+        stdin: what to attach to the process' stdin stream; can be
+               a file descriptor, a file object, None,
+               subprocess.DEVNULL if using Python 3.3+, or 'devnull' to
+               simulate subprocess.DEVNULL
+               * may _not_ be/contain subprocess.PIPE, which will
+                 cause the script to exit with an internal error
+               * file-like objects are allowed, however, and may be
+                 passed instead
+        stdout: what to attach to the process' stdout stream; can be
+                anything valid for stdin, or a list of such values
+                * may _not_ be/contain subprocess.PIPE, which will
+                  cause the script to exit with an internal error
+                * file-like objects are allowed, however, and may be
+                  passed instead; specifically, if more than one
+                  non-None value is supplied, the object must have
+                  write() and flush() methods
+        stderr: what to attach to the process' stderr stream; can be
+                anything valid for stdout, or subprocess.STDOUT (which
+                may not be part of a list, and will be ignored if in a
+                list)
+                * see stdout, above, regarding subprocess.PIPE
+        bg: if true, run the command in the background, and return the
+            Popen object for the process
         env_add: if not None, a dictionary of keys and values to add to
                  the environment in which the command will run; this is
                  added to the current environment if there is no env
@@ -3389,13 +3517,83 @@ def run_with_logging(cmd_descr, cmd, include_stderr=True, env_add=None,
         kwargs: passed to subprocess.Popen(); but see env_add
 
     Dependencies:
-        config_settings: print_cmds
-        globals: cfg, output_logger, output_log_fo, status_logger,
-                 FULL_DATE_FORMAT
-        functions: pps()
-        modules: copy, os, time, operator, subprocess, threading, sys
+        globals: exitvals['internal'], exitvals['external'], email_logger,
+                 _devnull_fo
+        functions: scalar_to_list(), multi_fan_out(), pps()
+        modules: copy, os, subprocess, threading, sys, atexit
 
     """
+
+    # sanity check
+    if (stdin == subprocess.PIPE or
+          stdout == subprocess.PIPE or
+          (not isinstance(stdout, int) and subprocess.PIPE in stdout) or
+          stderr == subprocess.PIPE or
+          (not isinstance(stderr, int) and subprocess.PIPE in stderr)):
+        email_logger.error(
+'''Internal Error: subprocess.PIPE may not be included in the arguments to
+run_command(); call was (in expanded notation):
+
+run_command(cmd={0}, stdin={1}, stdout={2},
+            stderr={3}, bg={4}, env_add={5},
+            kwargs={6})
+
+Exiting.''' .
+                           format(*map(pps, [cmd, stdin, stdout, stderr,
+                                             bg, env_add, kwargs]))
+        )
+        sys.exit(exitvals['internal']['num'])
+
+    # if stdout/stderr are scalars, make them lists
+    stdout = scalar_to_list(stdout)
+    stderr = scalar_to_list(stderr)
+
+    # simulate DEVNULL
+    if (('devnull' in stdout or 'devnull' in stderr)
+          and _devnull_fo is None):
+        try:
+            _devnull_fo = open(os.devnull, 'a+')
+        except IOError as e:
+            email_logger.error('Error: could not open the null device '
+                               '({0}); exiting.\nDetails: [Errno {1}] {2}' .
+                               format(pps(os.devnull), e.errno, e.strerror))
+            sys.exit(exitvals['external']['num'])
+
+        # automatically close on exit
+        # (should be done anyway, but we'll be thorough)
+        def _close_devnull_fo():
+            """
+            Close the devnull file object.
+            Ignore errors; we're probably exiting anyway.
+            Dependencies:
+                globals: _devnull_fo
+            """
+            _devnull_fo.close()
+        atexit.register(_close_devnull_fo)
+
+    # prepare the stdout target(s)
+    stdout[:] = [_devnull_fo if x == 'devnull' else x for x in stdout]
+    stdout[:] = [x for x in stdout if x is not None]
+    if len(stdout) == 0:
+        real_stdout = None
+    elif len(stdout) == 1:
+        real_stdout = stdout[0]
+    else:
+        real_stdout = subprocess.PIPE
+
+    # prepare the stderr target(s)
+    stderr[:] = [_devnull_fo if x == 'devnull' else x for x in stderr]
+    if len(stderr) == 1 and stderr[0] == subprocess.STDOUT:
+        real_stderr = stderr[0]
+    else:
+        stderr[:] = [x for x in stderr
+                       if x != subprocess.STDOUT and x is not None]
+        if len(stderr) == 0:
+            real_stderr = None
+        elif len(stderr) == 1:
+            real_stderr = stderr[0]
+        else:
+            real_stderr = subprocess.PIPE
 
     # set up the environment
     if env_add is not None:
@@ -3403,6 +3601,59 @@ def run_with_logging(cmd_descr, cmd, include_stderr=True, env_add=None,
             kwargs['env'] = copy.copy(os.environ).update(env_add)
         else:
             kwargs['env'].update(env_add)
+
+    # run the command
+    p = subprocess.Popen(cmd, stdin=stdin, stdout=real_stdout,
+                         stderr=real_stderr, **kwargs)
+
+    # deal with the output
+    stream_tuples = []
+    if len(stdout) > 1:
+        stream_tuples.append((p.stdout, stdout))
+    if len(stderr) > 1:
+        stream_tuples.append((p.stderr, stderr))
+    if stream_tuples:
+        if not bg:
+            multi_fan_out(stream_tuples)
+        else:
+            t = threading.Thread(target=multi_fan_out,
+                                 args=(stream_tuples, ))
+            t.start()
+
+    # return something
+    return p.wait() if not bg else p
+
+
+def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
+                     bg=False, env_add=None, **kwargs):
+
+    """
+    Run a command and log its output to the output log and stdout.
+
+    Returns the command's exit value if bg is false.  If bg is true,
+    returns the Popen object for the process; the caller must ensure
+    that its wait() method is eventually called.
+
+    May raise exceptions: OSError or ValueError.
+
+    WARNING: use keyword args when calling; the interface is in flux
+
+    Parameters:
+        cmd_descr: a string describing the command, used in messages
+                   like 'starting rsync backup'
+        log_stdout, log_stderr: if true, log the respective stream;
+                                if both are true, the streams will be
+                                combined
+        see run_command() for the rest
+
+    Dependencies:
+        config_settings: print_cmds
+        globals: cfg, output_logger, output_log_fo, status_logger,
+                 FULL_DATE_FORMAT
+        functions: run_command(), pps()
+        modules: time, operator, subprocess, sys
+
+    """
 
     # log the starting time
     output_logger.info('Starting {0} {1}.' .
@@ -3422,19 +3673,26 @@ def run_with_logging(cmd_descr, cmd, include_stderr=True, env_add=None,
         print(cmd_msg.strip(), file=output_log_fo)  # no stdout yet
         status_logger.info(cmd_msg.strip())
 
-    # run the command;
-    # redirect stderr so we get everything in the same order as we would
-    # on the command line
-    p = subprocess.Popen(cmd,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT
-                                if include_stderr else None,
-                         **kwargs)
+    # get the streams sorted out
+    stderr = 'devnull'
+    if log_stdout:
+        stdout = [output_log_fo, sys.stdout]
+        if log_stderr:
+            # redirect stderr so we get everything in the same order as we would
+            # on the command line
+            stderr = subprocess.STDOUT
+    else:
+        stdout = 'devnull'
+        if log_stderr:
+            stderr = [output_log_fo, sys.stdout]
 
-    # get the output
-    for line in iter(p.stdout.readline, ''):
-        output_log_fo.write(line)
-        sys.stdout.write(line)
+    # run the command
+    ret = run_command(cmd=cmd, stdout=stdout, stderr=stderr, bg=bg,
+                      env_add=env_add, **kwargs)
+
+    # backgrounded?  return the Popen object
+    if bg:
+        return ret
 
     # log the ending time
     output_logger.info('{0} finished {1}.' .
@@ -3442,13 +3700,8 @@ def run_with_logging(cmd_descr, cmd, include_stderr=True, env_add=None,
                               time.strftime(FULL_DATE_FORMAT,
                                             time.localtime())))
 
-    # get the exit value
-    return p.wait()
-
-
-#
-# see also rotate_prune_output_logs()
-#
+    # return the command's exit value
+    return ret
 
 
 ##########################################
