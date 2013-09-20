@@ -22,96 +22,96 @@ DOCSTRING CONTENTS:
     ----------
 
     ZIP_SUFFIXES
-        allowed suffixes for file rotation
+        Allowed suffixes for file rotation.
 
     PPS_INDENT
     PPS_WIDTH
     PPS_DEPTH
-        pretty-printer settings
+        Pretty-printer settings.
 
     FULL_DATE_FORMAT
-        format for printing certain timestamps
+        Format for printing certain timestamps.
 
     NUMBER_TYPES
     STRING_TYPES
     STRINGISH_TYPES
     CONTAINER_TYPES
-        type tuples
+        Type tuples.
 
     LF_ALERTS_SILENCED
     SCRIPT_DISABLED
-        names of tempfiles stored in the lockfile directory
+        Names of tempfiles stored in the lockfile directory.
 
     PATH_SEP
-        all path separator characters
+        All path-separator characters.
 
 
     Status and meta:
     ----------------
 
     exitvals
-        exit values
+        Exit values.
 
     script_name
-        name of the script
+        Name of the script.
 
     script_shortname
-        name of the script without suffixes
+        Name of the script without suffixes.
 
     running_as_email
-        user's local email address
+        User's local email address.
 
     supported_features
-        dict of features supported by the module and its submodules
+        Dict of features supported by the module and its submodules.
 
     available_features
-        list of features actually available on the system
+        List of features actually available on the system.
 
     task_article
     task_name
     tasks_name
-        what the script does
+        What the script does.
 
     script_modes
-        available script modes
+        Available script modes.
 
     license_str
-        license message
+        License message.
 
     start_time
-        starting timestamp
+        Starting timestamp.
 
 
     Configuration settings:
     -----------------------
 
     config_file_header
-        header for blank config files
+        Header for blank config files.
 
     default_config_files
-        default config-file path(s)
+        Default config-file path(s).
 
     config_file_paths
-        paths to the user-supplied config file(s)
+        Paths to the user-supplied config file(s).
 
     config_modules
-        module objects for the config file(s)
+        Module objects for the config file(s).
 
     cl_config
-        names of config settings that were supplied on the command line
+        Names of config settings that were supplied on the command line.
 
     cfg
-        the config settings dictionary
+        The config settings dictionary.
 
     config_defaults_multiple
-        config-setting defaults that are applied to more than one setting
-
+        Config-setting defaults that are applied to more than one
+        setting.
 
     config_settings
-        what config settings does this script accept?
+        What config settings does this script accept?
 
     bogus_config
-        non-existent settings that the end-user might set by accident
+        Non-existent settings that the end-user might set by accident.
 
 
     Hook lists:
@@ -149,10 +149,10 @@ DOCSTRING CONTENTS:
     alert_logger
     email_logger
     output_logger
-        logger objects
+        Logger objects.
 
     output_log_fo
-        output file object
+        Output-file object.
 
 
 2) API FUNCTIONS:
@@ -749,7 +749,7 @@ else:
 LF_ALERTS_SILENCED = 'lf_alerts_silenced'
 SCRIPT_DISABLED = 'script_disabled'
 
-# all path separator characters, to account for, e.g., Windows accepting
+# all path-separator characters, to account for, e.g., Windows accepting
 # both '/' and '\'; see validate_config()
 PATH_SEP = os.sep + ('/' if os.name == 'nt' else '')
 
