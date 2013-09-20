@@ -2070,7 +2070,6 @@ def check_file_type(file_path, file_label, type_char='f', follow_links=True,
 '''Internal Error: type_char contains an illegal value ({0})
 in check_file_type(); call was (in expanded notation):
 
-
 check_file_type(file_path={1}, file_label={2}, type_char={3},
                 follow_links={4}, must_exist={5}, use_logger={6},
                 warn_only={7}, exit_val={8})
@@ -2179,7 +2178,6 @@ def check_file_access(file_path, file_label, file_rwx='r', use_logger=False,
             err_exit(
 '''Internal Error: file_rwx contains an illegal value ({0})
 in check_file_access(); call was (in expanded notation):
-
 
 check_file_access(file_path={1}, file_label={2}, file_rwx={3},
                   use_logger={4}, warn_only={5}, exit_val={6})
