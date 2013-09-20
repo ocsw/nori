@@ -381,18 +381,22 @@ def validate_ssh_config():
     """
     for pd, tunnel in _config_blocks:
         core.setting_check_not_blank(pd+'ssh_host')
-        core.setting_check_num(pd+'ssh_port', 1, 65535)
-        core.setting_check_not_blank(pd+'ssh_user')
-        core.setting_check_file_read(pd+'ssh_key_file')
-        if (core.setting_check_type(pd+'ssh_options',
-                                    core.STRING_TYPES + (list, ))
-              is list):
-            core.setting_check_not_empty(pd+'ssh_options')
-            for i, o in enumerate(core.cfg[pd+'ssh_options']):
-                core.setting_check_type((pd+'ssh_options', i),
-                                        core.STRING_TYPES)
-        else:
-            core.setting_check_not_blank(pd+'ssh_options')
+        if core.setting_is_set(pd+'ssh_port'):
+            core.setting_check_num(pd+'ssh_port', 1, 65535)
+        if core.setting_is_set(pd+'ssh_user'):
+            core.setting_check_not_blank(pd+'ssh_user')
+        if core.setting_is_set(pd+'ssh_key_file'):
+            core.setting_check_file_read(pd+'ssh_key_file')
+        if core.setting_is_set(pd+'ssh_options'):
+            if (core.setting_check_type(pd+'ssh_options',
+                                        core.STRING_TYPES + (list, ))
+                  is list):
+                core.setting_check_not_empty(pd+'ssh_options')
+                for i, o in enumerate(core.cfg[pd+'ssh_options']):
+                    core.setting_check_type((pd+'ssh_options', i),
+                                            core.STRING_TYPES)
+            else:
+                core.setting_check_not_blank(pd+'ssh_options')
         if tunnel:
             core.setting_check_not_blank(pd+'local_host')
             core.setting_check_num(pd+'local_port', 1, 65535)
