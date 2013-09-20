@@ -46,7 +46,7 @@ DOCSTRING CONTENTS:
         All path-separator characters.
 
 
-    Status and meta:
+    Status and Meta:
     ----------------
 
     exitvals
@@ -82,7 +82,7 @@ DOCSTRING CONTENTS:
         Starting timestamp.
 
 
-    Configuration settings:
+    Configuration Settings:
     -----------------------
 
     config_file_header
@@ -114,7 +114,7 @@ DOCSTRING CONTENTS:
         Non-existent settings that the end-user might set by accident.
 
 
-    Hook lists:
+    Hook Lists:
     -----------
 
     render_status_messages_hooks
@@ -158,14 +158,14 @@ DOCSTRING CONTENTS:
 2) API FUNCTIONS:
 -----------------
 
-    Python version check:
+    Python Version Check:
     ---------------------
 
     pyversion_check()
         Exit if we don't have a recent enough Python.
 
 
-    Variable and value manipulations:
+    Variable and Value Manipulations:
     ---------------------------------
 
     char_name()
@@ -184,7 +184,7 @@ DOCSTRING CONTENTS:
         Convert a string representing a boolean to an actual boolean.
 
 
-    File tests and path manipulations:
+    File Tests and Path Manipulations:
     ----------------------------------
 
     file_access_const()
@@ -230,7 +230,7 @@ DOCSTRING CONTENTS:
         Remove a file or directory, recursively if necessary.
 
 
-    File rotation and pruning:
+    File Rotation and Pruning:
     --------------------------
 
     rotate_num_files()
@@ -249,7 +249,7 @@ DOCSTRING CONTENTS:
         Rotate and prune the output logs.
 
 
-    Logging and alerts:
+    Logging and Alerts:
     -------------------
 
     pps()
@@ -297,7 +297,7 @@ DOCSTRING CONTENTS:
         Run a command and log its output to the output log and stdout.
 
 
-    Config setting checks and manipulations:
+    Config-setting Checks and Manipulations:
     ----------------------------------------
 
     config_settings_no_print_output_log()
@@ -375,7 +375,7 @@ DOCSTRING CONTENTS:
         If we won't be able to create a file or directory, error/exit.
 
 
-    Status checks and modifications:
+    Status Checks and Modifications:
     --------------------------------
 
     lockfile_cleanup()
@@ -409,7 +409,7 @@ DOCSTRING CONTENTS:
         Forcibly remove the lockfile directory.
 
 
-    Startup and config file processing:
+    Startup and Config-file Processing:
     -----------------------------------
 
     import_file()
@@ -4592,7 +4592,7 @@ def render_status_metadata(full=False):
 
     msg = (
 '''------------------------------
-Timestamps and other metadata:
+Timestamps and Other Metadata:
 ------------------------------
 
 last_started_file:

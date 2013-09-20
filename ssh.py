@@ -27,7 +27,7 @@ which must be in the execution search path.
 2) API FUNCTIONS:
 -----------------
 
-    Startup and config file processing:
+    Startup and Config-file Processing:
     -----------------------------------
 
     create_ssh_settings
@@ -37,7 +37,7 @@ which must be in the execution search path.
         Validate all SSH config settings.
 
 
-    SSH remote commands and tunnels:
+    SSH Remote Commands and Tunnels:
     --------------------------------
 
     get_ssh_cmd()
