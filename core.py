@@ -3550,10 +3550,11 @@ def config_settings_no_print_output_log(no_print):
 #
 # allowed to be either a non-blank string or a tuple containing a
 # non-blank string and an integer between 1 and 65535:
-#   t = setting_check_type('s_name', (str, tuple))
-#   if t == str: setting_check_not_blank('s_name')
-#   if t == tuple: (setting_check_not_blank(('s_name', 0)) and
-#                   setting_check_int(('s_name', 0), 1, 65535))
+#   if setting_check_type('s_name', (str, tuple)) == str:
+#       setting_check_not_blank('s_name')
+#   else:
+#       setting_check_not_blank(('s_name', 0))
+#       setting_check_int(('s_name', 0), 1, 65535)
 #
 
 
