@@ -73,8 +73,10 @@ from __future__ import print_function
 from pprint import pprint as pp  # for debugging
 
 import sys
-from types import *
 import shlex
+
+if sys.hexversion < 0x03000000:
+    from types import *  # see constants, below
 
 
 ###############
@@ -88,6 +90,15 @@ from . import which
 ########################################################################
 #                              VARIABLES
 ########################################################################
+
+############
+# constants
+############
+
+# not in the types module anymore, but more readable
+if sys.hexversion >= 0x03000000:
+    NoneType = type(None)
+
 
 ##################
 # status and meta
@@ -365,8 +376,8 @@ def validate_ssh_config():
                          ssh_user, ssh_key_file, ssh_options,
                          local_host, local_port, remote_host,
                          remote_port, tun_timeout
-        globals: _config_blocks
-        modules: types, core
+        globals: NoneType [if using Python 3], _config_blocks
+        modules: types.NoneType [if using Python 2], core
     """
     for pd, tunnel in _config_blocks:
         core.setting_check_not_blank(pd+'ssh_host')

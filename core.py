@@ -520,8 +520,11 @@ import copy
 import subprocess
 import re
 import pprint
-from types import *
 import operator
+
+if sys.hexversion < 0x03000000 or sys.hexversion >= 0x03040000:
+    # see constants section and import_file(), below
+    from types import *
 
 if sys.hexversion < 0x03040000:
     import imp  # see import_file()
@@ -696,6 +699,10 @@ import importlib  # requires 2.7/3.1
 # constants
 ############
 
+# not in the types module anymore, but more readable
+if sys.hexversion >= 0x03000000:
+    NoneType = type(None)
+
 # internal, see file/path functions
 # set third tuple value to False for lookup-only
 # (i.e., use for going from character to tuple, but not the reverse)
@@ -742,8 +749,8 @@ else:
     STRING_TYPES = (str, )  # tuple so we can add to it
     STRINGISH_TYPES = (str, bytes, bytearray)
     CONTAINER_TYPES = (list, tuple, range, set, frozenset, dict,
-                       collections.ItemsView, collections.KeysView,
-                       collections.ValuesView)
+                       collections.abc.ItemsView, collections.abc.KeysView,
+                       collections.abc.ValuesView)
 
 # names of tempfiles stored in the lockfile directory
 LF_ALERTS_SILENCED = 'lf_alerts_silenced'
@@ -5083,7 +5090,8 @@ def validate_config():
 
     Dependencies:
         config settings: (all of them)
-        globals: cfg, validate_config_hooks, STRING_TYPES, PATH_SEP
+        globals: cfg, validate_config_hooks, NoneType [if using
+                 Python 3], STRING_TYPES, PATH_SEP
         functions: setting_check_type(), setting_check_num(),
                    setting_check_filedir_create(),
                    setting_check_not_blank(), setting_check_no_blanks(),
@@ -5091,7 +5099,7 @@ def validate_config():
                    setting_check_file_type(),
                    setting_check_file_access(), setting_check_list(),
                    setting_check_no_char()
-        modules: types, socket
+        modules: types.NoneType [if using Python 2], socket
 
     """
 
