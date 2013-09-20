@@ -3452,7 +3452,7 @@ def run_with_logging(cmd_descr, cmd, include_stderr=True, env_add=None,
 
 
 ##########################################
-# config setting checks and manipulations
+# config-setting checks and manipulations
 ##########################################
 
 def _config_settings_extra():
@@ -4903,7 +4903,7 @@ def clear_lockfile():
 
 
 #####################################
-# startup and config file processing
+# startup and config-file processing
 #####################################
 
 def import_file(file_path):
