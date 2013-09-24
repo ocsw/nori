@@ -296,6 +296,9 @@ DOCSTRING CONTENTS:
     end_logging_output()
         Close the output log file object.
 
+    generic_error_handler()
+        Handle exceptions with various options.
+
 
     Running External Commands:
     --------------------------
@@ -1946,7 +1949,6 @@ def file_error_handler(e, verb, file_label, file_path, must_exist=True,
     If it returns, returns False (but see must_exist, below).
 
     Parameters:
-        e: the exception object
         verb: a string describing the action that failed (e.g., 'stat',
               'remove')
         file_label: a string describing the file the exception was
@@ -1956,21 +1958,12 @@ def file_error_handler(e, verb, file_label, file_path, must_exist=True,
         must_exist: if false, and if the exception was because of a
                     non-existent file, the exception is ignored and the
                     function returns None
-        use_logger: if None, no messages are logged/printed
-                    if callable, is called with a message string and
-                    warn_only
-                    if true, the email logger is used
-                    if false, messages are printed to stderr
-        warn_only: if true, this is treated as a warning, not an error
-                   (which changes the messages logged/printed and
-                   prevents exiting the script)
-        exit_val: the value to exit the script with; if this is None,
-                  the function doesn't actually exit the script
+        see generic_error_handler() for the rest
 
     Dependencies:
-        globals: email_logger, exitvals['startup']
-        functions: pps(), err_exit()
-        modules: sys, errno
+        globals: exitvals['startup']
+        functions: generic_error_handler(), pps()
+        modules: errno
 
     """
 
@@ -1979,41 +1972,9 @@ def file_error_handler(e, verb, file_label, file_path, must_exist=True,
         return None
 
     # warning/error
-    if warn_only:
-        warn_msg = ('Warning: could not {0} {1} ({2}).\n'
-                    'Details: [Errno {3}] {4}' .
-                     format(verb, file_label, pps(file_path), e.errno,
-                            e.strerror))
-
-        if use_logger is None:
-            pass  # no messages
-        elif callable(use_logger):
-            use_logger(warn_msg, warn_only)
-        elif use_logger:
-            email_logger.warn(warn_msg)
-        else:
-            print('\n{0}\n'.format(warn_msg), file=sys.stderr)
-
-        return False
-
-    else:  # not warn_only
-        err_msg = ('Error: could not {0} {1} ({2}); exiting.\n'
-                   'Details: [Errno {3}] {4}' .
-                   format(verb, file_label, pps(file_path), e.errno,
-                          e.strerror))
-
-        if use_logger is None:
-            pass  # no messages
-        elif callable(use_logger):
-            use_logger(err_msg, warn_only)
-        elif use_logger:
-            email_logger.error(err_msg)
-        else:
-            err_exit(err_msg, exit_val)
-
-        if exit_val is not None:
-            sys.exit(exit_val)
-        return False
+    msg = ('could not {0} {1} ({2})' .
+           format(verb, file_label, pps(file_path)))
+    generic_error_handler(e, msg, use_logger, warn_only, exit_val)
 
 
 def check_file_type(file_path, file_label, type_char='f', follow_links=True,
@@ -3401,6 +3362,59 @@ def end_logging_output():
 
 
 ### see also run_with_logging() and rotate_prune_output_logs() ###
+
+
+def generic_error_handler(e, msg, use_logger=False, warn_only=False,
+                          exit_val=exitvals['startup']['num']):
+    """
+    Handle exceptions with various options.
+    If it returns, returns False.
+    Parameters:
+        e: the exception object
+        msg: the central part of the warning/error message
+        use_logger: if None, no messages are logged/printed
+                    if callable, is called with a message string and
+                    warn_only
+                    if true, the email logger is used
+                    if false, messages are printed to stderr
+        warn_only: if true, this is treated as a warning, not an error
+                   (which changes the messages logged/printed and
+                   prevents exiting the script)
+        exit_val: the value to exit the script with; if this is None,
+                  the function doesn't actually exit the script
+    Dependencies:
+        globals: email_logger, exitvals['startup']
+        functions: err_exit()
+        modules: sys
+    """
+    if warn_only:
+        warn_msg = ('Warning: {0}.\n'
+                    'Details: [Errno {1}] {2}' .
+                     format(msg, e.errno, e.strerror))
+        if use_logger is None:
+            pass  # no messages
+        elif callable(use_logger):
+            use_logger(warn_msg, warn_only)
+        elif use_logger:
+            email_logger.warn(warn_msg)
+        else:
+            print('\n{0}\n'.format(warn_msg), file=sys.stderr)
+        return False
+    else:
+        err_msg = ('Error: {0}; exiting.\n'
+                   'Details: [Errno {1}] {2}' .
+                   format(msg, e.errno, e.strerror))
+        if use_logger is None:
+            pass  # no messages
+        elif callable(use_logger):
+            use_logger(err_msg, warn_only)
+        elif use_logger:
+            email_logger.error(err_msg)
+        else:
+            err_exit(err_msg, exit_val)
+        if exit_val is not None:
+            sys.exit(exit_val)
+        return False
 
 
 ############################
