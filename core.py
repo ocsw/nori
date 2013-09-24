@@ -1987,7 +1987,7 @@ def file_error_handler(e, verb, file_label, file_path, must_exist=True,
     # warning/error
     msg = ('could not {0} {1} ({2})' .
            format(verb, file_label, pps(file_path)))
-    generic_error_handler(e, msg, use_logger, warn_only, exit_val)
+    return generic_error_handler(e, msg, use_logger, warn_only, exit_val)
 
 
 def check_file_type(file_path, file_label, type_char='f', follow_links=True,
