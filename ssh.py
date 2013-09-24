@@ -44,13 +44,11 @@ which must be in the execution search path.
         Assemble a list containing the ssh tunnel command and its
         arguments.
 
-    ###TODO
+    open_ssh_tunnel()
+        Open an SSH tunnel, including testing and logging.
 
-
-3) USAGE IN SCRIPTS:
---------------------
-
-###TODO
+    close_ssh_tunnel()
+        Close an SSH tunnel, including logging.
 
 """
 
@@ -338,7 +336,7 @@ The port number on the remote end of the SSH tunnel.
 '''
 Timeout for establishing the SSH tunnel, in seconds.
 
-Can be None, to wait forever, or a number >= 0.
+Can be None, to wait forever, or a number >= 1.
 '''
             ),
             default=15,
@@ -464,6 +462,112 @@ def get_ssh_tunnel_cmd(prefix, delim='_'):
     tunnel_arg.append('-N')
     cmd = get_ssh_cmd(prefix, delim)
     return cmd[0] + tunnel_arg + cmd[1:]
+
+
+def open_ssh_tunnel(descr, prefix, delim='_', atexit_reg=True,
+                    use_logger=True, warn_only=False,
+                    exit_val=core.exitvals['ssh_tunnel']['num']):
+
+    """
+    Open an SSH tunnel, including testing and logging.
+
+    Returns the tunnel's process object on success, otherwise False.
+
+    Parameters:
+        descr: a description of the tunnel's purpose (e.g. 'mysql dumps'
+               or 'rsync backups'); this is used in status and error
+               messages like 'running SSH tunnel for mysql dumps'
+        prefix, delim: prefix and delimiter that start the setting names
+                       to use
+        atexit_reg: if true, register a callback to kill the tunnel on
+                    exit; see core.run_command()
+        see core.generic_error_handler() for the rest
+
+    Dependencies:
+        config settings: [prefix+delim+:] (remote_host), (remote_port),
+                         local_host, local_port, tun_timeout
+        functions: get_ssh_tunnel_cmd()
+        modules: (subprocess), atexit, core
+        external commands: (ssh)
+
+    """
+
+    # log that we're running the command
+    core.logging_stop_stdouterr()
+    core.status_logger.info('Running SSH tunnel command for {0}...' .
+                            format(descr))
+    core.logging_start_stdouterr()
+    core.output_logger.info('Running SSH tunnel command for {0}...' .
+                            format(descr))
+
+    # run the command and set up our own exit callback
+    p = core.run_with_logging(cmd_descr='SSH tunnel for {0}'.format(descr),
+                              cmd=get_ssh_tunnel_cmd(prefix, delim),
+                              bg=True, atexit_register=False)
+    atexit.register(close_ssh_tunnel, descr, p)
+
+    # test the tunnel
+    waited = 0
+    while True:
+        # keep trying with 1-sec timeouts because the tunnel might take
+        # a while to come up; if we try once with a long timeout, we
+        # might catch it while it's still connecting, even though it's
+        # fine
+        if core.test_remote_port(descr,
+                                 (core.cfg[prefix+delim+'local_host'],
+                                  core.cfg[prefix+delim+'local_port']),
+                                 timeout=1, use_logger=None,
+                                 warn_only=True):
+            connected = True
+            break
+        waited += 1
+
+        # not working yet, but is it still running?
+        if p.poll() is None:
+            if waited >= core.cfg[prefix+delim+'tun_timeout']:
+                core.kill_bg_command(p)
+                msg = ('could not establish SSH tunnel for {0} '
+                       '(timed out)'.format(descr))
+                core.generic_error_handler(None, msg, use_logger, warn_only,
+                                           exit_val)
+                connected = False
+        else:  # process is already dead
+            ssh_exit = p.wait()
+            msg = ('could not establish SSH tunnel for {0} '
+                   '(status code {1})'.format(descr, ssh_exit))
+            core.generic_error_handler(None, msg, use_logger, warn_only,
+                                       exit_val)
+            connected = False
+
+    if connected:
+        core.status_logger.info('SSH tunnel for {0} established.' .
+                                format(descr))
+        return p
+    else:
+        return False
+
+
+def close_ssh_tunnel(descr, p_obj):
+    """
+    Close an SSH tunnel, including logging.
+    For tunnels opened with open_ssh_tunnel().
+    Can be called even if the tunnel already died / was closed / was
+    killed.
+    Parameters:
+        descr: a description of the tunnel's purpose (e.g. 'mysql dumps'
+               or 'rsync backups'); this is used in status messages like
+               'SSH tunnel for mysql dumps has been closed'
+        p_obj: the process object for the ssh tunnel command
+    Dependencies:
+        modules: os, core
+    """
+    ret = core.kill_bg_command(p_obj)
+    if ret != -15 and ret != -9 and os.name == 'posix':
+        status_logger.info('SSH tunnel for {0} was already closed.' .
+                           format(descr))
+    else:
+        status_logger.info('SSH tunnel for {0} has been closed.' .
+                           format(descr))
 
 
 ########################################################################
