@@ -310,6 +310,9 @@ DOCSTRING CONTENTS:
     run_command()
         Run an external command, with flexible input/output targeting.
 
+    kill_bg_command()
+        Kill a background command and return the exit value.
+
     run_with_logging()
         Run a command and log its output to the output log and stdout.
 
@@ -3480,7 +3483,7 @@ def multi_fan_out(stream_tuples):
 
 
 def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
-                env_add=None, **kwargs):
+                atexit_reg=True, env_add=None, **kwargs):
 
     """
     Run an external command, with flexible input/output targeting.
@@ -3515,9 +3518,11 @@ def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
                 anything valid for stdout, or subprocess.STDOUT (which
                 may not be part of a list, and will be ignored if in a
                 list)
-                * see stdout, above, regarding subprocess.PIPE
+                * see notes under stdout, above
         bg: if true, run the command in the background, and return the
             Popen object for the process
+        atexit_reg: if true, and if bg is true, register a callback to
+                    kill the command on exit
         env_add: if not None, a dictionary of keys and values to add to
                  the environment in which the command will run; this is
                  added to the current environment if there is no env
@@ -3631,13 +3636,87 @@ Exiting.''' .
             t = threading.Thread(target=multi_fan_out,
                                  args=(stream_tuples, ))
             t.start()
+            if atexit_reg:
+                atexit.register(kill_bg_command, p)
 
     # return something
     return p.wait() if not bg else p
 
 
+def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
+
+    """
+    Kill a background command and return the exit value.
+
+    First tries SIGTERM, then sends SIGKILL if the process is still
+    running.
+
+    May raise a TimeoutExpired exception (see wait_timeout).
+
+    Note: might be called more than once for the same process (e.g.
+    because once a callback is registered with atexit.register() it
+    can't be removed).
+
+    Parameters:
+        p.obj: the process object for the command
+        timeout: how long to wait after sending SIGTERM to send SIGKILL
+                 (in seconds); if 0, don't send SIGKILL, just wait for
+                 the process to die
+        wait_timeout: if using Python 3.3, and this is not None, how
+                      long to wait if the process hasn't died even
+                      after SIGKILL (in seconds) before raising a
+                      TimeoutExpired exception
+
+    Dependencies:
+        globals: email_logger, exitvals['internal']
+        modules: (subprocess), time, sys
+        Python: 2.6
+
+    """
+
+    # sanity check
+    if sys.hexversion < 0x03030000 and wait_timeout is not None:
+        email_logger.error('Internal Error: wait_timeout is not None in '
+                           'kill_bg_command(), but Python \n version is '
+                           'less than 3.3.')
+        sys.exit(exitvals['internal']['num'])
+
+    # is it already dead?
+    if p.poll() is not None:
+        return p.wait()
+
+    # SIGTERM
+    try:
+        p.terminate()
+    except OSError:
+        # apparently happens only if it's dead and p.wait() was already
+        # called
+        pass
+    if p.poll() is not None:
+        return p.wait()
+
+    # SIGKILL
+    if kill_timeout != 0:
+        for i in range(kill_timeout):
+            time.sleep(1)
+            if p.poll() is not none:
+                return p.wait()
+    try:
+        p.kill()
+    except OSError:
+        # apparently happens only if it's dead and p.wait() was already
+        # called
+        pass
+
+    # hopefully it's actually dead by now, otherwise this could hang
+    if sys.hexversion >= 0x03030000:
+        return p.wait(wait_timeout)
+    else:
+        return p.wait()
+
+
 def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
-                     bg=False, env_add=None, **kwargs):
+                     bg=False, atexit_reg=True, env_add=None, **kwargs):
 
     """
     Run a command and log its output to the output log and stdout.
@@ -3700,7 +3779,7 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
 
     # run the command
     ret = run_command(cmd=cmd, stdout=stdout, stderr=stderr, bg=bg,
-                      env_add=env_add, **kwargs)
+                      atexit_reg=atexit_reg, env_add=env_add, **kwargs)
 
     # backgrounded?  return the Popen object
     if bg:

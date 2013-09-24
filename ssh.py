@@ -11,7 +11,6 @@ DOCSTRING CONTENTS:
 
 1) About and Requirements
 2) API Functions
-3) Usage in Scripts
 
 
 1) ABOUT AND REQUIREMENTS:
@@ -20,8 +19,6 @@ DOCSTRING CONTENTS:
 This submodule provides SSH functionality, including remote command
 execution and tunnels.  It requires the 'ssh' command line utility,
 which must be in the execution search path.
-
-###TODO
 
 
 2) API FUNCTIONS:
@@ -415,15 +412,19 @@ def validate_ssh_config():
 def get_ssh_cmd(prefix, delim='_'):
     """
     Assemble a list containing the ssh command and its arguments.
+    Can be used with (e.g.) core.run_command() or
+    core.run_with_logging().
     For remote commands, add the remote command/argument list to the
     list returned from this function.
     See also get_ssh_tunnel_cmd().
     Parameters:
         prefix, delim: prefix and delimiter that start the setting names
+                       to use
     Dependencies:
         config settings: [prefix+delim+:] ssh_host, ssh_port,
                          ssh_user, ssh_key_file, ssh_options
         modules: shlex, core
+        external commands: ssh
     """
     cmd = ['ssh']
     if prefix+delim+'ssh_port' in core.cfg:
@@ -444,13 +445,17 @@ def get_ssh_cmd(prefix, delim='_'):
 def get_ssh_tunnel_cmd(prefix, delim='_'):
     """
     Assemble a list containing the ssh tunnel command and its arguments.
+    Can be used with (e.g.) core.run_command() or
+    core.run_with_logging(), but see open_ssh_tunnel(), below.
     Parameters:
         prefix, delim: prefix and delimiter that start the setting names
+                       to use
     Dependencies:
         config settings: [prefix+delim+:] local_port, remote_host,
                          remote_port
         functions: get_ssh_cmd()
         modules: core
+        external commands: ssh
     """
     tunnel_arg = ['-L']
     tunnel_arg.append(':'.join(core.cfg[prefix+delim+'local_port'],
