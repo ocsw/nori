@@ -559,10 +559,10 @@ def close_ssh_tunnel(descr, p_obj):
                'SSH tunnel for mysql dumps has been closed'
         p_obj: the process object for the ssh tunnel command
     Dependencies:
-        modules: os, core
+        modules: core
     """
-    ret = core.kill_bg_command(p_obj)
-    if ret != -15 and ret != -9 and os.name == 'posix':
+    ret, already = core.kill_bg_command(p_obj)
+    if already:
         status_logger.info('SSH tunnel for {0} was already closed.' .
                            format(descr))
     else:

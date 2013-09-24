@@ -3662,7 +3662,9 @@ Exiting.''' .
 def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
 
     """
-    Kill a background command and return the exit value.
+    Kill a background command.
+
+    Returns a tuple: (exit value, was_already_dead?).
 
     First tries SIGTERM, then sends SIGKILL if the process is still
     running.
@@ -3699,7 +3701,7 @@ def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
 
     # is it already dead?
     if p.poll() is not None:
-        return p.wait()
+        return (p.wait(), True)
 
     # SIGTERM
     try:
@@ -3709,14 +3711,14 @@ def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
         # called
         pass
     if p.poll() is not None:
-        return p.wait()
+        return (p.wait(), False)
 
     # SIGKILL
     if kill_timeout != 0:
         for i in range(kill_timeout):
             time.sleep(1)
             if p.poll() is not none:
-                return p.wait()
+                return (p.wait(), False)
     try:
         p.kill()
     except OSError:
@@ -3726,9 +3728,9 @@ def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
 
     # hopefully it's actually dead by now, otherwise this could hang
     if sys.hexversion >= 0x03030000:
-        return p.wait(wait_timeout)
+        return (p.wait(wait_timeout), False)
     else:
-        return p.wait()
+        return (p.wait(), False)
 
 
 def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
