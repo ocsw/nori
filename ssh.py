@@ -68,6 +68,7 @@ from __future__ import print_function
 from pprint import pprint as pp  # for debugging
 
 import sys
+import atexit
 import shlex
 
 if sys.hexversion < 0x03000000:
@@ -190,7 +191,7 @@ def create_ssh_settings(prefix, delim='_', heading='', extra_text='',
                          local_host, local_port, remote_host,
                          remote_port, tun_timeout
         globals: _config_blocks
-        modules: getpass, core
+        modules: core
 
     """
 
