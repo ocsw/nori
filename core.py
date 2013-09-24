@@ -3383,7 +3383,7 @@ def generic_error_handler(e, msg, use_logger=False, warn_only=False,
     Handle exceptions with various options.
     If it returns, returns False.
     Parameters:
-        e: the exception object
+        e: the exception object; can also be None, to just work with msg
         msg: the central part of the warning/error message
         use_logger: if None, no messages are logged/printed
                     if callable, is called with a message string and
@@ -3401,9 +3401,12 @@ def generic_error_handler(e, msg, use_logger=False, warn_only=False,
         modules: sys
     """
     if warn_only:
-        warn_msg = ('Warning: {0}.\n'
-                    'Details: [Errno {1}] {2}' .
-                     format(msg, e.errno, e.strerror))
+        if e is None:
+            warn_msg = 'Warning: {0}.'.format(msg)
+        else:
+            warn_msg = ('Warning: {0}.\n'
+                        'Details: [Errno {1}] {2}' .
+                         format(msg, e.errno, e.strerror))
         if use_logger is None:
             pass  # no messages
         elif callable(use_logger):
@@ -3414,9 +3417,12 @@ def generic_error_handler(e, msg, use_logger=False, warn_only=False,
             print('\n{0}\n'.format(warn_msg), file=sys.stderr)
         return False
     else:
-        err_msg = ('Error: {0}; exiting.\n'
-                   'Details: [Errno {1}] {2}' .
-                   format(msg, e.errno, e.strerror))
+        if e is None:
+            err_msg = 'Error: {0}; exiting.'.format(msg)
+        else:
+            err_msg = ('Error: {0}; exiting.\n'
+                       'Details: [Errno {1}] {2}' .
+                       format(msg, e.errno, e.strerror))
         if use_logger is None:
             pass  # no messages
         elif callable(use_logger):
