@@ -3539,9 +3539,9 @@ def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
     # sanity check
     if (stdin == subprocess.PIPE or
           stdout == subprocess.PIPE or
-          (not isinstance(stdout, int) and subprocess.PIPE in stdout) or
+          (isinstance(stdout, list) and subprocess.PIPE in stdout) or
           stderr == subprocess.PIPE or
-          (not isinstance(stderr, int) and subprocess.PIPE in stderr)):
+          (isinstance(stderr, list) and subprocess.PIPE in stderr)):
         email_logger.error(
 '''Internal Error: subprocess.PIPE may not be included in the arguments to
 run_command(); call was (in expanded notation):
