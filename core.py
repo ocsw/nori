@@ -740,7 +740,7 @@ import importlib  # requires 2.7/3.1
 # constants
 ############
 
-# not in the types module anymore, but more readable
+# NoneType isn't in the types module anymore, but it's more readable
 if sys.hexversion >= 0x03000000:
     NoneType = type(None)
 
