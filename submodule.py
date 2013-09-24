@@ -110,9 +110,9 @@ pyversion_check(7, 2)
 core.exitvals['submodule']=dict(
     num=999,
     descr=(
-"""
+'''
 error doing submodule stuff
-"""
+'''
     ),
 )
 
@@ -137,9 +137,9 @@ if 'submodule' in core.available_features:
 
     core.config_settings['submodule_setting'] = dict(
         descr=(
-"""
+'''
 Submodule stuff.
-"""
+'''
         ),
         default='submodule stuff',
         requires=['submodule'],

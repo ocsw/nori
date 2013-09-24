@@ -111,18 +111,18 @@ if sys.hexversion >= 0x03000000:
 core.exitvals['ssh_connect']=dict(
     num=20,
     descr=(
-"""
+'''
 error establishing SSH connection
-"""
+'''
     ),
 )
 
 core.exitvals['ssh_tunnel']=dict(
     num=21,
     descr=(
-"""
+'''
 error establishing SSH tunnel
-"""
+'''
     ),
 )
 
@@ -206,9 +206,9 @@ def create_ssh_settings(prefix, delim='_', heading='', extra_text='',
 
     core.config_settings[prefix+delim+'ssh_host'] = dict(
         descr=(
-"""
+'''
 The hostname of the remote SSH host.
-"""
+'''
         ),
         # no default
         cl_coercer=str,
@@ -217,15 +217,15 @@ The hostname of the remote SSH host.
 
     core.config_settings[prefix+delim+'ssh_port'] = dict(
         descr=(
-"""
+'''
 The SSH port on the remote host.
-"""
+'''
         ),
         # no default
         default_descr=(
-"""
+'''
 the ssh utility's default (generally 22, the standard port)
-"""
+'''
         ),
         cl_coercer=int,
         requires=['ssh'],
@@ -233,15 +233,15 @@ the ssh utility's default (generally 22, the standard port)
 
     core.config_settings[prefix+delim+'ssh_user'] = dict(
         descr=(
-"""
+'''
 The username on the remote SSH host.
-"""
+'''
         ),
         # no default
         default_descr=(
-"""
+'''
 the ssh utility's default (generally the username the script is run by)
-"""
+'''
         ),
         cl_coercer=str,
         requires=['ssh'],
@@ -249,15 +249,15 @@ the ssh utility's default (generally the username the script is run by)
 
     core.config_settings[prefix+delim+'ssh_key_file'] = dict(
         descr=(
-"""
+'''
 The path to the SSH key file.
-"""
+'''
         ),
         # no default
         default_descr=(
-"""
+'''
 the ssh utility's default (generally ~/.ssh/id_*)
-""".format(prefix+delim)
+'''.format(prefix+delim)
         ),
         cl_coercer=str,
         requires=['ssh'],
@@ -265,13 +265,13 @@ the ssh utility's default (generally ~/.ssh/id_*)
 
     core.config_settings[prefix+delim+'ssh_options'] = dict(
         descr=(
-"""
+'''
 The options to pass to the ssh utility.
 
 This can be a string or a list of strings.  A string can be passed on the
 command line, but this isn't recommended unless it is very simple, due to
 quoting issues.
-"""
+'''
         ),
         # no default
         cl_coercer=str,  # can also be a list, but not from the cli
@@ -281,12 +281,12 @@ quoting issues.
     if tunnel:
         core.config_settings[prefix+delim+'local_host'] = dict(
             descr=(
-"""
+'''
 The hostname on the local end of the SSH tunnel.
 
 This is generally 'localhost', but it may need to be (e.g.) '127.0.0.1'
 or '::1'.
-"""
+'''
             ),
             default='localhost',
             cl_coercer=str,
@@ -295,11 +295,11 @@ or '::1'.
 
         core.config_settings[prefix+delim+'local_port'] = dict(
             descr=(
-"""
+'''
 The port number on the local end of the SSH tunnel.
 
 Can be any valid unused port.
-"""
+'''
             ),
             default=default_local_port,
             cl_coercer=int,
@@ -308,7 +308,7 @@ Can be any valid unused port.
 
         core.config_settings[prefix+delim+'remote_host'] = dict(
             descr=(
-"""
+'''
 The hostname on the remote end of the SSH tunnel.
 
 Connected to from the remote host.
@@ -317,7 +317,7 @@ This is generally 'localhost', but it may need to be (e.g.) '127.0.0.1'
 or '::1'.  It can also be something else entirely, for example if the
 purpose of the tunnel is to get through a firewall, but a connection
 cannot be made directly to the necessary server.
-"""
+'''
             ),
             default='localhost',
             cl_coercer=str,
@@ -326,9 +326,9 @@ cannot be made directly to the necessary server.
 
         core.config_settings[prefix+delim+'remote_port'] = dict(
             descr=(
-"""
+'''
 The port number on the remote end of the SSH tunnel.
-"""
+'''
             ),
             default=default_remote_port,
             cl_coercer=int,
@@ -338,11 +338,11 @@ The port number on the remote end of the SSH tunnel.
 
         core.config_settings[prefix+delim+'tun_timeout'] = dict(
             descr=(
-"""
+'''
 Timeout for establishing the SSH tunnel, in seconds.
 
-Can be None, to wait forever, or a number >= 1.
-"""
+Can be None, to wait forever, or a number >= 0.
+'''
             ),
             default=15,
             cl_coercer=(lambda x: None if x == 'None' or x == 'none'
