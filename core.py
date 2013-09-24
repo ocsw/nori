@@ -317,6 +317,16 @@ DOCSTRING CONTENTS:
         Run a command and log its output to the output log and stdout.
 
 
+    Network Operations:
+    -------------------
+
+    network_error_handler()
+        Handle socket.* exceptions with various options.
+
+    test_remote_port()
+        Test connecting to a remote network port.
+
+
     Config-setting Checks and Manipulations:
     ----------------------------------------
 
@@ -3793,6 +3803,107 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
 
     # return the command's exit value
     return ret
+
+
+#####################
+# network operations
+#####################
+
+def network_error_handler(e, verb, socket_descr, remote_host, remote_port,
+                          use_logger=False, warn_only=False,
+                          exit_val=exitvals['startup']['num']):
+    """
+    Handle socket.* exceptions with various options.
+    If it returns, returns False.
+    Parameters:
+        verb: a string describing the action that failed (e.g.,
+              'connect to', 'write to')
+        socket_descr: a string describing the socket the exception was
+                      related to, e.g. 'MySQL SSH tunnel'
+        remote_host: the hostname/IP the socket was connected to (or was
+                     attempting to connect to)
+        remote_port: the port number the socket was connected to (or was
+                     attempting to connect to)
+        see generic_error_handler() for the rest
+    Dependencies:
+        globals: exitvals['startup']
+        functions: generic_error_handler()
+    """
+    msg = ('could not {0} {1}\n'
+           '(remote: {2}:{3})' .
+           format(verb, socket_descr, remote_host, remote_socket))
+    return generic_error_handler(e, msg, use_logger, warn_only, exit_val)
+
+
+def test_remote_port(descr, remote_end, local_end=('', 0),
+                     s_family=socket.AF_INET, s_type=socket.SOCK_STREAM,
+                     s_proto=0, timeout=5, use_logger=False,
+                     warn_only=False, exit_val=exitvals['startup']['num']):
+
+    """
+    Test connecting to a remote network port.
+
+    Parameters:
+        descr: a string describing what we're testing, used in messages
+               like ''
+        remote_end: a (host, port) tuple; host can be a hostname
+        local end: a (host, port) tuple; for the defaults, host can be
+                   '' and port can be 0 (individually)
+                   * only available if using Python 2.7/3.2
+        s_family: socket.AF_INET (IPv4) or socket.AF_INET6 (IPv6)
+        s_type: socket.sock_STREAM (TCP) or socket.SOCK_DGRAM (UDP)
+        s_proto: socket protocol, usually 0 (IP)
+        timeout: number of seconds to wait for the connection to be
+                 established, or None to wait forever
+        see generic_error_handler() for the rest
+
+    Dependencies:
+        globals: exitvals['startup'], exitvals['internal'], email_logger
+        functions: network_error_handler()
+        modules: socket, sys
+        Python: 2.6; 2.7/3.2 if local_end is used
+
+    """
+
+    # is local_end supported?
+    local_support = False
+    if ((sys.version_info[0] == 2 and sys.version_info[1] >= 7) or
+          (sys.version_info[0] == 3 and sys.version_info[1] >= 2)
+          or sys.version_info[0] > 3):
+        local_support = True
+
+    # sanity check
+    if local_end != ('', 0) and not local_support:
+        email_logger.error('Internal Error: local_end supplied to '
+                           'test_remote_port(), but Python version\n'
+                           'is not 2.7/3.2; exiting.')
+        sys.exit(exitvals['internal']['num'])
+
+    # create the socket
+    s = socket.socket(s_family, s_type, s_proto)
+
+    # try to connect
+    try:
+        if local_support:
+            socket.create_connection(remote_end, timeout, local_end)
+        else:
+            socket.create_connection(remote_end, timeout)
+        connected = True
+    except (socket.error, socket.herror, socket.gaierror,
+            socket.timeout) as e:
+        network_error_handler(e, 'connect to', descr, remote_end[0],
+                              remote_end[1], use_logger, warn_only,
+                              exit_val)
+        connected = False
+
+    # shut down the socket; not sure if this can throw exceptions
+    try:
+        socket.shutdown(socket.SHUT_RDWR)
+    except (socket.error, socket.herror, socket.gaierror,
+            socket.timeout) as e:
+        pass
+
+    return connected
 
 
 ##########################################
