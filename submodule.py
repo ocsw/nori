@@ -107,7 +107,7 @@ pyversion_check(7, 2)
 ##################
 
 # submodule-specific exit values
-core.exitvals['submodule']=dict(
+core.exitvals['submodule'] = dict(
     num=999,
     descr=(
 '''

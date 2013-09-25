@@ -37,7 +37,7 @@ DOCSTRING CONTENTS:
     Many aspects of the library are self-documenting; to get
     information, options can be supplied to either the package itself,
     (with, e.g., 'python -m nori OPTIONS'), or to scripts that use the
-    library. 
+    library.
 
     For command-line usage information, run with '--help'.
 

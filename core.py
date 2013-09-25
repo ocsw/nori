@@ -3495,7 +3495,7 @@ def multi_fan_out(stream_tuples):
                 o.write(line)
                 o.flush()
         if True in [i_dict['in_eof'] for i, i_dict in stream_dict.items()]:
-            break;
+            break
 
 
 def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
@@ -3787,8 +3787,8 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
     if log_stdout:
         stdout = [output_log_fo, sys.stdout]
         if log_stderr:
-            # redirect stderr so we get everything in the same order as we would
-            # on the command line
+            # redirect stderr so we get everything in the same order as
+            # we would on the command line
             stderr = subprocess.STDOUT
     else:
         stdout = 'devnull'

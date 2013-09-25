@@ -104,7 +104,7 @@ if sys.hexversion >= 0x03000000:
 # exit values
 #
 
-core.exitvals['ssh_connect']=dict(
+core.exitvals['ssh_connect'] = dict(
     num=20,
     descr=(
 '''
@@ -113,7 +113,7 @@ error establishing SSH connection
     ),
 )
 
-core.exitvals['ssh_tunnel']=dict(
+core.exitvals['ssh_tunnel'] = dict(
     num=21,
     descr=(
 '''
@@ -330,7 +330,6 @@ The port number on the remote end of the SSH tunnel.
             cl_coercer=int,
             requires=['ssh'],
         )
-
 
         core.config_settings[prefix+delim+'tun_timeout'] = dict(
             descr=(
