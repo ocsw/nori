@@ -781,14 +781,17 @@ FULL_DATE_FORMAT = '%a %b %d %H:%M:%S %Z %Y'
 if sys.hexversion < 0x03000000:
     NUMBER_TYPES = (int, float, long)  # not complex
     STRING_TYPES = (basestring, )  # tuple so we can add to it
-    STRINGISH_TYPES = (basestring, bytearray, buffer)
+    if sys.hexversion < 0x02070000:
+        STRINGISH_TYPES = (basestring, bytearray, buffer)
+    else:
+        STRINGISH_TYPES = (basestring, bytearray, buffer, memoryview)
     CONTAINER_TYPES = (list, tuple, xrange, set, frozenset, dict,
                        collections.ItemsView, collections.KeysView,
                        collections.ValuesView)
 else:
     NUMBER_TYPES = (int, float)  # not complex
     STRING_TYPES = (str, )  # tuple so we can add to it
-    STRINGISH_TYPES = (str, bytes, bytearray)
+    STRINGISH_TYPES = (str, bytes, bytearray, memoryview)
     CONTAINER_TYPES = (list, tuple, range, set, frozenset, dict,
                        collections.abc.ItemsView, collections.abc.KeysView,
                        collections.abc.ValuesView)
