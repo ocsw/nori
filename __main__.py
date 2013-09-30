@@ -111,8 +111,9 @@ DOCSTRING CONTENTS:
     directly in its own, so that scripts that use the library can do:
         import nori
         nori.function()
-    regardless of which module the function is in.  See the imports
-    section, below.
+    regardless of which module the function is in.  (See the imports
+    section, below.)  This means that there should not be any name
+    clashes between any of the submodules.
 
 """
 
