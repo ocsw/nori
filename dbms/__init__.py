@@ -34,3 +34,5 @@ from pprint import pprint as pp  # for debugging
 #
 
 from .dbms import *
+from .mysql import *
+from .postgresql import *
