@@ -6221,14 +6221,3 @@ def process_command_line():
     # deal with the rest of the modes
     mode_dict['callback']()
     sys.exit(exitvals['no_error']['num'])
-
-
-########################################################################
-#                           RUN STANDALONE
-########################################################################
-
-def main():
-    process_command_line()
-
-if __name__ == '__main__':
-    main()

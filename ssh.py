@@ -568,14 +568,3 @@ def close_ssh_tunnel(descr, p_obj):
     else:
         status_logger.info('SSH tunnel for {0} has been closed.' .
                            format(descr))
-
-
-########################################################################
-#                           RUN STANDALONE
-########################################################################
-
-def main():
-    core.process_command_line()
-
-if __name__ == '__main__':
-    main()
