@@ -85,7 +85,7 @@ from . import core
 ########################################################################
 
 # minimum versions for the imports and code below
-pyversion_check(7, 2)
+core.pyversion_check(7, 2)
 
 
 ########################################################################
