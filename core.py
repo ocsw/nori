@@ -1914,14 +1914,16 @@ def str_to_bool(s):
     Parameters:
         s: the string to convert
     """
-    if s.lower() == 'true': return True
-    if s.lower() == 'false': return False
-    if s.lower() == 'on': return True
-    if s.lower() == 'off': return False
-    if s.lower() == 'yes': return True
-    if s.lower() == 'no': return False
-    if s == '1': return True
-    if s == '0': return False
+    if (s.lower() == 'true' or
+          s.lower() == 'on' or
+          s.lower() == 'yes' or
+          s == '1'):
+        return True
+    if (s.lower() == 'false' or
+          s.lower() == 'off' or
+          s.lower() == 'no' or
+          s == '0'):
+        return False
     raise ValueError
 
 
