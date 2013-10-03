@@ -153,8 +153,8 @@ core.validate_config_hooks.append(lambda: validate_ssh_config())
 #####################################
 
 def create_ssh_settings(prefix, delim='_', heading='', extra_text='',
-                        tunnel=False, default_local_port=None,
-                        default_remote_port=None):
+                        extra_requires=[], tunnel=False,
+                        default_local_port=None, default_remote_port=None):
 
     """
     Add a block of SSH config settings to the script.
@@ -178,6 +178,8 @@ def create_ssh_settings(prefix, delim='_', heading='', extra_text='',
                     include the heading)
                     this is mainly intended to be used for things like
                     'Ignored if [some setting] is not True.'
+        extra_requires: a list of features to be added to the settings'
+                        requires attributes
         tunnel: if true, add tunnel-specific settings
         default_local_port: if tunnel is true, used as the default local
                             port number for the tunnel (and must be set)
@@ -195,12 +197,14 @@ def create_ssh_settings(prefix, delim='_', heading='', extra_text='',
 
     """
 
+    pd = prefix + delim
+
     if heading:
-        core.config_settings[prefix+delim+'heading'] = dict(
+        core.config_settings[pd + 'heading'] = dict(
             heading=heading,
         )
 
-    core.config_settings[prefix+delim+'ssh_host'] = dict(
+    core.config_settings[pd + 'ssh_host'] = dict(
         descr=(
 '''
 The hostname of the remote SSH host.
@@ -208,10 +212,9 @@ The hostname of the remote SSH host.
         ),
         # no default
         cl_coercer=str,
-        requires=['ssh'],
     )
 
-    core.config_settings[prefix+delim+'ssh_port'] = dict(
+    core.config_settings[pd + 'ssh_port'] = dict(
         descr=(
 '''
 The SSH port on the remote host.
@@ -224,10 +227,9 @@ the ssh utility's default (generally 22, the standard port)
 '''
         ),
         cl_coercer=int,
-        requires=['ssh'],
     )
 
-    core.config_settings[prefix+delim+'ssh_user'] = dict(
+    core.config_settings[pd + 'ssh_user'] = dict(
         descr=(
 '''
 The username on the remote SSH host.
@@ -240,10 +242,9 @@ the ssh utility's default (generally the username the script is run by)
 '''
         ),
         cl_coercer=str,
-        requires=['ssh'],
     )
 
-    core.config_settings[prefix+delim+'ssh_key_file'] = dict(
+    core.config_settings[pd + 'ssh_key_file'] = dict(
         descr=(
 '''
 The path to the SSH key file.
@@ -253,13 +254,12 @@ The path to the SSH key file.
         default_descr=(
 '''
 the ssh utility's default (generally ~/.ssh/id_*)
-'''.format(prefix+delim)
+'''.format(pd)
         ),
         cl_coercer=str,
-        requires=['ssh'],
     )
 
-    core.config_settings[prefix+delim+'ssh_options'] = dict(
+    core.config_settings[pd + 'ssh_options'] = dict(
         descr=(
 '''
 The options to pass to the ssh utility.
@@ -271,11 +271,10 @@ quoting issues.
         ),
         # no default
         cl_coercer=str,  # can also be a list, but not from the cli
-        requires=['ssh'],
     )
 
     if tunnel:
-        core.config_settings[prefix+delim+'local_host'] = dict(
+        core.config_settings[pd + 'local_host'] = dict(
             descr=(
 '''
 The hostname on the local end of the SSH tunnel.
@@ -286,10 +285,9 @@ or '::1'.
             ),
             default='localhost',
             cl_coercer=str,
-            requires=['ssh'],
         )
 
-        core.config_settings[prefix+delim+'local_port'] = dict(
+        core.config_settings[pd + 'local_port'] = dict(
             descr=(
 '''
 The port number on the local end of the SSH tunnel.
@@ -299,10 +297,9 @@ Can be any valid unused port.
             ),
             default=default_local_port,
             cl_coercer=int,
-            requires=['ssh'],
         )
 
-        core.config_settings[prefix+delim+'remote_host'] = dict(
+        core.config_settings[pd + 'remote_host'] = dict(
             descr=(
 '''
 The hostname on the remote end of the SSH tunnel.
@@ -317,10 +314,9 @@ cannot be made directly to the necessary server.
             ),
             default='localhost',
             cl_coercer=str,
-            requires=['ssh'],
         )
 
-        core.config_settings[prefix+delim+'remote_port'] = dict(
+        core.config_settings[pd + 'remote_port'] = dict(
             descr=(
 '''
 The port number on the remote end of the SSH tunnel.
@@ -328,10 +324,9 @@ The port number on the remote end of the SSH tunnel.
             ),
             default=default_remote_port,
             cl_coercer=int,
-            requires=['ssh'],
         )
 
-        core.config_settings[prefix+delim+'tun_timeout'] = dict(
+        core.config_settings[pd + 'tun_timeout'] = dict(
             descr=(
 '''
 Timeout for establishing the SSH tunnel, in seconds.
@@ -342,25 +337,38 @@ Can be None, to wait forever, or a number >= 1.
             default=15,
             cl_coercer=(lambda x: None if x == 'None' or x == 'none'
                                        else int(x)),
-            requires=['ssh'],
         )
 
-    if extra_text:
-        setting_list = [
-            'ssh_host', 'ssh_port', 'ssh_user', 'ssh_key_file',
-            'ssh_options',
+    setting_list = [
+        'ssh_host', 'ssh_port', 'ssh_user', 'ssh_key_file',
+        'ssh_options',
+    ]
+    if tunnel:
+        setting_list += [
+            'local_host', 'local_port', 'remote_host',  'remote_port',
+            'tun_timeout',
         ]
-        if tunnel:
-            setting_list += [
-                'local_host', 'local_port', 'remote_host',  'remote_port',
-                'tun_timeout',
-            ]
+    if extra_text:
         for s_name in setting_list:
-            core.config_settings[prefix+delim+s_name]['descr'] += (
-                '\n' + extra_text
+            if 'descr' in core.config_settings[pd + s_name]:
+                core.config_settings[pd + s_name]['descr'] += (
+                    '\n' + extra_text
+                )
+            else:
+                core.config_settings[pd + s_name]['descr'] = (
+                    extra_text
+                )
+    for s_name in setting_list:
+        if 'requires' in core.config_settings[pd + s_name]:
+            core.config_settings[pd + s_name]['requires'] += (
+                ['ssh'] + extra_requires
+            )
+        else:
+            core.config_settings[pd + s_name]['requires'] = (
+                ['ssh'] + extra_requires
             )
 
-    _config_blocks.append((prefix+delim, tunnel))
+    _config_blocks.append((pd, tunnel))
 
 
 def validate_ssh_config():
