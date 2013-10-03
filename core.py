@@ -828,7 +828,13 @@ script_shortname = re.sub('\.py.?$', '', script_name)
 # better to set the address explicitly whereever it's needed
 # (e.g., don't use the default alert_emails_from/alert_emails_to
 # settings)
-running_as_email = getpass.getuser() + '@' + socket.getfqdn()
+try:
+    running_as_email = getpass.getuser() + '@' + socket.getfqdn()
+except ImportError:
+    running_as_email = ''
+    print('Warning: could not get the current username; do not rely on '
+          'the defaults\nfor the alert_emails_from / alert_emails_to '
+          'settings.', file=sys.stderr)
 
 # dict of supported features
 # format: 'feature_name': 'feature_description'
