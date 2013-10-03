@@ -36,6 +36,7 @@ DOCSTRING CONTENTS:
     STRING_TYPES
     STRINGISH_TYPES
     CONTAINER_TYPES
+    MAPPING_TYPES
         Type tuples.
 
     LF_ALERTS_SILENCED
@@ -372,6 +373,9 @@ DOCSTRING CONTENTS:
 
     setting_check_no_blanks()
         If a container config setting contains any blanks, error/exit.
+
+    setting_check_kwargs(setting_name, stringish=False):
+        If a mapping config setting has a non-identifier key, error/exit.
 
     setting_check_no_char()
         If a config setting contains particular character(s),
@@ -795,6 +799,7 @@ else:
     CONTAINER_TYPES = (list, tuple, range, set, frozenset, dict,
                        collections.abc.ItemsView, collections.abc.KeysView,
                        collections.abc.ValuesView)
+MAPPING_TYPES = (dict, )  # tuple so we can add to it
 
 # names of tempfiles stored in the lockfile directory
 LF_ALERTS_SILENCED = 'lf_alerts_silenced'
@@ -4429,7 +4434,8 @@ def setting_check_not_all_blank(setting_name_list, ish=False):
                  exitvals['startup']['num'])
 
 
-def setting_check_no_blanks(setting_name, ish=False):
+def setting_check_no_blanks(setting_name, stringish=False,
+                            mapping_values=True):
 
     """
     If a container config setting contains any blanks, error/exit.
@@ -4445,13 +4451,16 @@ def setting_check_no_blanks(setting_name, ish=False):
 
     Parameters:
         setting_name: see note, above
-        ish: if true, string-like but non-string types are allowed
-             (see STRINGISH_TYPES, under constants)
+        stringish: if true, string-like but non-string types are allowed
+                   (see STRINGISH_TYPES, under constants)
+        mapping_values: if true, mapping types are checked based on
+                        their values; if false, their keys (see
+                        MAPPING_TYPES, under constants)
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, CONTAINER_TYPES, STRING_TYPES, STRINGISH_TYPES,
-                 exitvals['startup']
+        globals: cfg, CONTAINER_TYPES, MAPPING_TYPES, STRING_TYPES,
+                 STRINGISH_TYPES, exitvals['startup']
         functions: setting_check_is_set(), setting_check_type(),
                    err_exit()
 
@@ -4461,16 +4470,101 @@ def setting_check_no_blanks(setting_name, ish=False):
     obj, obj_path = setting_check_is_set(setting_name)
 
     # check the container type
-    setting_check_type(setting_name, CONTAINER_TYPES)
+    t = setting_check_type(setting_name, CONTAINER_TYPES)
 
     # blanks?
-    for subobj in obj:
-        if not isinstance(subobj, STRINGISH_TYPES if ish else STRING_TYPES):
-            err_exit('Error: {0} contains a non-string; Exiting.' .
+    if t in MAPPING_TYPES and mapping_values:
+        for k, v in enumerate(obj):
+            if not isinstance(v, STRINGISH_TYPES if stringish
+                                                 else STRING_TYPES):
+                err_exit('Error: {0} contains a non-string value; '
+                         'exiting.' .
+                         format(obj_path),
+                         exitvals['startup']['num'])
+            if not v:
+                err_exit('Error: {0} contains a blank value; exiting.' .
+                         format(obj_path),
+                         exitvals['startup']['num'])
+    elif t in MAPPING_TYPES and not mapping_values:
+        for k, v in enumerate(obj):
+            if not isinstance(k, STRINGISH_TYPES if stringish
+                                                 else STRING_TYPES):
+                err_exit('Error: {0} contains a non-string key; exiting.' .
+                         format(obj_path),
+                         exitvals['startup']['num'])
+            if not k:
+                err_exit('Error: {0} contains a blank key; exiting.' .
+                         format(obj_path),
+                         exitvals['startup']['num'])
+    else:
+        for subobj in obj:
+            if not isinstance(subobj, STRINGISH_TYPES if stringish
+                                                      else STRING_TYPES):
+                err_exit('Error: {0} contains a non-string; exiting.' .
+                         format(obj_path),
+                         exitvals['startup']['num'])
+            if not subobj:
+                err_exit('Error: {0} contains a blank string; exiting.' .
+                         format(obj_path),
+                         exitvals['startup']['num'])
+
+    return (obj, obj_path)
+
+
+def setting_check_kwargs(setting_name, stringish=False):
+
+    """
+    If a mapping config setting has a non-identifier key, error/exit.
+
+    Otherwise, returns a tuple containing the setting object and the
+    full path to the object (see setting_walk()).
+
+    'Non-identifier' means a string that can't be a legal variable name
+    in Python; this function is intended to be used before doing
+    something like:
+        foo(**cfg['setting_name'])
+
+    The existence and type of the mapping are checked, but only the
+    types of the mapping's keys are checked.  If the container can't be
+    empty, see setting_check_not_empty().
+
+    See MAPPING_TYPES, under constants.
+
+    Parameters:
+        setting_name: see note, above
+        stringish: if true, string-like but non-string types are allowed
+                   for the keys (see STRINGISH_TYPES, under constants)
+
+    Dependencies:
+        config settings: (contents of setting_name)
+        globals: cfg, MAPPING_TYPES, STRING_TYPES, STRINGISH_TYPES,
+                 exitvals['startup']
+        functions: setting_check_is_set(), setting_check_type(),
+                   err_exit()
+        modules: re
+
+    """
+
+    # walk the tree and make sure it's set
+    obj, obj_path = setting_check_is_set(setting_name)
+
+    # check the container type
+    setting_check_type(setting_name, MAPPING_TYPES)
+
+    # non-identifiers?
+    for k, v in enumerate(obj):
+        if not isinstance(k, STRINGISH_TYPES if stringish
+                                             else STRING_TYPES):
+            err_exit('Error: {0} contains a non-string key; exiting.' .
                      format(obj_path),
                      exitvals['startup']['num'])
-        if not subobj:
-            err_exit('Error: {0} contains a blank string; Exiting.' .
+        if not k:
+            err_exit('Error: {0} contains a blank key; exiting.' .
+                     format(obj_path),
+                     exitvals['startup']['num'])
+        if re.search('^[A-Za-z_][A-Za-z0-9_]*$', k) is None:
+            err_exit('Error: {0} contains a key which is not a legal '
+                     'identifier;\nexiting.' .
                      format(obj_path),
                      exitvals['startup']['num'])
 
