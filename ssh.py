@@ -383,32 +383,32 @@ def validate_ssh_config():
         modules: types.NoneType [if using Python 2], core
     """
     for pd, tunnel in _config_blocks:
-        core.setting_check_not_blank(pd+'ssh_host')
-        if core.setting_is_set(pd+'ssh_port'):
-            core.setting_check_num(pd+'ssh_port', 1, 65535)
-        if core.setting_is_set(pd+'ssh_user'):
-            core.setting_check_not_blank(pd+'ssh_user')
-        if core.setting_is_set(pd+'ssh_key_file'):
-            core.setting_check_file_read(pd+'ssh_key_file')
-        if core.setting_is_set(pd+'ssh_options'):
-            if (core.setting_check_type(pd+'ssh_options',
+        core.setting_check_not_blank(pd + 'ssh_host')
+        if core.setting_is_set(pd + 'ssh_port'):
+            core.setting_check_num(pd + 'ssh_port', 1, 65535)
+        if core.setting_is_set(pd + 'ssh_user'):
+            core.setting_check_not_blank(pd + 'ssh_user')
+        if core.setting_is_set(pd + 'ssh_key_file'):
+            core.setting_check_file_read(pd + 'ssh_key_file')
+        if core.setting_is_set(pd + 'ssh_options'):
+            if (core.setting_check_type(pd + 'ssh_options',
                                         core.STRING_TYPES + (list, ))
                   is list):
-                core.setting_check_not_empty(pd+'ssh_options')
-                for i, o in enumerate(core.cfg[pd+'ssh_options']):
-                    core.setting_check_type((pd+'ssh_options', i),
+                core.setting_check_not_empty(pd + 'ssh_options')
+                for i, o in enumerate(core.cfg[pd + 'ssh_options']):
+                    core.setting_check_type((pd + 'ssh_options', i),
                                             core.STRING_TYPES)
             else:
-                core.setting_check_not_blank(pd+'ssh_options')
+                core.setting_check_not_blank(pd + 'ssh_options')
         if tunnel:
-            core.setting_check_not_blank(pd+'local_host')
-            core.setting_check_num(pd+'local_port', 1, 65535)
-            core.setting_check_not_blank(pd+'remote_host')
-            core.setting_check_num(pd+'remote_port', 1, 65535)
-            if (core.setting_check_type(pd+'tun_timeout',
+            core.setting_check_not_blank(pd + 'local_host')
+            core.setting_check_num(pd + 'local_port', 1, 65535)
+            core.setting_check_not_blank(pd + 'remote_host')
+            core.setting_check_num(pd + 'remote_port', 1, 65535)
+            if (core.setting_check_type(pd + 'tun_timeout',
                                         core.NUMBER_TYPES + (NoneType, ))
                   is not NoneType):
-                core.setting_check_num(pd+'tun_timeout', 0)
+                core.setting_check_num(pd + 'tun_timeout', 0)
 
 
 ##################################
@@ -432,19 +432,20 @@ def get_ssh_cmd(prefix, delim='_'):
         modules: shlex, core
         external commands: ssh
     """
+    pd = prefix + delim
     cmd = ['ssh']
-    if prefix+delim+'ssh_port' in core.cfg:
-        cmd += ['-p', str(core.cfg[prefix+delim+'ssh_port'])]
-    if prefix+delim+'ssh_key_file' in core.cfg:
-        cmd += ['-i', core.cfg[prefix+delim+'ssh_key_file']]
-    if prefix+delim+'ssh_options' in core.cfg:
-        if isinstance(core.cfg[prefix+delim+'ssh_options'], list):
-            cmd += core.cfg[prefix+delim+'ssh_options']
+    if pd + 'ssh_port' in core.cfg:
+        cmd += ['-p', str(core.cfg[pd + 'ssh_port'])]
+    if pd + 'ssh_key_file' in core.cfg:
+        cmd += ['-i', core.cfg[pd + 'ssh_key_file']]
+    if pd + 'ssh_options' in core.cfg:
+        if isinstance(core.cfg[pd + 'ssh_options'], list):
+            cmd += core.cfg[pd + 'ssh_options']
         else:
-            cmd += shlex.split(core.cfg[prefix+delim+'ssh_options'])
-    if prefix+delim+'ssh_user' in core.cfg:
-        cmd += ['-l', core.cfg[prefix+delim+'ssh_user']]
-    cmd.append(core.cfg[prefix+delim+'ssh_host'])
+            cmd += shlex.split(core.cfg[pd + 'ssh_options'])
+    if pd + 'ssh_user' in core.cfg:
+        cmd += ['-l', core.cfg[pd + 'ssh_user']]
+    cmd.append(core.cfg[pd + 'ssh_host'])
     return cmd
 
 
@@ -463,10 +464,11 @@ def get_ssh_tunnel_cmd(prefix, delim='_'):
         modules: core
         external commands: ssh
     """
+    pd = prefix + delim
     tunnel_arg = ['-L']
-    tunnel_arg.append(':'.join(core.cfg[prefix+delim+'local_port'],
-                               core.cfg[prefix+delim+'remote_host'],
-                               core.cfg[prefix+delim+'remote_port']))
+    tunnel_arg.append(':'.join(core.cfg[pd + 'local_port'],
+                               core.cfg[pd + 'remote_host'],
+                               core.cfg[pd + 'remote_port']))
     tunnel_arg.append('-N')
     cmd = get_ssh_cmd(prefix, delim)
     return cmd[0] + tunnel_arg + cmd[1:]
@@ -500,6 +502,8 @@ def open_ssh_tunnel(descr, prefix, delim='_', atexit_reg=True,
 
     """
 
+    pd = prefix + delim
+
     # log that we're running the command
     core.logging_stop_stdouterr()
     core.status_logger.info('Running SSH tunnel command for {0}...' .
@@ -522,8 +526,8 @@ def open_ssh_tunnel(descr, prefix, delim='_', atexit_reg=True,
         # might catch it while it's still connecting, even though it's
         # fine
         if core.test_remote_port(descr,
-                                 (core.cfg[prefix+delim+'local_host'],
-                                  core.cfg[prefix+delim+'local_port']),
+                                 (core.cfg[pd + 'local_host'],
+                                  core.cfg[pd + 'local_port']),
                                  timeout=1, use_logger=None,
                                  warn_only=True):
             connected = True
@@ -532,7 +536,7 @@ def open_ssh_tunnel(descr, prefix, delim='_', atexit_reg=True,
 
         # not working yet, but is it still running?
         if p.poll() is None:
-            if waited >= core.cfg[prefix+delim+'tun_timeout']:
+            if waited >= core.cfg[pd + 'tun_timeout']:
                 core.kill_bg_command(p)
                 msg = ('could not establish SSH tunnel for {0} '
                        '(timed out)'.format(descr))
