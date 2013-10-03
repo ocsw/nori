@@ -146,6 +146,7 @@ from pprint import pprint as pp  # for debugging
 
 from .core import *
 from .ssh import *
+from .dbms import *
 
 
 ########################################################################
