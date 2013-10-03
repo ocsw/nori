@@ -33,9 +33,9 @@ else:
             return (os.path.exists(fn) and os.access(fn, mode)
                     and not os.path.isdir(fn))
 
-        # If we're given a path with a directory part, look it up directly rather
-        # than referring to PATH directories. This includes checking relative to the
-        # current directory, e.g. ./script
+        # If we're given a path with a directory part, look it up directly
+        # rather than referring to PATH directories. This includes checking
+        # relative to the current directory, e.g. ./script
         if os.path.dirname(cmd):
             if _access_check(cmd, mode):
                 return cmd
@@ -54,17 +54,18 @@ else:
 
             # PATHEXT is necessary to check on Windows.
             pathext = os.environ.get("PATHEXT", "").split(os.pathsep)
-            # See if the given file matches any of the expected path extensions.
-            # This will allow us to short circuit when given "python.exe".
-            # If it does match, only test that one, otherwise we have to try
-            # others.
+            # See if the given file matches any of the expected path
+            # extensions. This will allow us to short circuit when given
+            # "python.exe". If it does match, only test that one, otherwise
+            # we have to try others.
             if any(cmd.lower().endswith(ext.lower()) for ext in pathext):
                 files = [cmd]
             else:
                 files = [cmd + ext for ext in pathext]
         else:
-            # On other platforms you don't have things like PATHEXT to tell you
-            # what file suffixes are executable, so just pass on cmd as-is.
+            # On other platforms you don't have things like PATHEXT to tell
+            # you what file suffixes are executable, so just pass on cmd
+            # as-is.
             files = [cmd]
 
         seen = set()
