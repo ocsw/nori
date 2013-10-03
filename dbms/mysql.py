@@ -69,32 +69,32 @@ try:
 except ImportError:
     pass  # see the status and meta variables section
 
-import psycopg2
-import psycopg2.extensions
-psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
-psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
-DEC2FLOAT = psycopg2.extensions.new_type(
-    psycopg2.extensions.DECIMAL.values,
-    'DEC2FLOAT',
-    lambda value, curs: float(value) if value is not None else None)
-psycopg2.extensions.register_type(DEC2FLOAT)
-
-warnings
-errors, incl. strings
-pooling
-dicts
-conversion, incl. unicode
-buffering?
-autocommit
-
-which package
-features
-
-connect
-error handling
-close, incl. auto
-exec, incl. cursor open, commit/rollback
-fetch, incl. cursor close
+#import psycopg2
+#import psycopg2.extensions
+#psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
+#psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
+#DEC2FLOAT = psycopg2.extensions.new_type(
+#    psycopg2.extensions.DECIMAL.values,
+#    'DEC2FLOAT',
+#    lambda value, curs: float(value) if value is not None else None)
+#psycopg2.extensions.register_type(DEC2FLOAT)
+#
+#warnings
+#errors, incl. strings
+#pooling
+#dicts
+#conversion, incl. unicode
+#buffering?
+#autocommit
+#
+#which package
+#features
+#
+#connect
+#error handling
+#close, incl. auto
+#exec, incl. cursor open, commit/rollback
+#fetch, incl. cursor close
 
 ###############
 # this package
@@ -108,7 +108,7 @@ from .. import core
 ########################################################################
 
 # minimum versions for the imports and code below
-pyversion_check(7, 2)
+core.pyversion_check(7, 2)
 
 
 ########################################################################
