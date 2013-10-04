@@ -92,8 +92,8 @@ class MySQL(DBMS):
 
     # local and remote ports for tunnels (remote is also for direct
     # connections)
+    DEFAULT_LOCAL_PORT = 4306
     DEFAULT_REMOTE_PORT = 3306
-    DEFAULT_LOCAL_PORT = 33306
 
     # where to look for the socket file, to set the default
     SOCKET_SEARCH_PATH = [
@@ -144,47 +144,29 @@ class MySQL(DBMS):
                 core.config_settings[pd + 'socket_file']['default'] = f
                 break
 
+        if tunnel:
+            # make output log settings visible
+            core.config_settings_no_print_output_log(False)
+            core.config_settings['exec_path']['no_print'] = False
+            core.config_settings['print_cmds']['no_print'] = False
+
 
     def validate_config(self):
         """
         Validate DBMS config settings.
-        Only does checks that are likely to be relevant for all DBMSes;
-        it's easy to be more restrictive in subclasses, but hard to be
-        more lenient.
+        Only does checks that aren't done in DBMS.validate_config().
         Dependencies:
             instance vars: prefix, delim, tunnel_config
             config settings: [prefix+delim+:] use_ssh_tunnel, protocol,
-                             host, port, socket_file, user, password,
-                             pw_file, connect_db, connect_options
-            modules: core
+                             host, port, socket_file
+            modules: core, dbms.DBMS
         """
         pd = self.prefix + self.delim
         if not self.tunnel_config or not core.cfg[pd + 'use_ssh_tunnel']:
-            if (pd + 'protocol' in core.cfg and
-                  core.cfg[pd + 'protocol'] == 'tcp'):
-                if pd + 'host' in core.cfg:
-                    core.setting_check_not_blank(pd + 'host')
-                if pd + 'port' in core.cfg:
-                    core.setting_check_num(pd + 'port', 1, 65535)
-            elif (pd + 'protocol' in core.cfg and
-                  core.cfg[pd + 'protocol'] == 'socket'):
-                if pd + 'socket_file' in core.cfg:
-                    core.setting_check_not_blank(pd + 'socket_file')
-
+            core.setting_check_list(pd + 'protocol', ['tcp', 'socket'])
+            if core.cfg[pd + 'protocol'] == 'tcp':
+                core.setting_check_is_set(pd + 'host')
+                core.setting_check_is_set(pd + 'port')
+            elif core.cfg[pd + 'protocol'] == 'socket':
+                core.setting_check_is_set(pd + 'socket_file')
         DBMS.validate_config(self)
-
-#warnings
-#errors, incl. strings
-#pooling
-#dicts
-#conversion, incl. unicode
-#buffering?
-#autocommit
-#
-#which package
-#
-#connect
-#error handling
-#close, incl. auto
-#exec, incl. cursor open, commit/rollback
-#fetch, incl. cursor close

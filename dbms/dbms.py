@@ -122,8 +122,8 @@ class DBMS(object):
 
     # local and remote ports for tunnels (remote is also for direct
     # connections); must be set by subclasses
-    DEFAULT_REMOTE_PORT = None
     DEFAULT_LOCAL_PORT = None
+    DEFAULT_REMOTE_PORT = None
 
 
     ###############
@@ -421,12 +421,13 @@ Options must be supplied as a dict.
     def connect(self):
         pass
 
+### check socket, pw file types/access
+
 #connect, incl. ssh
 #error handling
 #close, incl. auto
 #exec, incl. cursor open, commit/rollback
 #fetch, incl. cursor close
-#
 #
 #warnings
 #errors, incl. strings
@@ -437,22 +438,12 @@ Options must be supplied as a dict.
 #autocommit
 #
 #which package
-#features
 #
 #pw_file default?
 #connect db optional
 #h/p vs socket
 #
 #mysql ssl
+#mysql_remoteport=   (the usual port)
 #
-#        If you're calling this function, you will almost certainly want to
-#        do these as well:
-#            core.config_settings_no_print_output_log(False)
-#            core.config_settings['exec_path']['no_print'] = False
-#            core.config_settings['print_cmds']['no_print'] = False
-#
-####mysql_localhost=  # defaults to "127.0.0.1"
-####mysql_localport=  # defaults to "4306"
-####mysql_remoteport=  # defaults to "3306" (the usual port)
 #postgres socket, ssl, etc.
-#port, socket defaults
