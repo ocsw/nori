@@ -2,7 +2,7 @@
 
 
 """
-This is the DBMS submodule for the nori library; see __main__.py
+This is the PostgreSQL submodule for the nori library; see __main__.py
 for license and usage information.
 
 
@@ -65,11 +65,10 @@ import sys
 #########
 
 try:
-    import paramiko
+    import psycopg2
 except ImportError:
     pass  # see the status and meta variables section
 
-#import psycopg2
 #import psycopg2.extensions
 #psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 #psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
@@ -101,43 +100,21 @@ except ImportError:
 ###############
 
 from .. import core
-
-
-########################################################################
-#                         PYTHON VERSION CHECK
-########################################################################
-
-# minimum versions for the imports and code below
-core.pyversion_check(7, 2)
+from . import DBMS
 
 
 ########################################################################
 #                              VARIABLES
 ########################################################################
 
-############
-# constants
-############
-
-
 ##################
 # status and meta
 ##################
 
-# submodule-specific exit values
-core.exitvals['submodule'] = dict(
-    num=999,
-    descr=(
-'''
-error doing submodule stuff
-'''
-    ),
-)
-
-# submodule-specific features
-core.supported_features['submodule'] = 'submodule stuff'
-if 'paramiko' in sys.modules:
-    core.available_features.append('submodule')
+# supported / available features
+core.supported_features['dbms.postgresql'] = 'PostgreSQL support'
+if 'psycopg2' in sys.modules:
+    core.available_features.append('dbms.postgresql')
 
 
 #########################
