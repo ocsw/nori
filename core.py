@@ -187,6 +187,9 @@ DOCSTRING CONTENTS:
     str_to_bool()
         Convert a string representing a boolean to an actual boolean.
 
+    is_legal_identifier()
+        Check if a string is a legal Python identifier.
+
 
     File Tests and Path Manipulations:
     ----------------------------------
@@ -1925,6 +1928,17 @@ def str_to_bool(s):
           s == '0'):
         return False
     raise ValueError
+
+
+def is_legal_identifier(s):
+    """
+    Check if a string is a legal Python identifier.
+    Parameters:
+        s: the string to check
+    Dependencies:
+        modules: re
+    """
+    return re.search('^[A-Za-z_][A-Za-z0-9_]*$', s) is not None
 
 
 ####################################
@@ -4570,7 +4584,7 @@ def setting_check_kwargs(setting_name, stringish=False):
             err_exit('Error: {0} contains a blank key; exiting.' .
                      format(obj_path),
                      exitvals['startup']['num'])
-        if re.search('^[A-Za-z_][A-Za-z0-9_]*$', k) is None:
+        if not is_legal_identifier(k):
             err_exit('Error: {0} contains a key which is not a legal '
                      'identifier;\nexiting.' .
                      format(obj_path),
