@@ -106,7 +106,7 @@ core.pyversion_check(7, 2)
 # status and meta
 ##################
 
-# submodule-specific exit values
+# exit values
 core.exitvals['submodule'] = dict(
     num=999,
     descr=(
@@ -116,7 +116,7 @@ error doing submodule stuff
     ),
 )
 
-# submodule-specific features
+# supported / available features
 core.supported_features['submodule'] = 'submodule stuff'
 if 'paramiko' in sys.modules:
     core.available_features.append('submodule')
@@ -127,7 +127,7 @@ if 'paramiko' in sys.modules:
 #########################
 
 #
-# submodule-specific config settings
+# available config settings
 #
 
 if 'submodule' in core.available_features:
