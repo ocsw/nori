@@ -108,9 +108,9 @@ class DBMS(object):
 
     """
 
-    ##################
-    # class variables
-    ##################
+    #############################
+    # class variables: constants
+    #############################
 
     # what to call the DBMS; subclasses must be define this
     # (e.g.: 'MySQL')
@@ -119,6 +119,11 @@ class DBMS(object):
     # required feature(s) for config settings, etc.
     # subclasses should add to this
     REQUIRES = ['dbms']
+
+    # local and remote ports for tunnels (remote is also for direct
+    # connections); must be set by subclasses
+    DEFAULT_REMOTE_PORT = None
+    DEFAULT_LOCAL_PORT = None
 
 
     ###############
@@ -166,7 +171,8 @@ class DBMS(object):
             tunnel: if true, add SSH-tunnel settings
 
         Dependencies:
-            class vars: DBMS_NAME, REQUIRES
+            class vars: DBMS_NAME, REQUIRES, DEFAULT_REMOTE_PORT,
+                        DEFAULT_LOCAL_PORT
             instance vars: prefix, delim, tunnel_config
             config settings: [prefix+delim+:] (heading), use_ssh_tunnel,
                              protocol, host, port, socket_file, user,
@@ -202,11 +208,9 @@ Use an SSH tunnel for the {0} connection (True/False)?
             ssh.create_ssh_settings(
                 self.prefix, self.delim, extra_text=ssh_extra_text,
                 extra_requires=self.REQUIRES + extra_requires,
-                tunnel=True
-            )
-            # we don't set default_local_port or default_remote_port
-            # here; subclasses must change the defaults in
-            # core.config_settings
+                tunnel=True,
+                default_local_port=self.__class__.DEFAULT_LOCAL_PORT,
+                default_remote_port=self.__class__.DEFAULT_REMOTE_PORT)
 
         core.config_settings[pd + 'protocol'] = dict(
             descr=(
@@ -382,7 +386,7 @@ Options must be supplied as a dict.
         pd = self.prefix + self.delim
         if self.tunnel_config:
             core.setting_check_type(pd + 'use_ssh_tunnel', (bool, ))
-        else:
+        if not self.tunnel_config or not core.cfg[pd + 'use_ssh_tunnel']:
             if (pd + 'protocol' in core.cfg and
                   core.cfg[pd + 'protocol'] == 'tcp'):
                 if pd + 'host' in core.cfg:
