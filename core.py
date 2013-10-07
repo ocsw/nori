@@ -3448,7 +3448,6 @@ def generic_error_handler(e, msg, use_logger=False, warn_only=False,
             email_logger.warn(warn_msg)
         else:
             print('\n{0}\n'.format(warn_msg), file=sys.stderr)
-        return False
     else:
         if e is None:
             err_msg = 'Error: {0}; exiting.'.format(msg)
@@ -3466,7 +3465,7 @@ def generic_error_handler(e, msg, use_logger=False, warn_only=False,
             err_exit(err_msg, exit_val)
         if exit_val is not None:
             sys.exit(exit_val)
-        return False
+    return False
 
 
 ############################
