@@ -133,9 +133,9 @@ class MySQL(DBMS):
 
         # fix some defaults
         core.config_settings[pd + 'port']['default'] = (
-            MySQL.DEFAULT_REMOTE_PORT
+            self.__class__.DEFAULT_REMOTE_PORT
         )
-        for f in MySQL.SOCKET_SEARCH_PATH:
+        for f in self.__class__.SOCKET_SEARCH_PATH:
             if (core.check_file_type(f, 'MySQL socket', type_char='s',
                                 follow_links=True, must_exist=True,
                                 use_logger=None, warn_only=True) and

@@ -125,6 +125,10 @@ class DBMS(object):
     DEFAULT_LOCAL_PORT = None
     DEFAULT_REMOTE_PORT = None
 
+    # where to look for the socket file, to set the default
+    # format can vary by subclass (e.g., files vs. directories)
+    SOCKET_SEARCH_PATH = []
+
 
     ###############
     # housekeeping
@@ -195,7 +199,7 @@ class DBMS(object):
                 descr=(
 '''
 Use an SSH tunnel for the {0} connection (True/False)?
-'''.format(self.DBMS_NAME)
+'''.format(self.__class__.DBMS_NAME)
                 ),
                 default=False,
                 cl_coercer=core.str_to_bool,
@@ -207,7 +211,7 @@ Use an SSH tunnel for the {0} connection (True/False)?
                 ssh_extra_text += '\n\n' + extra_text
             ssh.create_ssh_settings(
                 self.prefix, self.delim, extra_text=ssh_extra_text,
-                extra_requires=self.REQUIRES + extra_requires,
+                extra_requires=self.__class__.REQUIRES + extra_requires,
                 tunnel=True,
                 default_local_port=self.__class__.DEFAULT_LOCAL_PORT,
                 default_remote_port=self.__class__.DEFAULT_REMOTE_PORT)
@@ -222,7 +226,7 @@ Can be:
     * 'socket': use {1}socket_file
 
 Ignored if {1}use_ssh_tunnel is True.
-'''.format(self.DBMS_NAME, pd)
+'''.format(self.__class__.DBMS_NAME, pd)
             ),
             default='tcp',
             cl_coercer=str,
@@ -235,7 +239,7 @@ Remote hostname for the {0} connection.
 
 Ignored if {1}use_ssh_tunnel is True or if
 {1}protocol is not 'tcp'.
-'''.format(self.DBMS_NAME, pd)
+'''.format(self.__class__.DBMS_NAME, pd)
             ),
             default='localhost',
             cl_coercer=str,
@@ -248,7 +252,7 @@ Remote port number for the {0} connection.
 
 Ignored if {1}use_ssh_tunnel is True or if
 {1}protocol is not 'tcp'.
-'''.format(self.DBMS_NAME, pd)
+'''.format(self.__class__.DBMS_NAME, pd)
             ),
             # no default here; it should be set by subclasses
             cl_coercer=int,
@@ -262,7 +266,7 @@ Path to the socket file for the {0} connection.
 
 Ignored if {1}use_ssh_tunnel is True or if
 {1}protocol is not 'socket'.
-'''.format(self.DBMS_NAME, pd)
+'''.format(self.__class__.DBMS_NAME, pd)
             ),
             # no default here; it should be set by subclasses
             cl_coercer=str,
@@ -272,7 +276,7 @@ Ignored if {1}use_ssh_tunnel is True or if
             descr=(
 '''
 Username for the {0} connection.
-'''.format(self.DBMS_NAME)
+'''.format(self.__class__.DBMS_NAME)
             ),
             # see below for default
             cl_coercer=str,
@@ -297,7 +301,7 @@ the username the script is being run under
 Password for the {0} connection.
 
 See also {1}pw_file, below.
-'''.format(self.DBMS_NAME, pd)
+'''.format(self.__class__.DBMS_NAME, pd)
             ),
             # no default
             cl_coercer=str,
@@ -312,7 +316,7 @@ File must contain nothing but the password; leading/trailing whitespace will
 be trimmed.
 
 Ignored if {1}password is set.
-'''.format(self.DBMS_NAME, pd)
+'''.format(self.__class__.DBMS_NAME, pd)
             ),
             # no default
             cl_coercer=str,
@@ -322,7 +326,7 @@ Ignored if {1}password is set.
             descr=(
 '''
 Initial database for the {0} connection.
-'''.format(self.DBMS_NAME)
+'''.format(self.__class__.DBMS_NAME)
             ),
             # no default here; it can be set by subclasses
             cl_coercer=str,
@@ -334,7 +338,7 @@ Initial database for the {0} connection.
 Additional options for the {0} connection.
 
 Options must be supplied as a dict.
-'''.format(self.DBMS_NAME)
+'''.format(self.__class__.DBMS_NAME)
             ),
             # no default here; it can be set by subclasses
         )
@@ -360,11 +364,11 @@ Options must be supplied as a dict.
         for s_name in setting_list:
             if 'requires' in core.config_settings[pd + s_name]:
                 core.config_settings[pd + s_name]['requires'] += (
-                    self.REQUIRES + extra_requires
+                    self.__class__.REQUIRES + extra_requires
                 )
             else:
                 core.config_settings[pd + s_name]['requires'] = (
-                    self.REQUIRES + extra_requires
+                    self.__class__.REQUIRES + extra_requires
                 )
 
         core.validate_config_hooks.append(self.validate_config)
