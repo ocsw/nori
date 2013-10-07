@@ -96,6 +96,7 @@ class MySQL(DBMS):
     DEFAULT_REMOTE_PORT = 3306
 
     # where to look for the socket file, to set the default
+    # this is a list of file paths, not directories
     SOCKET_SEARCH_PATH = [
         '/var/run/mysqld/mysqld.sock',
         '/tmp/mysql.sock',

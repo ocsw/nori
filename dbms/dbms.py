@@ -178,6 +178,7 @@ class DBMS(object):
             class vars: DBMS_NAME, REQUIRES, DEFAULT_REMOTE_PORT,
                         DEFAULT_LOCAL_PORT
             instance vars: prefix, delim, tunnel_config
+            methods: settings_extra_text(), validate_config()
             config settings: [prefix+delim+:] (heading), use_ssh_tunnel,
                              protocol, host, port, socket_file, user,
                              password, pw_file, connect_db,
@@ -425,8 +426,6 @@ Options must be supplied as a dict.
     def connect(self):
         pass
 
-### check socket, pw file types/access
-
 #connect, incl. ssh
 #error handling
 #close, incl. auto
@@ -443,11 +442,6 @@ Options must be supplied as a dict.
 #
 #which package
 #
-#pw_file default?
-#connect db optional
-#h/p vs socket
-#
-#mysql ssl
-#mysql_remoteport=   (the usual port)
-#
-#postgres socket, ssl, etc.
+#mysql, postgres:
+#  ssl
+#  remoteport: '(the usual port)'
