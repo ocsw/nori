@@ -200,6 +200,10 @@ class DBMS(object):
                 descr=(
 '''
 Use an SSH tunnel for the {0} connection (True/False)?
+
+If True, specify the host in {0}_ssh_host and the port in
+{0}_remote_port instead of {0}_host and
+{0}_port.
 '''.format(self.__class__.DBMS_NAME)
                 ),
                 default=False,
@@ -319,7 +323,8 @@ be trimmed.
 Ignored if {1}password is set.
 '''.format(self.__class__.DBMS_NAME, pd)
             ),
-            # no default
+            default='/etc/{0}/{1}.pw'.format(core.script_shortname,
+                                             self.prefix),
             cl_coercer=str,
         )
 

@@ -133,6 +133,10 @@ class MySQL(DBMS):
         pd = self.prefix + self.delim
 
         # fix some defaults
+        core.config_settings[pd + 'host']['default'] = (
+            '127.0.0.1'  # mysql.connector default
+        )
+
         core.config_settings[pd + 'port']['default'] = (
             self.__class__.DEFAULT_REMOTE_PORT
         )
