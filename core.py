@@ -6015,7 +6015,8 @@ def create_blank_config_files(full=False):
 
     Dependencies:
         globals: config_file_paths, config_settings, exitvals['startup']
-        functions: open_create_only(), pps(), err_exit()
+        functions: apply_config_defaults(), open_create_only(), pps(),
+                   err_exit()
         modules: sys, errno, re
 
     """
@@ -6032,6 +6033,7 @@ def create_blank_config_files(full=False):
             msg += "#cfg['" + s_name + "'] = \n"
 
     else:  # full=True
+        apply_config_defaults()
         for s_name, s_dict in config_settings.items():
             if 'no_print' in s_dict and s_dict['no_print']:
                 continue
