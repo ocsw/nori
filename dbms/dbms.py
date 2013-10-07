@@ -426,13 +426,13 @@ Options must be supplied as a dict.
             elif (pd + 'protocol' in core.cfg and
                   core.cfg[pd + 'protocol'] == 'socket'):
                 if pd + 'socket_file' in core.cfg:
-                    core.setting_check_not_blank(pd + 'socket_file')
+                    core.setting_check_file_rw(pd + 'socket_file')
         if pd + 'user' in core.cfg:
             core.setting_check_not_blank(pd + 'user')
         if pd + 'password' in core.cfg:
             core.setting_check_not_blank(pd + 'password')
         if pd + 'password' not in core.cfg and pd + 'pw_file' in core.cfg:
-            core.setting_check_not_blank(pd + 'pw_file')
+            core.setting_check_file_read(pd + 'pw_file')
         if pd + 'connect_db' in core.cfg:
             core.setting_check_not_blank(pd + 'connect_db')
         if pd + 'connect_options' in core.cfg:
