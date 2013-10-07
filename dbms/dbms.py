@@ -358,15 +358,7 @@ Options must be supplied as a dict.
                 'use_ssh_tunnel',
             ]
         if extra_text:
-            for s_name in setting_list:
-                if 'descr' in core.config_settings[pd + s_name]:
-                    core.config_settings[pd + s_name]['descr'] += (
-                        '\n' + extra_text
-                    )
-                else:
-                    core.config_settings[pd + s_name]['descr'] = (
-                        extra_text
-                    )
+            self.settings_extra_text(setting_list, extra_text)
         for s_name in setting_list:
             if 'requires' in core.config_settings[pd + s_name]:
                 core.config_settings[pd + s_name]['requires'] += (
@@ -378,6 +370,34 @@ Options must be supplied as a dict.
                 )
 
         core.validate_config_hooks.append(self.validate_config)
+
+
+    def settings_extra_text(self, setting_list, extra_text):
+        """
+        Add extra text to config setting descriptions.
+        Pulled out for use by subclasses that replace descriptions.
+        Parameters:
+            setting_list: a list of settings to modify
+            extra_text: if not blank, added to the descriptions of the
+                        settings in setting_list (preceded by a blank
+                        line)
+                        this is mainly intended to be used for things
+                        like 'Ignored if [some setting] is False.'
+        Dependencies:
+            instance vars: prefix, delim
+            modules: core
+        """
+        pd = self.prefix + self.delim
+        if extra_text:
+            for s_name in setting_list:
+                if 'descr' in core.config_settings[pd + s_name]:
+                    core.config_settings[pd + s_name]['descr'] += (
+                        '\n' + extra_text
+                    )
+                else:
+                    core.config_settings[pd + s_name]['descr'] = (
+                        extra_text
+                    )
 
 
     def validate_config(self):
