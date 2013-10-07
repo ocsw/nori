@@ -451,8 +451,8 @@ Options must be supplied as a dict.
     def connect(self):
         pass
 
-#connect, incl. ssh
 #error handling
+#connect, incl. ssh
 #close, incl. auto
 #exec, incl. cursor open, commit/rollback
 #fetch, incl. cursor close
