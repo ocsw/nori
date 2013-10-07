@@ -466,7 +466,3 @@ Options must be supplied as a dict.
 #autocommit
 #
 #which package
-#
-#mysql, postgres:
-#  ssl
-#  remoteport: '(the usual port)'

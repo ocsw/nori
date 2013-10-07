@@ -121,7 +121,10 @@ class MySQL(DBMS):
         Dependencies:
             class vars: DEFAULT_REMOTE_PORT, SOCKET_SEARCH_PATH
             instance vars: prefix, delim
-            config settings: [prefix+delim+:] port, socket_file
+            methods: settings_extra_text(),
+                     apply_config_defaults_extra()
+            config settings: [prefix+delim+:] use_ssh_tunnel, port,
+                             socket_file
             modules: core, dbms.DBMS
 
         """
@@ -132,7 +135,29 @@ class MySQL(DBMS):
 
         pd = self.prefix + self.delim
 
+        # add notes about SSL
+        core.config_settings[pd + 'use_ssh_tunnel']['descr'] = (
+'''
+Use an SSH tunnel for the {0} connection (True/False)?
+
+If True, specify the host in {0}_ssh_host and the port in
+{0}_remote_port instead of {0}_host and
+{0}_port.
+
+Note: to use {0}'s SSL support, you will need to add the
+necessary options to {1}connect_options:
+    ssl_ca
+    ssl_cert
+    ssl_key
+    ssl_verify_cert
+See the {0} documentation for more information.
+'''.format(self.__class__.DBMS_NAME, pd)
+        )
+
+        #
         # fix some defaults
+        #
+
         core.config_settings[pd + 'host']['default'] = (
             '127.0.0.1'  # mysql.connector default
         )
@@ -148,6 +173,38 @@ class MySQL(DBMS):
                                     use_logger=None, warn_only=True)):
                 core.config_settings[pd + 'socket_file']['default'] = f
                 break
+
+        # fix up descriptions we replaced
+        if extra_text:
+            setting_list = ['use_ssh_tunnel']
+            self.settings_extra_text(setting_list, extra_text)
+
+        core.apply_config_defaults_hooks.append(
+            self.apply_config_defaults_extra
+        )
+
+
+    def apply_config_defaults_extra(self):
+
+        """
+        Apply configuration defaults that are last-minute/complicated.
+
+        Dependencies:
+            instance vars: prefix, delim
+            config settings: [prefix+delim+:] port, remote_port
+            modules: core
+
+        """
+
+        pd = self.prefix + self.delim
+
+        # pd + 'port', pd + 'remote_port': clarify default
+        for s_name in [pd + 'port', pd + 'remote_port']:
+            if (s_name in core.config_settings and
+                  core.config_settings[s_name]['default'] == 3306):
+                core.config_settings[s_name]['default_descr'] = (
+                    '3306 (the standard port)'
+                )
 
 
     def validate_config(self):

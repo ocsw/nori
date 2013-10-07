@@ -129,8 +129,8 @@ class PostgreSQL(DBMS):
             instance vars: prefix, delim
             methods: settings_extra_text(),
                      apply_config_defaults_extra()
-            config settings: [prefix+delim+:] protocol, host, port,
-                             socket_file, connect_db
+            config settings: [prefix+delim+:] use_ssh_tunnel, protocol,
+                             host, port, socket_file, connect_db
             modules: core, dbms.DBMS
 
         """
@@ -140,6 +140,27 @@ class PostgreSQL(DBMS):
                              tunnel)
 
         pd = self.prefix + self.delim
+
+        # add notes about SSL
+        core.config_settings[pd + 'use_ssh_tunnel']['descr'] = (
+'''
+Use an SSH tunnel for the {0} connection (True/False)?
+
+If True, specify the host in {0}_ssh_host and the port in
+{0}_remote_port instead of {0}_host and
+{0}_port.
+
+Note: to use {0}'s SSL support, you will need to add the
+necessary options to {1}connect_options:
+    sslmode
+    sslcompression
+    sslcert
+    sslkey
+    sslrootcert
+    sslcrl
+See the {0} documentation for more information.
+'''.format(self.__class__.DBMS_NAME, pd)
+        )
 
         #
         # PostgreSQL combines tcp and socket into host
@@ -163,7 +184,7 @@ relative directory or the full name of the socket file, or to use
 anything other than a port number as the suffix.
 
 Ignored if {1}use_ssh_tunnel is True.
-'''.format(self.__class__.DBMS_NAME)
+'''.format(self.__class__.DBMS_NAME, pd)
         )
         # default is set in apply_config_defaults_extra()
 
@@ -195,7 +216,7 @@ don't use any (such as getting the list of databases).
 
         # fix up descriptions we replaced
         if extra_text:
-            setting_list = ['host', 'port', 'connect_db']
+            setting_list = ['use_ssh_tunnel', 'host', 'port', 'connect_db']
             self.settings_extra_text(setting_list, extra_text)
 
         core.apply_config_defaults_hooks.append(
@@ -204,18 +225,23 @@ don't use any (such as getting the list of databases).
 
 
     def apply_config_defaults_extra(self):
+
         """
         Apply configuration defaults that are last-minute/complicated.
+
         Dependencies:
             class vars: SOCKET_SEARCH_PATH
             instance vars: prefix, delim
-            config settings: [prefix+delim+:] host, port
+            config settings: [prefix+delim+:] host, port, remote_port
             modules: core
+
         """
+
         pd = self.prefix + self.delim
+
         # pd + 'host': first try to find a socket, then fall back to TCP
         for d in self.__class__.SOCKET_SEARCH_PATH:
-            f = d + '/.s.PGSQL.' + core.cfg[pd + 'port']
+            f = d + '/.s.PGSQL.' + str(core.cfg[pd + 'port'])
             if (core.check_file_type(f, 'PostgreSQL socket', type_char='s',
                                 follow_links=True, must_exist=True,
                                 use_logger=None, warn_only=True) and
@@ -223,8 +249,17 @@ don't use any (such as getting the list of databases).
                                          file_rwx='rw', use_logger=None,
                                          warn_only=True)):
                 core.config_settings[pd + 'host']['default'] = f
-                return
-        core.config_settings[pd + 'host']['default'] = '127.0.0.1'
+                break
+        if pd + 'host' not in core.config_settings:
+            core.config_settings[pd + 'host']['default'] = '127.0.0.1'
+
+        # pd + 'port', pd + 'remote_port': clarify default
+        for s_name in [pd + 'port', pd + 'remote_port']:
+            if (s_name in core.config_settings and
+                  core.config_settings[s_name]['default'] == 5432):
+                core.config_settings[s_name]['default_descr'] = (
+                    '5432 (the standard port)'
+                )
 
 
     def validate_config(self):
