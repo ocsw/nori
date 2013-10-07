@@ -149,12 +149,6 @@ class MySQL(DBMS):
                 core.config_settings[pd + 'socket_file']['default'] = f
                 break
 
-        if tunnel:
-            # make output log settings visible
-            core.config_settings_no_print_output_log(False)
-            core.config_settings['exec_path']['no_print'] = False
-            core.config_settings['print_cmds']['no_print'] = False
-
 
     def validate_config(self):
         """

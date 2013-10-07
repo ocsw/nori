@@ -159,11 +159,11 @@ def create_ssh_settings(prefix, delim='_', heading='', extra_text='',
     """
     Add a block of SSH config settings to the script.
 
-    If you're calling this function, you will almost certainly want to
-    do these as well:
-        core.config_settings_no_print_output_log(False)
-        core.config_settings['exec_path']['no_print'] = False
-        core.config_settings['print_cmds']['no_print'] = False
+    Makes the output log settings visible; to reverse this:
+        # make output log settings invisible
+        core.config_settings_no_print_output_log(True)
+        core.config_settings['exec_path']['no_print'] = True
+        core.config_settings['print_cmds']['no_print'] = True
 
     When modifying, remember to keep the setting_list at the bottom and
     validate_config() in sync with the config settings.
@@ -196,6 +196,11 @@ def create_ssh_settings(prefix, delim='_', heading='', extra_text='',
         modules: core
 
     """
+
+    # make output log settings visible
+    core.config_settings_no_print_output_log(False)
+    core.config_settings['exec_path']['no_print'] = False
+    core.config_settings['print_cmds']['no_print'] = False
 
     pd = prefix + delim
 
