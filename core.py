@@ -2068,6 +2068,8 @@ def check_file_type(file_path, file_label, type_char='f', follow_links=True,
         if file_error_handler(e, 'stat', file_label, file_path, must_exist,
                               use_logger, warn_only, exit_val) is None:
             return True
+        else:
+            return False
 
     # file type?
     for t_char in type_char:
@@ -2204,11 +2206,9 @@ Exiting.''' .
             # exceptions, and I can't produce one, but I've seen
             # examples online, so...
             # (must_exist=True)
-            if (file_error_handler(e, 'check access to', file_label,
-                                   file_path, True, use_logger, warn_only,
-                                   exit_val)
-                  is None):
-                return False
+            return file_error_handler(e, 'check access to', file_label,
+                                      file_path, True, use_logger,
+                                      warn_only, exit_val)
 
         # each failure is different
         if not access_ret:
