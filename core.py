@@ -404,7 +404,10 @@ DOCSTRING CONTENTS:
     setting_check_file_rw()
         Wrapper to check the case of a file we need to read and write.
 
-    setting_check_dir_rwx()
+    setting_check_dir_search()
+        Wrapper: check a dir which we need to be able to search.
+
+    setting_check_dir_full()
         Wrapper: check a dir in which we need to create and/or rotate
         files.
 
@@ -4811,7 +4814,24 @@ def setting_check_file_rw(setting_name):
     return setting_check_file_access(setting_name, 'rw')
 
 
-def setting_check_dir_rwx(setting_name):
+def setting_check_dir_search(setting_name):
+    """
+    Wrapper: check a dir which we need to be able to search.
+    Setting must be a non-blank string.  Directory must exist, be a
+    directory or a symlink to one, and be searchable (x).
+    Note: despite the name, this only allows accessing files with known
+    names; _reading_ the directory requires additional permissions.
+    Dependencies:
+        config settings: (contents of setting_name)
+        globals: cfg
+        functions: setting_check_file_type(),
+                   setting_check_file_access()
+    """
+    setting_check_file_type(setting_name, 'd')
+    return setting_check_file_access(setting_name, 'x')
+
+
+def setting_check_dir_full(setting_name):
     """
     Wrapper: check a dir in which we need to create and/or rotate files.
     Setting must be a non-blank string.  Directory must exist, be a
