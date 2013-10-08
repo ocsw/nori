@@ -107,7 +107,7 @@ class MySQL(DBMS):
     # startup and config file processing
     #####################################
 
-    def create_settings(self, heading='', extra_text='',
+    def create_settings(self, heading='', extra_text='', ignore=None,
                         extra_requires=[],
                         tunnel=True if 'ssh' in core.available_features
                                     else False):
@@ -130,8 +130,8 @@ class MySQL(DBMS):
         """
 
         # first do the generic stuff
-        DBMS.create_settings(self, heading, extra_text, extra_requires,
-                             tunnel)
+        DBMS.create_settings(self, heading, extra_text, ignore,
+                             extra_requires, tunnel)
 
         pd = self.prefix + self.delim
 
@@ -212,11 +212,13 @@ See the {0} documentation for more information.
         Validate DBMS config settings.
         Only does checks that aren't done in DBMS.validate_config().
         Dependencies:
-            instance vars: prefix, delim, tunnel_config
+            instance vars: ignore, prefix, delim, tunnel_config
             config settings: [prefix+delim+:] use_ssh_tunnel, protocol,
                              host, port, socket_file
             modules: core, dbms.DBMS
         """
+        if callable(self.ignore) and self.ignore():
+            return
         pd = self.prefix + self.delim
         if not self.tunnel_config or not core.cfg[pd + 'use_ssh_tunnel']:
             core.setting_check_list(pd + 'protocol', ['tcp', 'socket'])

@@ -113,7 +113,7 @@ class PostgreSQL(DBMS):
     # startup and config file processing
     #####################################
 
-    def create_settings(self, heading='', extra_text='',
+    def create_settings(self, heading='', extra_text='', ignore=None,
                         extra_requires=[],
                         tunnel=True if 'ssh' in core.available_features
                                     else False):
@@ -136,8 +136,8 @@ class PostgreSQL(DBMS):
         """
 
         # first do the generic stuff
-        DBMS.create_settings(self, heading, extra_text, extra_requires,
-                             tunnel)
+        DBMS.create_settings(self, heading, extra_text, ignore,
+                             extra_requires, tunnel)
 
         pd = self.prefix + self.delim
 
@@ -267,11 +267,13 @@ don't use any (such as getting the list of databases).
         Validate DBMS config settings.
         Only does checks that aren't done in DBMS.validate_config().
         Dependencies:
-            instance vars: prefix, delim, tunnel_config
+            instance vars: ignore, prefix, delim, tunnel_config
             config settings: [prefix+delim+:] use_ssh_tunnel, host, port,
                              connect_db
             modules: core, dbms.DBMS
         """
+        if callable(self.ignore) and self.ignore():
+            return
         pd = self.prefix + self.delim
         if not self.tunnel_config or not core.cfg[pd + 'use_ssh_tunnel']:
             core.setting_check_not_blank(pd + 'host')
