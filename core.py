@@ -5891,7 +5891,7 @@ def process_config(arg_ns):
 
     # hooks for adding more initializations
     for hook in process_config_hooks:
-        if  callable(hook):
+        if callable(hook):
             hook()
 
 
