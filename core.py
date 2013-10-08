@@ -3590,8 +3590,6 @@ def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
 
     May raise exceptions: OSError or ValueError.
 
-    WARNING: use keyword args when calling; the interface is in flux
-
     Parameters:
         cmd: a list containing the command and its arguments
         stdin: what to attach to the process' stdin stream; can be
@@ -3825,8 +3823,6 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
 
     May raise exceptions: OSError or ValueError.
 
-    WARNING: use keyword args when calling; the interface is in flux
-
     Parameters:
         cmd_descr: a string describing the command, used in messages
                    like 'starting rsync backup'
@@ -3876,8 +3872,8 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
             stderr = [output_log_fo, sys.stdout]
 
     # run the command
-    ret = run_command(cmd=cmd, stdout=stdout, stderr=stderr, bg=bg,
-                      atexit_reg=atexit_reg, env_add=env_add, **kwargs)
+    ret = run_command(cmd, stdout, stderr, bg, atexit_reg, env_add,
+                      **kwargs)
 
     # backgrounded?  return the Popen object
     if bg:
