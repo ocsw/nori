@@ -279,6 +279,6 @@ don't use any (such as getting the list of databases).
             core.setting_check_not_blank(pd + 'host')
             if core.cfg[pd + 'host'][0] == '/':
                 core.setting_check_dir_search(pd + 'host')
-            core.setting_check_num(pd + 'port', 1, 65535)
+            core.setting_check_is_set(pd + 'port')
         core.setting_check_is_set(pd + 'connect_db')
         DBMS.validate_config(self)

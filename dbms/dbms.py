@@ -328,11 +328,13 @@ Path to the password file for the {0} connection.
 File must contain nothing but the password; leading/trailing whitespace will
 be trimmed.
 
-Ignored if {1}password is set.
-'''.format(self.__class__.DBMS_NAME, pd)
+Recommended filename: '/etc/{1}/{2}.pw'.
+
+Ignored if {3}password is set.
+'''.format(self.__class__.DBMS_NAME, core.script_shortname,
+           self.prefix, pd),
             ),
-            default='/etc/{0}/{1}.pw'.format(core.script_shortname,
-                                             self.prefix),
+
             cl_coercer=str,
         )
 
@@ -439,14 +441,16 @@ Options must be supplied as a dict.
         if self.tunnel_config:
             core.setting_check_type(pd + 'use_ssh_tunnel', (bool, ))
         if not self.tunnel_config or not core.cfg[pd + 'use_ssh_tunnel']:
-            if (pd + 'protocol' in core.cfg and
-                  core.cfg[pd + 'protocol'] == 'tcp'):
+            if (pd + 'protocol' not in core.config_settings or
+                  (pd + 'protocol' in core.cfg and
+                   core.cfg[pd + 'protocol'] == 'tcp')):
                 if pd + 'host' in core.cfg:
                     core.setting_check_not_blank(pd + 'host')
                 if pd + 'port' in core.cfg:
                     core.setting_check_num(pd + 'port', 1, 65535)
-            elif (pd + 'protocol' in core.cfg and
-                  core.cfg[pd + 'protocol'] == 'socket'):
+            elif (pd + 'protocol' not in core.config_settings or
+                  (pd + 'protocol' in core.cfg and
+                   core.cfg[pd + 'protocol'] == 'socket')):
                 if pd + 'socket_file' in core.cfg:
                     core.setting_check_file_rw(pd + 'socket_file')
         if pd + 'user' in core.cfg:
