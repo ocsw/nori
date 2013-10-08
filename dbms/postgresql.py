@@ -99,6 +99,9 @@ class PostgreSQL(DBMS):
     # required feature(s) for config settings, etc.
     REQUIRES = DBMS.REQUIRES + ['dbms.postgresql']
 
+    # module object containing connect(), etc.
+    MODULE = psycopg2
+
     # local and remote ports for tunnels (remote is also for direct
     # connections)
     DEFAULT_LOCAL_PORT = 6432

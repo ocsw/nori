@@ -90,6 +90,9 @@ class MySQL(DBMS):
     # required feature(s) for config settings, etc.
     REQUIRES = DBMS.REQUIRES + ['dbms.mysql']
 
+    # module object containing connect(), etc.
+    MODULE = mysql.connector
+
     # local and remote ports for tunnels (remote is also for direct
     # connections)
     DEFAULT_LOCAL_PORT = 4306

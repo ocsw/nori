@@ -120,6 +120,9 @@ class DBMS(object):
     # subclasses should add to this
     REQUIRES = ['dbms']
 
+    # module object containing connect(), etc.
+    MODULE = None
+
     # local and remote ports for tunnels (remote is also for direct
     # connections); must be set by subclasses
     DEFAULT_LOCAL_PORT = None
@@ -134,17 +137,34 @@ class DBMS(object):
     # housekeeping
     ###############
 
-    def __init__(self, prefix, delim='_'):
+    def __init__(self, prefix, delim='_', err_use_logger=True,
+                 err_warn_only=False, err_no_exit=False,
+                 warn_use_logger=True, warn_warn_only=False,
+                 warn_no_exit=False):
         """
         Populate instance variables.
         Parameters:
             prefix, delim: prefix and delimiter that start the setting
                            names to use
+            err_no_exit: if True, don't exit the script on DBMS / tunnel
+                         errors (assuming warn_only is False; this is
+                         the equivalent of passing exit_val=None to
+                         core.generic_error_handler())
+            warn_no_exit: like err_no_exit, but for DBMS warnings
+            see core.generic_error_handler() for the rest;
+                err_* apply to DBMS errors, and warn_* apply to DBMS
+                warnings
         """
         self.prefix = prefix
         self.delim = delim
-        self.is_connected = False
-        self.has_cursor = False
+        self.err_use_logger = err_use_logger
+        self.err_warn_only = err_warn_only
+        self.err_no_exit = err_no_exit
+        self.warn_use_logger = warn_use_logger
+        self.warn_warn_only = warn_warn_only
+        self.warn_no_exit = warn_no_exit
+        self.conn = None
+        self.cur = None
 
 
     #####################################
@@ -380,6 +400,7 @@ Options must be supplied as a dict.
                 )
 
         core.validate_config_hooks.append(self.validate_config)
+        core.process_config_hooks.append(self.populate_conn_args)
 
 
     def _ignore_ssh_settings(self):
@@ -465,9 +486,90 @@ Options must be supplied as a dict.
             core.setting_check_kwargs(pd + 'connect_options')
 
 
+    def populate_conn_args(self):
+        """
+        Turn the config settings into a dictionary of connection args.
+        Dependencies:
+            instance vars: prefix, delim, tunnel_config, conn_args
+            methods: read_password_file()
+            config_settings: [prefix+delim+:] use_ssh_tunnel,
+                             local_host, local_port, protocol, host,
+                             port, socket_file, user, password, pw_file,
+                             connect_db, connect_options
+            modules: core
+        """
+        pd = self.prefix + self.delim
+        self.conn_args = {}
+        if self.tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
+            self.conn_args['host'] = core.cfg[pd + 'local_host']
+            self.conn_args['port'] = core.cfg[pd + 'local_port']
+        else:
+            if (pd + 'protocol' not in core.config_settings or
+                  (pd + 'protocol' in core.cfg and
+                   core.cfg[pd + 'protocol'] == 'tcp')):
+                if pd + 'host' in core.cfg:
+                    self.conn_args['host'] = core.cfg[pd + 'host']
+                if pd + 'port' in core.cfg:
+                    self.conn_args['port'] = core.cfg[pd + 'port']
+            elif (pd + 'protocol' not in core.config_settings or
+                  (pd + 'protocol' in core.cfg and
+                   core.cfg[pd + 'protocol'] == 'socket')):
+                if pd + 'socket_file' in core.cfg:
+                    self.conn_args['unix_socket'] = (
+                        core.cfg[pd + 'socket_file']
+                    )
+        if pd + 'user' in core.cfg:
+            self.conn_args['user'] = core.cfg[pd + 'user']
+        if pd + 'password' in core.cfg:
+            self.conn_args['password'] = core.cfg[pd + 'password']
+        elif pd + 'pw_file' in core.cfg:
+            self.conn_args['password'] = self.read_password_file()
+        if pd + 'connect_db' in core.cfg:
+            self.conn_args['database'] = core.cfg[pd + 'connect_db']
+        if pd + 'connect_options' in core.cfg:
+            self.conn_args.update(pd + 'connect_options')
+
+
+    def read_password_file(self):
+        """
+        Get and the password from the password file.
+        Dependencies:
+            instance vars: prefix, delim
+            config_settings: [prefix+delim+:] pw_file
+            modules: core
+        """
+        pd = self.prefix + self.delim
+        try:
+            with open(core.fix_path(core.cfg[pd + 'pw_file']), 'r') as pf:
+                return pf.read().strip()
+        except IOError as e:
+            core.file_error_handler(
+                e, 'read', 'password file', cfg[pd + 'pw_file'],
+                must_exist=True, use_logger=True, warn_only=False,
+                exit_val=core.exitvals['startup']['num']
+            )
+
+
     #############################
     # logging and error handling
     #############################
+
+    def error_handler(self, e):
+        """
+        """
+        msg = ''
+        if isinstance(e, self.__class__.MODULE.Warning):
+            pass
+        else:
+            pass
+
+    def render_exception(self, e):
+        """
+        Return a formatted string for a DBMS-related exception.
+        Parameters:
+            e: the exception to render
+        """
+        return 'Details: {0}'.format(e)
 
 
     ###############################
@@ -475,11 +577,58 @@ Options must be supplied as a dict.
     ###############################
 
     def connect(self):
-        pass
 
+        """
+        Connect to the DBMS, including any SSH tunnel.
+
+        Dependencies:
+            class vars: DBMS_NAME, MODULE
+            instance vars: prefix, delim, tunnel_config, ssh,
+                           err_use_logger, err_warn_only, conn_args,
+                           conn
+            methods: close()
+            config settings: [prefix+delim+:] use_ssh_tunnel
+            modules: atexit, (contents of MODULE), core, (ssh.SSH)
+
+        """
+
+        pd = self.prefix + self.delim
+
+        # SSH tunnel
+        if self.tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
+            self.ssh.open_tunnel(self.__class__.DBMS_NAME + ' connection',
+                                 atexit_reg=True,
+                                 use_logger=self.err_use_logger,
+                                 warn_only=self.err_warn_only)
+
+        # DBMS connection
+        try:
+            self.conn = self.__class__.MODULE.connect(**self.conn_args)
+            atexit.register(self.close)
+        except (self.__class__.MODULE.Warning,
+                self.__class__.MODULE.Error) as e:
+            print(str(e))
+            self.conn = None   ### not if warn
+            
+
+
+
+    def close(self):
+        """
+        Close the DBMS connection.
+        Dependencies:
+            instance vars: conn
+            modules: (contents of MODULE)
+        """
+        self.conn.close()
+        
+
+
+#error/warning formatter
+#err vars in docs
+#redo config func
+#
 #error handling
-#connect, incl. ssh
-#close, incl. auto
 #exec, incl. cursor open, commit/rollback
 #fetch, incl. cursor close
 #
@@ -492,3 +641,10 @@ Options must be supplied as a dict.
 #autocommit
 #
 #which package
+
+# run a get-database-list command
+# (may not be possible/straightforward for all DBMSes)
+#   MySQL:
+#     "SHOW DATABASES;"
+#   PostgreSQL:
+#     "SELECT datname FROM pg_catalog.pg_database;"
