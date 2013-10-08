@@ -403,7 +403,7 @@ Can be None, to wait forever, or a number >= 1.
         """
         pd = self.prefix + self.delim
         if callable(self.ignore) and self.ignore():
-            continue
+            return
         core.setting_check_not_blank(pd + 'ssh_host')
         if core.setting_is_set(pd + 'ssh_port'):
             core.setting_check_num(pd + 'ssh_port', 1, 65535)
@@ -561,15 +561,19 @@ Can be None, to wait forever, or a number >= 1.
                     core.kill_bg_command(p)
                     msg = ('could not establish SSH tunnel for {0} '
                            '(timed out)'.format(descr))
-                    core.generic_error_handler(None, msg, use_logger,
-                                               warn_only, exit_val)
+                    core.generic_error_handler(
+                        None, msg, core.render_command_exception,
+                        use_logger, warn_only, exit_val
+                    )
                     connected = False
             else:  # process is already dead
                 ssh_exit = p.wait()
                 msg = ('could not establish SSH tunnel for {0} '
                        '(status code {1})'.format(descr, ssh_exit))
-                core.generic_error_handler(None, msg, use_logger,
-                                           warn_only, exit_val)
+                core.generic_error_handler(
+                    None, msg, core.render_command_exception, use_logger,
+                    warn_only, exit_val
+                )
                 connected = False
 
         if connected:
