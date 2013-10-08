@@ -200,6 +200,9 @@ DOCSTRING CONTENTS:
     file_type_info()
         Return the stat.IS* function and name for a file type character.
 
+    render_io_exception()
+        Return a formatted string for an I/O-related exception.
+
     file_error_handler()
         Handle OSError/IOError exceptions with various options.
 
@@ -300,6 +303,9 @@ DOCSTRING CONTENTS:
     end_logging_output()
         Close the output log file object.
 
+    render_generic_exception()
+        Return a formatted string for a generic exception.
+
     generic_error_handler()
         Handle exceptions with various options.
 
@@ -310,6 +316,10 @@ DOCSTRING CONTENTS:
     multi_fan_out()
         Copy data from multiple streams to multiple streams, line by
         line.
+
+    render_command_exception()
+        Return a formatted string for an external-command-related
+        exception.
 
     run_command()
         Run an external command, with flexible input/output targeting.
@@ -1985,6 +1995,15 @@ def file_type_info(c):
     return (None, None, None)
 
 
+def render_io_exception(e):
+    """
+    Return a formatted string for an I/O-related exception.
+    Parameters:
+        e: the exception to render
+    """
+    return 'Details: [Errno {0}] {1}'.format(e.errno, e.strerror)
+
+
 def file_error_handler(e, verb, file_label, file_path, must_exist=True,
                        use_logger=False, warn_only=False,
                        exit_val=exitvals['startup']['num']):
@@ -2020,7 +2039,8 @@ def file_error_handler(e, verb, file_label, file_path, must_exist=True,
     # warning/error
     msg = ('could not {0} {1} ({2})' .
            format(verb, file_label, pps(file_path)))
-    return generic_error_handler(e, msg, use_logger, warn_only, exit_val)
+    return generic_error_handler(e, msg, render_io_exception, use_logger,
+                                 warn_only, exit_val)
 
 
 def check_file_type(file_path, file_label, type_char='f', follow_links=True,
@@ -3410,14 +3430,29 @@ def end_logging_output():
 ### see also run_with_logging() and rotate_prune_output_logs() ###
 
 
-def generic_error_handler(e, msg, use_logger=False, warn_only=False,
+def render_generic_exception(e):
+    """
+    Return a formatted string for a generic exception.
+    Parameters:
+        e: the exception to render
+    """
+    return 'Details: {0}'.format(e)
+
+
+def generic_error_handler(e, msg, renderer=render_generic_exception,
+                          use_logger=False, warn_only=False,
                           exit_val=exitvals['startup']['num']):
+
     """
     Handle exceptions with various options.
+
     If it returns, returns False.
+
     Parameters:
         e: the exception object; can also be None, to just work with msg
         msg: the central part of the warning/error message
+        renderer: a function to use to format the contents of the
+                  exception
         use_logger: if None, no messages are logged/printed
                     if callable, is called with a message string and
                     warn_only
@@ -3428,18 +3463,21 @@ def generic_error_handler(e, msg, use_logger=False, warn_only=False,
                    prevents exiting the script)
         exit_val: the value to exit the script with; if this is None,
                   the function doesn't actually exit the script
+
     Dependencies:
         globals: email_logger, exitvals['startup']
-        functions: err_exit()
+        functions: render_generic_exception(), err_exit()
         modules: sys
+
     """
+
+    if e is not None:
+        details = renderer(e)
+
     if warn_only:
-        if e is None:
-            warn_msg = 'Warning: {0}.'.format(msg)
-        else:
-            warn_msg = ('Warning: {0}.\n'
-                        'Details: [Errno {1}] {2}' .
-                         format(msg, e.errno, e.strerror))
+        warn_msg = 'Warning: {0}.'.format(msg)
+        if details:
+            warn_msg += '\n' + details
         if use_logger is None:
             pass  # no messages
         elif callable(use_logger):
@@ -3449,12 +3487,9 @@ def generic_error_handler(e, msg, use_logger=False, warn_only=False,
         else:
             print('\n{0}\n'.format(warn_msg), file=sys.stderr)
     else:
-        if e is None:
-            err_msg = 'Error: {0}; exiting.'.format(msg)
-        else:
-            err_msg = ('Error: {0}; exiting.\n'
-                       'Details: [Errno {1}] {2}' .
-                       format(msg, e.errno, e.strerror))
+        err_msg = 'Error: {0}; exiting.'.format(msg)
+        if details:
+            err_msg += '\n' + details
         if use_logger is None:
             pass  # no messages
         elif callable(use_logger):
@@ -3465,6 +3500,7 @@ def generic_error_handler(e, msg, use_logger=False, warn_only=False,
             err_exit(err_msg, exit_val)
         if exit_val is not None:
             sys.exit(exit_val)
+
     return False
 
 
@@ -3528,6 +3564,18 @@ def multi_fan_out(stream_tuples):
                 o.flush()
         if True in [i_dict['in_eof'] for i, i_dict in stream_dict.items()]:
             break
+
+
+def render_command_exception(e):
+    """
+    Return a formatted string for an external-command-related exception.
+    Parameters:
+        e: the exception to render
+    """
+    if isinstance(e, OSError):
+        return 'Details: [Errno {0}] {1}'.format(e.errno, e.strerror)
+    else:
+        return 'Details: {0}'.format(e)
 
 
 def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
@@ -3868,11 +3916,13 @@ def network_error_handler(e, verb, socket_descr, remote_host, remote_port,
     Dependencies:
         globals: exitvals['startup']
         functions: generic_error_handler()
+        Python: 2.6, for socket.* exceptions
     """
     msg = ('could not {0} {1}\n'
            '(remote: {2}:{3})' .
            format(verb, socket_descr, remote_host, remote_socket))
-    return generic_error_handler(e, msg, use_logger, warn_only, exit_val)
+    return generic_error_handler(e, msg, render_io_exception, use_logger,
+                                 warn_only, exit_val)
 
 
 def test_remote_port(descr, remote_end, local_end=('', 0),
