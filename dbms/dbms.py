@@ -55,7 +55,7 @@ import getpass
 ###############
 
 from .. import core
-from .. import ssh
+from ..ssh import SSH
 
 
 ########################################################################
@@ -151,7 +151,7 @@ class DBMS(object):
     # startup and config file processing
     #####################################
 
-    def create_settings(self, heading='', extra_text='',
+    def create_settings(self, heading='', extra_text='', ignore=None,
                         extra_requires=[],
                         tunnel=True if 'ssh' in core.available_features
                                     else False):
@@ -170,6 +170,8 @@ class DBMS(object):
                         line; does not include the heading)
                         this is mainly intended to be used for things
                         like 'Ignored if [some setting] is False.'
+            ignore: if not None, a function; when this function is true,
+                    don't bother validating the settings
             extra_requires: a list of features to be added to the
                             settings' requires attributes
             tunnel: if true, add SSH-tunnel settings
@@ -177,18 +179,20 @@ class DBMS(object):
         Dependencies:
             class vars: DBMS_NAME, REQUIRES, DEFAULT_REMOTE_PORT,
                         DEFAULT_LOCAL_PORT
-            instance vars: prefix, delim, tunnel_config
-            methods: settings_extra_text(), validate_config()
+            instance vars: prefix, delim, tunnel_config, ignore, ssh
+            methods: _ignore_ssh_settings, settings_extra_text(),
+                     validate_config(), populate_conn_args()
             config settings: [prefix+delim+:] (heading), use_ssh_tunnel,
                              protocol, host, port, socket_file, user,
                              password, pw_file, connect_db,
                              connect_options
-            modules: getpass, core, ssh
+            modules: getpass, core, ssh.SSH
 
         """
 
         pd = self.prefix + self.delim
         self.tunnel_config = tunnel
+        self.ignore = ignore
 
         if heading:
             core.config_settings[pd + 'heading'] = dict(
@@ -210,16 +214,20 @@ If True, specify the host in {0}_ssh_host and the port in
                 cl_coercer=core.str_to_bool,
                 requires=['ssh'],  # see below for the rest
             )
+
             ssh_extra_text = ("Ignored if cfg['{0}'] is False." .
                               format(pd + 'use_ssh_tunnel'))
             if extra_text:
                 ssh_extra_text += '\n\n' + extra_text
-            ssh.create_ssh_settings(
-                self.prefix, self.delim, extra_text=ssh_extra_text,
-                extra_requires=self.__class__.REQUIRES + extra_requires,
+            self.ssh = SSH(self.prefix, self.delim)
+            self.ssh.create_settings(
+                extra_text=ssh_extra_text,
+                ignore=self._ignore_ssh_settings,
+                extra_requires=(self.__class__.REQUIRES + extra_requires),
                 tunnel=True,
                 default_local_port=self.__class__.DEFAULT_LOCAL_PORT,
-                default_remote_port=self.__class__.DEFAULT_REMOTE_PORT)
+                default_remote_port=self.__class__.DEFAULT_REMOTE_PORT
+            )
 
         core.config_settings[pd + 'protocol'] = dict(
             descr=(
@@ -372,6 +380,18 @@ Options must be supplied as a dict.
         core.validate_config_hooks.append(self.validate_config)
 
 
+    def _ignore_ssh_settings(self):
+        """
+        If true, ignore the SSH config settings.
+        Dependencies:
+            instance vars: prefix, delim
+            config settings: [prefix+delim+:] use_ssh_tunnel
+            modules: core
+        """
+        pd = self.prefix + self.delim
+        return not core.cfg[pd + 'use_ssh_tunnel']
+
+
     def settings_extra_text(self, setting_list, extra_text):
         """
         Add extra text to config setting descriptions.
@@ -407,12 +427,14 @@ Options must be supplied as a dict.
         it's easy to be more restrictive in subclasses, but hard to be
         more lenient.
         Dependencies:
-            instance vars: prefix, delim, tunnel_config
+            instance vars: ignore, prefix, delim, tunnel_config
             config settings: [prefix+delim+:] use_ssh_tunnel, protocol,
                              host, port, socket_file, user, password,
                              pw_file, connect_db, connect_options
             modules: core
         """
+        if callable(self.ignore) and self.ignore():
+            return
         pd = self.prefix + self.delim
         if self.tunnel_config:
             core.setting_check_type(pd + 'use_ssh_tunnel', (bool, ))
