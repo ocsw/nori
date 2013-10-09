@@ -162,7 +162,7 @@ necessary options to {1}connect_options:
     sslrootcert
     sslcrl
 See the {0} documentation for more information.
-'''.format(self.__class__.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd)
         )
 
         #
@@ -187,7 +187,7 @@ relative directory or the full name of the socket file, or to use
 anything other than a port number as the suffix.
 
 Ignored if {1}use_ssh_tunnel is True.
-'''.format(self.__class__.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd)
         )
         # default is set in apply_config_defaults_extra()
 
@@ -198,10 +198,10 @@ Port number for the {0} connection.
 Used for both TCP and socket connections; see {0}_host.
 
 Ignored if {1}use_ssh_tunnel is True.
-'''.format(self.__class__.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd)
         )
         core.config_settings[pd + 'port']['default'] = (
-            self.__class__.DEFAULT_REMOTE_PORT
+            self.DEFAULT_REMOTE_PORT
         )
 
         del(core.config_settings[pd + 'socket_file'])
@@ -213,7 +213,7 @@ Initial database for the {0} connection.
 
 {0} requires a database to connect to even for commands that
 don't use any (such as getting the list of databases).
-'''.format(self.__class__.DBMS_NAME)
+'''.format(self.DBMS_NAME)
         )
         core.config_settings[pd + 'connect_db']['default'] = 'postgres'
 
@@ -243,7 +243,7 @@ don't use any (such as getting the list of databases).
         pd = self.prefix + self.delim
 
         # pd + 'host': first try to find a socket, then fall back to TCP
-        for d in self.__class__.SOCKET_SEARCH_PATH:
+        for d in self.SOCKET_SEARCH_PATH:
             f = d + '/.s.PGSQL.' + str(core.cfg[pd + 'port'])
             if (core.check_file_type(f, 'PostgreSQL socket', type_char='s',
                                 follow_links=True, must_exist=True,

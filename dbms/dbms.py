@@ -228,7 +228,7 @@ Use an SSH tunnel for the {0} connection (True/False)?
 If True, specify the host in {0}_ssh_host and the port in
 {0}_remote_port instead of {0}_host and
 {0}_port.
-'''.format(self.__class__.DBMS_NAME)
+'''.format(self.DBMS_NAME)
                 ),
                 default=False,
                 cl_coercer=core.str_to_bool,
@@ -243,10 +243,10 @@ If True, specify the host in {0}_ssh_host and the port in
             self.ssh.create_settings(
                 extra_text=ssh_extra_text,
                 ignore=self._ignore_ssh_settings,
-                extra_requires=(self.__class__.REQUIRES + extra_requires),
+                extra_requires=(self.REQUIRES + extra_requires),
                 tunnel=True,
-                default_local_port=self.__class__.DEFAULT_LOCAL_PORT,
-                default_remote_port=self.__class__.DEFAULT_REMOTE_PORT
+                default_local_port=self.DEFAULT_LOCAL_PORT,
+                default_remote_port=self.DEFAULT_REMOTE_PORT
             )
 
         core.config_settings[pd + 'protocol'] = dict(
@@ -259,7 +259,7 @@ Can be:
     * 'socket': use {1}socket_file
 
 Ignored if {1}use_ssh_tunnel is True.
-'''.format(self.__class__.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd)
             ),
             default='tcp',
             cl_coercer=str,
@@ -272,7 +272,7 @@ Remote hostname for the {0} connection.
 
 Ignored if {1}use_ssh_tunnel is True or if
 {1}protocol is not 'tcp'.
-'''.format(self.__class__.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd)
             ),
             default='localhost',
             cl_coercer=str,
@@ -285,7 +285,7 @@ Remote port number for the {0} connection.
 
 Ignored if {1}use_ssh_tunnel is True or if
 {1}protocol is not 'tcp'.
-'''.format(self.__class__.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd)
             ),
             # no default here; it should be set by subclasses
             cl_coercer=int,
@@ -299,7 +299,7 @@ Path to the socket file for the {0} connection.
 
 Ignored if {1}use_ssh_tunnel is True or if
 {1}protocol is not 'socket'.
-'''.format(self.__class__.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd)
             ),
             # no default here; it should be set by subclasses
             cl_coercer=str,
@@ -309,7 +309,7 @@ Ignored if {1}use_ssh_tunnel is True or if
             descr=(
 '''
 Username for the {0} connection.
-'''.format(self.__class__.DBMS_NAME)
+'''.format(self.DBMS_NAME)
             ),
             # see below for default
             cl_coercer=str,
@@ -334,7 +334,7 @@ the username the script is being run under
 Password for the {0} connection.
 
 See also {1}pw_file, below.
-'''.format(self.__class__.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd)
             ),
             # no default
             cl_coercer=str,
@@ -351,8 +351,7 @@ be trimmed.
 Recommended filename: '/etc/{1}/{2}.pw'.
 
 Ignored if {3}password is set.
-'''.format(self.__class__.DBMS_NAME, core.script_shortname,
-           self.prefix, pd),
+'''.format(self.DBMS_NAME, core.script_shortname, self.prefix, pd),
             ),
 
             cl_coercer=str,
@@ -362,7 +361,7 @@ Ignored if {3}password is set.
             descr=(
 '''
 Initial database for the {0} connection.
-'''.format(self.__class__.DBMS_NAME)
+'''.format(self.DBMS_NAME)
             ),
             # no default here; it can be set by subclasses
             cl_coercer=str,
@@ -374,7 +373,7 @@ Initial database for the {0} connection.
 Additional options for the {0} connection.
 
 Options must be supplied as a dict.
-'''.format(self.__class__.DBMS_NAME)
+'''.format(self.DBMS_NAME)
             ),
             # no default here; it can be set by subclasses
         )
@@ -392,11 +391,11 @@ Options must be supplied as a dict.
         for s_name in setting_list:
             if 'requires' in core.config_settings[pd + s_name]:
                 core.config_settings[pd + s_name]['requires'] += (
-                    self.__class__.REQUIRES + extra_requires
+                    self.REQUIRES + extra_requires
                 )
             else:
                 core.config_settings[pd + s_name]['requires'] = (
-                    self.__class__.REQUIRES + extra_requires
+                    self.REQUIRES + extra_requires
                 )
 
         core.validate_config_hooks.append(self.validate_config)
@@ -596,7 +595,7 @@ Options must be supplied as a dict.
 
         # SSH tunnel
         if self.tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
-            self.ssh.open_tunnel(self.__class__.DBMS_NAME + ' connection',
+            self.ssh.open_tunnel(self__.DBMS_NAME + ' connection',
                                  atexit_reg=True,
                                  use_logger=self.err_use_logger,
                                  warn_only=self.err_warn_only)

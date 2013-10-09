@@ -154,7 +154,7 @@ necessary options to {1}connect_options:
     ssl_key
     ssl_verify_cert
 See the {0} documentation for more information.
-'''.format(self.__class__.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd)
         )
 
         #
@@ -166,9 +166,9 @@ See the {0} documentation for more information.
         )
 
         core.config_settings[pd + 'port']['default'] = (
-            self.__class__.DEFAULT_REMOTE_PORT
+            self.DEFAULT_REMOTE_PORT
         )
-        for f in self.__class__.SOCKET_SEARCH_PATH:
+        for f in self.SOCKET_SEARCH_PATH:
             if (core.check_file_type(f, 'MySQL socket', type_char='s',
                                 follow_links=True, must_exist=True,
                                 use_logger=None, warn_only=True) and
