@@ -711,7 +711,7 @@ Options must be supplied as a dict.
                 format(self.DBMS_NAME, core.pps(pd))
             )
         else:
-            ret = True
+            err = False
             try:
                 self.conn.close()
             except (self.MODULE.Warning, self.MODULE.Error) as e:
@@ -720,9 +720,9 @@ Options must be supplied as a dict.
                                    core.exitvals['dbms_connect']['num'],
                                    downgrade_errs)
                 if isinstance(e, self.MODULE.Error) and not downgrade_errs:
-                    ret = False
+                    err = True
             self.conn = None
-            if ret:
+            if not err:
                 core.status_logger.info(
                     '{0} connection (config prefix/delim {1})\n'
                     'has been closed.' .
@@ -733,7 +733,7 @@ Options must be supplied as a dict.
         if self.tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
             self.ssh.close_tunnel()
 
-        return ret
+        return not err
 
 
     def get_cursor(self, main=True, downgrade_errs=False):
@@ -814,7 +814,7 @@ Options must be supplied as a dict.
             )
             return True
 
-        ret = True
+        err = False
         try:
             if cur is None:
                 self.cur.close()
@@ -827,9 +827,9 @@ Options must be supplied as a dict.
                 core.exitvals['dbms_connect']['num'], downgrade_errs
             )
             if isinstance(e, self.MODULE.Error) and not downgrade_errs:
-                ret = False
+                err = True
         self.conn = None
-        if ret:
+        if not err:
             core.status_logger.debug(
                 '{0}{1} cursor (config prefix/delim {2})\n'
                 'has been closed.' .
