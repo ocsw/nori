@@ -842,6 +842,14 @@ Options must be supplied as a dict.
 #   'execute query on'
 #fetch, incl. cursor close, incl. auto
 #   'retrieve data from'
+#change db
+#get db list
+#   run a get-database-list command
+#   (may not be possible/straightforward for all DBMSes)
+#      MySQL:
+#        "SHOW DATABASES;"
+#      PostgreSQL:
+#        "SELECT datname FROM pg_catalog.pg_database;"
 #
 #warnings
 #pooling
@@ -851,10 +859,3 @@ Options must be supplied as a dict.
 #autocommit
 #
 #which package
-#
-# run a get-database-list command
-# (may not be possible/straightforward for all DBMSes)
-#   MySQL:
-#     "SHOW DATABASES;"
-#   PostgreSQL:
-#     "SELECT datname FROM pg_catalog.pg_database;"
