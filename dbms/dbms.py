@@ -205,7 +205,7 @@ class DBMS(object):
             config settings: [prefix+delim+:] (heading), use_ssh_tunnel,
                              protocol, host, port, socket_file, user,
                              password, pw_file, connect_db,
-                             connect_options
+                             connect_options, cursor_options
             modules: getpass, core, ssh.SSH
 
         """
@@ -378,9 +378,20 @@ Options must be supplied as a dict.
             # no default here; it can be set by subclasses
         )
 
+        core.config_settings[pd + 'cursor_options'] = dict(
+            descr=(
+'''
+Additional options for creating {0} cursors.
+
+Options must be supplied as a dict.
+'''.format(self.DBMS_NAME)
+            ),
+            # no default here; it can be set by subclasses
+        )
+
         setting_list = [
             'protocol', 'host', 'port', 'socket_file', 'user', 'password',
-            'pw_file', 'connect_db', 'connect_options',
+            'pw_file', 'connect_db', 'connect_options', 'cursor_options',
         ]
         if tunnel:
             setting_list += [
@@ -452,7 +463,8 @@ Options must be supplied as a dict.
             instance vars: ignore, prefix, delim, tunnel_config
             config settings: [prefix+delim+:] use_ssh_tunnel, protocol,
                              host, port, socket_file, user, password,
-                             pw_file, connect_db, connect_options
+                             pw_file, connect_db, connect_options,
+                             cursor_options
             modules: core
         """
         if callable(self.ignore) and self.ignore():
@@ -483,6 +495,8 @@ Options must be supplied as a dict.
             core.setting_check_not_blank(pd + 'connect_db')
         if pd + 'connect_options' in core.cfg:
             core.setting_check_kwargs(pd + 'connect_options')
+        if pd + 'cursor_options' in core.cfg:
+            core.setting_check_kwargs(pd + 'cursor_options')
 
 
     def populate_conn_args(self):
