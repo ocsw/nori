@@ -631,6 +631,8 @@ Options must be supplied as a dict.
         """
         Connect to the DBMS, including any SSH tunnel.
 
+        Returns False on error, otherwise True.
+
         Dependencies:
             class vars: DBMS_NAME, MODULE
             instance vars: prefix, delim, tunnel_config, ssh,
@@ -659,10 +661,12 @@ Options must be supplied as a dict.
         try:
             self.conn = self.MODULE.connect(**self.conn_args)
         except (self.MODULE.Warning, self.MODULE.Error) as e:
+            self.error_handler(e, 'connect to', 'connecting to',
+                               core.exitvals['dbms_connect']['num'])
             if isinstance(e, self.MODULE.Error):
                 self.conn = None
-            return self.error_handler(e, 'connect to', 'connecting to',
-                                      core.exitvals['dbms_connect']['num'])
+                self.ssh.close_tunnel()
+                return False
         atexit.register(self.close)
         core.status_logger.info('{0} connection established.' .
                                 format(self.DBMS_NAME))
@@ -670,11 +674,16 @@ Options must be supplied as a dict.
 
 
     def close(self, downgrade_errs=True):
+
         """
         Close the DBMS connection, including any SSH tunnel.
+
+        Returns False on error, otherwise True.
+
         Parameters:
             downgrade_errs: if True, errors encountered while closing
                             the connection are treated as warnings
+
         Dependencies:
             class vars: DBMS_NAME, MODULE
             instance vars: prefix, delim, tunnel_config, conn, ssh,
@@ -682,6 +691,7 @@ Options must be supplied as a dict.
             methods: close_cursor(), error_handler()
             config settings: [prefix+delim+:] use_ssh_tunnel
             modules: (contents of MODULE), core, (ssh.SSH)
+
         """
 
         # main cursor, if any
@@ -695,33 +705,38 @@ Options must be supplied as a dict.
                 format(self.DBMS_NAME, core.pps(self.prefix + self.delim))
             )
         else:
+            ret = True
             try:
                 self.conn.close()
             except (self.MODULE.Warning, self.MODULE.Error) as e:
-                if downgrade_errs:
-                    saved_err_warn_only = self.err_warn_only
-                    self.err_warn_only = True
                 self.error_handler(e, 'close connection to',
                                    'closing connection to',
-                                   core.exitvals['dbms_connect']['num'])
-                if downgrade_errs:
-                    self.err_warn_only = saved_err_warn_only
+                                   core.exitvals['dbms_connect']['num'],
+                                   downgrade_errs)
+                if isinstance(e, self.MODULE.Error) and not downgrade_errs:
+                    ret = False
             self.conn = None
-            core.status_logger.info(
-                '{0} connection (config prefix/delim {1})\n'
-                'has been closed.' .
-                format(self.DBMS_NAME, core.pps(self.prefix + self.delim))
-            )
+            if ret:
+                core.status_logger.info(
+                    '{0} connection (config prefix/delim {1})\n'
+                    'has been closed.' .
+                    format(self.DBMS_NAME,
+                           core.pps(self.prefix + self.delim))
+                )
 
         # SSH tunnel
         if self.tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
             self.ssh.close_tunnel()
+
+        return ret
 
 
     def get_cursor(self, main=True):
 
         """
         Get a cursor for the DBMS connection.
+
+        Returns the cursor object, or None on error.
 
         Parameters:
             main: if True, treat this as the "main" cursor: store it in
@@ -744,16 +759,18 @@ Options must be supplied as a dict.
             if isinstance(e, self.MODULE.Error):
                 cur = None
             # should this be dbms_query?
-            return self.error_handler(e, 'get cursor for',
-                                      'getting cursor for',
-                                      core.exitvals['dbms_connect']['num'])
+            self.error_handler(e, 'get cursor for', 'getting cursor for',
+                               core.exitvals['dbms_connect']['num'])
 
         if main:
             self.cur = cur
-        atexit.register(self.close_cursor, cur=None if main else cur)
-        core.status_logger.debug('Got {0}{1} cursor.' .
-                                 format('main ' if main else '',
-                                        self.DBMS_NAME))
+        if cur:
+            atexit.register(self.close_cursor, cur=None if main else cur)
+            core.status_logger.debug('Got {0}{1} cursor.' .
+                                     format('main ' if main else '',
+                                            self.DBMS_NAME))
+
+        return cur
 
 
     def close_cursor(self, cur=None, downgrade_errs=True):
@@ -764,6 +781,8 @@ Options must be supplied as a dict.
         Can be called more than once for the "main" cursor, but calling
         on an already-closed non-main cursor will cause an error
         (subject to downgrade_errs).
+
+        Returns False on error, otherwise True.
 
         Parameters:
             cur: the cursor to close; if None, the "main" cursor is used
@@ -786,33 +805,32 @@ Options must be supplied as a dict.
                 'was already closed.' .
                 format(self.DBMS_NAME, core.pps(self.prefix + self.delim))
             )
-            return
+            return True
 
+        ret = True
         try:
             if cur is None:
                 self.cur.close()
             else:
                 cur.close()
         except (self.MODULE.Warning, self.MODULE.Error) as e:
-            if downgrade_errs:
-                saved_err_warn_only = self.err_warn_only
-                self.err_warn_only = True
             self.error_handler(
-                e,
-                'close {0}cursor for'.format('main ' if main else ''),
+                e, 'close {0}cursor for'.format('main ' if main else ''),
                 'closing {0}cursor for'.format('main ' if main else ''),
-                core.exitvals['dbms_connect']['num']
+                core.exitvals['dbms_connect']['num'], downgrade_errs
             )
-            if downgrade_errs:
-                self.err_warn_only = saved_err_warn_only
+            if isinstance(e, self.MODULE.Error) and not downgrade_errs:
+                ret = False
         self.conn = None
-        core.status_logger.info(
-            '{0}{1} cursor (config prefix/delim {2})\n'
-            'has been closed.' .
-            format('Main ' if main else '', self.DBMS_NAME,
-                   core.pps(self.prefix + self.delim))
-        )
+        if ret:
+            core.status_logger.debug(
+                '{0}{1} cursor (config prefix/delim {2})\n'
+                'has been closed.' .
+                format('Main ' if main else '', self.DBMS_NAME,
+                       core.pps(self.prefix + self.delim))
+            )
 
+        return ret
 
 
 #log status
