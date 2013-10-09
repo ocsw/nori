@@ -622,6 +622,33 @@ Options must be supplied as a dict.
         return 'Details: {0}'.format(e)
 
 
+    def wrap_call(self, func, err_verb, warn_verb, downgrade_errs=False,
+                  *args, **kwargs):
+        """
+        Wrap a DBMS function call in error handling.
+        Returns a tuple: (success?, function_return_value)
+        Parameters:
+            func: the function to wrap
+            args/kwargs: arguments to pass to the function
+            see error_handler() for the rest
+        Dependencies:
+            class vars: MODULE
+            methods: error_handler()
+            modules: (module containing func), core
+        """
+        err = False
+        try:
+            ret = cur.func(*args, **kwargs)
+        except (self.MODULE.Warning, self.MODULE.Error) as e:
+            self.error_handler(
+                e, err_verb, warn_verb,
+                core.exitvals['dbms_execute']['num'], downgrade_errs
+            )
+            if isinstance(e, self.MODULE.Error) and not downgrade_errs:
+                err = True
+        return (not err, ret)
+
+
     ###############################
     # DBMS connections and queries
     ###############################
@@ -838,6 +865,21 @@ Options must be supplied as a dict.
             )
 
         return not err
+
+
+    def execute(self, query, *param, cur=None, downgrade_errs=False):
+        """
+        Wrapper: execute a DBMS query.
+        Returns False on error, otherwise True.
+        Parameters:
+            cur: the cursor to use; if None, the "main" cursor is used
+            query/param: the query and its parameters
+            see error_handler() for the rest
+        """
+        cur = cur if cur else self.cur
+        return self.wrap_call(cur.execute, 'execute query on',
+                              'executing query on', downgrade_errs, query,
+                              *param)[0]
 
 
 #log status
