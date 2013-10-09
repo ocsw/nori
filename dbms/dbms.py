@@ -568,7 +568,8 @@ Options must be supplied as a dict.
     # logging and error handling
     #############################
 
-    def error_handler(self, e, err_verb, warn_verb, exit_val):
+    def error_handler(self, e, err_verb, warn_verb, exit_val,
+                      downgrade_errs=False):
         """
         Handle DBMS exceptions with various options.
         If it returns, returns False.
@@ -577,6 +578,7 @@ Options must be supplied as a dict.
                       errors (e.g., 'connect to')
             warn_verb: a string describing the action that failed, for
                        warnings (e.g., 'connecting to')
+            downgrade_errs: if True, errors are treated as warnings
             see core.generic_error_handler() for the rest
         Dependencies:
             class vars: DBMS_NAME, MODULE
@@ -587,7 +589,7 @@ Options must be supplied as a dict.
             modules: (contents of MODULE), core
         """
 
-        if isinstance(e, self.MODULE.Warning):
+        if isinstance(e, self.MODULE.Warning) or downgrade_errs:
             msg = ('problem {0} {1} DBMS '
                    '(config prefix/delim {2})' .
                    format(err_verb, self.DBMS_NAME,
