@@ -274,6 +274,7 @@ don't use any (such as getting the list of databases).
             config settings: [prefix+delim+:] use_ssh_tunnel, host, port,
                              connect_db
             modules: core, dbms.DBMS
+            Python: 2.0/3.2, for callable()
         """
         if callable(self.ignore) and self.ignore():
             return

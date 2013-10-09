@@ -219,6 +219,7 @@ See the {0} documentation for more information.
             config settings: [prefix+delim+:] use_ssh_tunnel, protocol,
                              host, port, socket_file
             modules: core, dbms.DBMS
+            Python: 2.0/3.2, for callable()
         """
         if callable(self.ignore) and self.ignore():
             return

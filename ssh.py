@@ -400,6 +400,7 @@ Can be None, to wait forever, or a number >= 1.
                              remote_host, remote_port, tun_timeout
             globals: NoneType [if using Python 3], _config_blocks
             modules: types.NoneType [if using Python 2], core
+            Python: 2.0/3.2, for callable()
         """
         pd = self.prefix + self.delim
         if callable(self.ignore) and self.ignore():

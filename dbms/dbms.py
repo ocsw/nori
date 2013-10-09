@@ -466,6 +466,7 @@ Options must be supplied as a dict.
                              pw_file, connect_db, connect_options,
                              cursor_options
             modules: core
+            Python: 2.0/3.2, for callable()
         """
         if callable(self.ignore) and self.ignore():
             return

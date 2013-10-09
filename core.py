@@ -2072,6 +2072,7 @@ def check_file_type(file_path, file_label, type_char='f', follow_links=True,
         functions: fix_path(), file_error_handler(), file_type_info(),
                    pps(), err_exit()
         modules: os, stat, sys
+        Python: 2.0/3.2, for callable()
 
     """
 
@@ -2190,6 +2191,7 @@ def check_file_access(file_path, file_label, file_rwx='r', use_logger=False,
         functions: fix_path(), file_access_const(),
                    file_error_handler(), pps(), err_exit()
         modules: os, sys
+        Python: 2.0/3.2, for callable()
 
     """
 
@@ -3468,6 +3470,7 @@ def generic_error_handler(e, msg, renderer=render_generic_exception,
         globals: email_logger, exitvals['startup']
         functions: render_generic_exception(), err_exit()
         modules: sys
+        Python: 2.0/3.2, for callable()
 
     """
 
@@ -5176,6 +5179,7 @@ def render_status_messages(full=False):
                  SCRIPT_DISABLED, task_name, tasks_name
         functions: fix_path()
         modules: os
+        Python: 2.0/3.2, for callable()
 
     """
 
@@ -5242,6 +5246,7 @@ def render_status_metadata(full=False):
                  SCRIPT_DISABLED
         functions: get_file_metadata()
         modules: os
+        Python: 2.0/3.2, for callable()
 
     """
 
@@ -5691,6 +5696,7 @@ def apply_config_defaults_extra():
     Dependencies:
         config settings: lockfile_alert_file, lockfile
         globals: cfg, apply_config_defaults_hooks
+        Python: 2.0/3.2, for callable()
 
     """
 
@@ -5748,6 +5754,7 @@ def validate_config():
                    setting_check_file_access(), setting_check_list(),
                    setting_check_no_char()
         modules: types.NoneType [if using Python 2], socket
+        Python: 2.0/3.2, for callable()
 
     """
 
@@ -5871,7 +5878,7 @@ def process_config(arg_ns):
                    init_logging_main(), init_logging_output(), pps(),
                    err_exit()
         modules: argparse, os
-        Python: 2.7/3.2, for argparse
+        Python: 2.7/3.2, for argparse; 2.0/3.2, for callable()
 
     """
 
@@ -5954,6 +5961,7 @@ def render_config():
         config settings: (all)
         globals: cfg, config_settings, config_file_paths
         modules: os
+        Python: 2.0/3.2, for callable()
 
     """
 
@@ -6016,6 +6024,7 @@ def log_cl_config():
                  config_settings
         functions: pps()
         modules: os
+        Python: 2.0/3.2, for callable()
 
     """
 
@@ -6150,7 +6159,7 @@ def create_arg_parser():
         globals: script_name, available_features, create_arg_parser_hooks,
                  script_modes
         modules: re, argparse
-        Python: 2.7/3.2, for argparse
+        Python: 2.7/3.2, for argparse; 2.0/3.2, for callable()
 
     """
 
@@ -6289,6 +6298,7 @@ def run_mode():
         functions: log_cl_config(), check_status(),
                    init_logging_output(), touch_file()
         modules: time
+        Python: 2.0/3.2, for callable()
 
     """
 
@@ -6350,7 +6360,7 @@ def process_command_line():
         functions: (mode callbacks), create_arg_parser(),
                    process_config(), pps(), err_exit()
         modules: argparse, sys
-        Python: 2.7/3.2, for argparse
+        Python: 2.7/3.2, for argparse; 2.0/3.2, for callable()
 
     """
 
