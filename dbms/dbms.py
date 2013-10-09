@@ -74,7 +74,8 @@ core.exitvals['dbms_connect'] = dict(
     num=30,
     descr=(
 '''
-error connecting to or disconnecting from a database
+error connecting to or disconnecting from a database;
+also used for cursors
 '''
     ),
 )
@@ -83,7 +84,7 @@ core.exitvals['dbms_execute'] = dict(
     num=31,
     descr=(
 '''
-error executing a database query/command
+error executing a database query/command/function
 '''
     ),
 )
