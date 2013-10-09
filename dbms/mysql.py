@@ -231,3 +231,21 @@ See the {0} documentation for more information.
             elif core.cfg[pd + 'protocol'] == 'socket':
                 core.setting_check_is_set(pd + 'socket_file')
         DBMS.validate_config(self)
+
+
+    #############################
+    # logging and error handling
+    #############################
+
+    def render_exception(self, e):
+        """
+        Return a formatted string for a DBMS-related exception.
+        Parameters:
+            e: the exception to render
+        Dependencies:
+            class vars: MODULE
+        """
+        if hasattr(self.MODULE, '__version__'):  # 1.1+
+            return 'Error code: {0}\nDetails: {1}'.format(e.errno, e.msg)
+        else:
+            return 'Error Code / Details: {0}'.format(e)

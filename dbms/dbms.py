@@ -567,14 +567,48 @@ Options must be supplied as a dict.
     # logging and error handling
     #############################
 
-    def error_handler(self, e):
+    def error_handler(self, e, err_verb, warn_verb, exit_val):
         """
+        Handle DBMS exceptions with various options.
+        If it returns, returns False.
+        Parameters:
+            err_verb: a string describing the action that failed, for
+                      errors (e.g., 'connect to')
+            warn_verb: a string describing the action that failed, for
+                       warnings (e.g., 'connecting to')
+            see core.generic_error_handler() for the rest
+        Dependencies:
+            class vars: DBMS_NAME, MODULE
+            instance vars: prefix, delim, err_use_logger, err_warn_only,
+                           err_no_exit, warn_use_logger, warn_warn_only,
+                           warn_no_exit
+            methods: render_exception()
+            modules: (contents of MODULE), core
         """
-        msg = ''
-        if isinstance(e, self.__class__.MODULE.Warning):
-            pass
+
+        if isinstance(e, self.MODULE.Warning):
+            msg = ('problem {0} {1} DBMS '
+                   '(config prefix/delim {2})' .
+                   format(err_verb, self.DBMS_NAME,
+                          core.pps(self.prefix + self.delim)))
+            return core.generic_error_handler(
+                e, msg, renderer=self.render_exception,
+                use_logger=self.warn_use_logger,
+                warn_only=self.warn_warn_only,
+                exit_val=None if self.warn_no_exit else exit_val
+            )
         else:
-            pass
+            msg = ('could not {0} {1} DBMS '
+                   '(config prefix/delim {2})' .
+                   format(err_verb, self__.DBMS_NAME,
+                          core.pps(self.prefix + self.delim)))
+            return core.generic_error_handler(
+                e, msg, renderer=self.render_exception,
+                use_logger=self.err_use_logger,
+                warn_only=self.err_warn_only,
+                exit_val=None if self.err_no_exit else exit_val
+            )
+
 
     def render_exception(self, e):
         """
@@ -599,7 +633,7 @@ Options must be supplied as a dict.
             instance vars: prefix, delim, tunnel_config, ssh,
                            err_use_logger, err_warn_only, conn_args,
                            conn
-            methods: close()
+            methods: close(), error_handler()
             config settings: [prefix+delim+:] use_ssh_tunnel
             modules: atexit, (contents of MODULE), core, (ssh.SSH)
 
