@@ -650,38 +650,180 @@ Options must be supplied as a dict.
                                  warn_only=self.err_warn_only)
 
         # DBMS connection
+        core.status_logger.info(
+            'Connecting to {0} DBMS (config prefix/delim {1})...' .
+            format(self.DBMS_NAME, core.pps(self.prefix + self.delim))
+        )
         try:
-            self.conn = self.__class__.MODULE.connect(**self.conn_args)
-            atexit.register(self.close)
-        except (self.__class__.MODULE.Warning,
-                self.__class__.MODULE.Error) as e:
-            print(str(e))
-            self.conn = None   ### not if warn
-            
+            self.conn = self.MODULE.connect(**self.conn_args)
+        except (self.MODULE.Warning, self.MODULE.Error) as e:
+            if isinstance(e, self.MODULE.Error):
+                self.conn = None
+            return self.error_handler(e, 'connect to', 'connecting to',
+                                      core.exitvals['dbms_connect']['num'])
+        atexit.register(self.close)
+        core.status_logger.info('{0} connection established.' .
+                                format(self.DBMS_NAME))
+        return True
 
 
-
-    def close(self):
+    def close(self, downgrade_errs=True):
         """
-        Close the DBMS connection.
+        Close the DBMS connection, including any SSH tunnel.
+        Parameters:
+            downgrade_errs: if True, errors encountered while closing
+                            the connection are treated as warnings
         Dependencies:
-            instance vars: conn
-            modules: (contents of MODULE)
+            class vars: DBMS_NAME, MODULE
+            instance vars: prefix, delim, tunnel_config, conn, ssh,
+                           err_warn_only
+            methods: close_cursor(), error_handler()
+            config settings: [prefix+delim+:] use_ssh_tunnel
+            modules: (contents of MODULE), core, (ssh.SSH)
         """
-        self.conn.close()
-        
+
+        # main cursor, if any
+        self.close_cursor(None, downgrade_errs)
+
+        # DBMS connection
+        if self.conn is None:
+            core.status_logger.info(
+                '{0} connection (config prefix/delim {1})\n'
+                'was already closed.' .
+                format(self.DBMS_NAME, core.pps(self.prefix + self.delim))
+            )
+        else:
+            try:
+                self.conn.close()
+            except (self.MODULE.Warning, self.MODULE.Error) as e:
+                if downgrade_errs:
+                    saved_err_warn_only = self.err_warn_only
+                    self.err_warn_only = True
+                self.error_handler(e, 'close connection to',
+                                   'closing connection to',
+                                   core.exitvals['dbms_connect']['num'])
+                if downgrade_errs:
+                    self.err_warn_only = saved_err_warn_only
+            self.conn = None
+            core.status_logger.info(
+                '{0} connection (config prefix/delim {1})\n'
+                'has been closed.' .
+                format(self.DBMS_NAME, core.pps(self.prefix + self.delim))
+            )
+
+        # SSH tunnel
+        if self.tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
+            self.ssh.close_tunnel()
 
 
-#error/warning formatter
-#err vars in docs
-#redo config func
+    def get_cursor(self, main=True):
+
+        """
+        Get a cursor for the DBMS connection.
+
+        Parameters:
+            main: if True, treat this as the "main" cursor: store it in
+                  the object and use it by default in other methods
+
+        Dependencies:
+            class vars: DBMS_NAME, MODULE
+            instance vars: prefix, delim, cur
+            methods: close_cursor(), error_handler()
+            config settings: [prefix+delim+:] cursor_options
+            modules: atexit, (contents of MODULE), core
+
+        """
+
+        pd = self.prefix + self.delim
+
+        try:
+            cur = self.MODULE.cursor(**core.cfg[pd + 'cursor_options'])
+        except (self.MODULE.Warning, self.MODULE.Error) as e:
+            if isinstance(e, self.MODULE.Error):
+                cur = None
+            # should this be dbms_query?
+            return self.error_handler(e, 'get cursor for',
+                                      'getting cursor for',
+                                      core.exitvals['dbms_connect']['num'])
+
+        if main:
+            self.cur = cur
+        atexit.register(self.close_cursor, cur=None if main else cur)
+        core.status_logger.debug('Got {0}{1} cursor.' .
+                                 format('main ' if main else '',
+                                        self.DBMS_NAME))
+
+
+    def close_cursor(self, cur=None, downgrade_errs=True):
+
+        """
+        Close the DBMS cursor.
+
+        Can be called more than once for the "main" cursor, but calling
+        on an already-closed non-main cursor will cause an error
+        (subject to downgrade_errs).
+
+        Parameters:
+            cur: the cursor to close; if None, the "main" cursor is used
+            downgrade_errs: if True, errors encountered while closing
+                            the connection are treated as warnings
+
+        Dependencies:
+            class vars: DBMS_NAME, MODULE
+            instance vars: prefix, delim, tunnel_config, conn, ssh,
+                           err_warn_only
+            methods: close_cursor(), error_handler()
+            config settings: [prefix+delim+:] use_ssh_tunnel
+            modules: (contents of MODULE), core, (ssh.SSH)
+
+        """
+
+        if cur is None and self.cur is None:
+            core.status_logger.debug(
+                'Main {0} cursor (config prefix/delim {1})\n'
+                'was already closed.' .
+                format(self.DBMS_NAME, core.pps(self.prefix + self.delim))
+            )
+            return
+
+        try:
+            if cur is None:
+                self.cur.close()
+            else:
+                cur.close()
+        except (self.MODULE.Warning, self.MODULE.Error) as e:
+            if downgrade_errs:
+                saved_err_warn_only = self.err_warn_only
+                self.err_warn_only = True
+            self.error_handler(
+                e,
+                'close {0}cursor for'.format('main ' if main else ''),
+                'closing {0}cursor for'.format('main ' if main else ''),
+                core.exitvals['dbms_connect']['num']
+            )
+            if downgrade_errs:
+                self.err_warn_only = saved_err_warn_only
+        self.conn = None
+        core.status_logger.info(
+            '{0}{1} cursor (config prefix/delim {2})\n'
+            'has been closed.' .
+            format('Main ' if main else '', self.DBMS_NAME,
+                   core.pps(self.prefix + self.delim))
+        )
+
+
+
+#log status
 #
-#error handling
+#err vars in docs
+#redo-config func
+#
 #exec, incl. cursor open, commit/rollback
-#fetch, incl. cursor close
+#   'execute query on'
+#fetch, incl. cursor close, incl. auto
+#   'retrieve data from'
 #
 #warnings
-#errors, incl. strings
 #pooling
 #dicts
 #conversion, incl. unicode
@@ -689,7 +831,7 @@ Options must be supplied as a dict.
 #autocommit
 #
 #which package
-
+#
 # run a get-database-list command
 # (may not be possible/straightforward for all DBMSes)
 #   MySQL:
