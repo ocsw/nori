@@ -626,12 +626,15 @@ Options must be supplied as a dict.
     # DBMS connections and queries
     ###############################
 
-    def connect(self):
+    def connect(self, downgrade_errs=False):
 
         """
         Connect to the DBMS, including any SSH tunnel.
 
         Returns False on error, otherwise True.
+
+        Parameters:
+            see error_handler()
 
         Dependencies:
             class vars: DBMS_NAME, MODULE
@@ -662,7 +665,8 @@ Options must be supplied as a dict.
             self.conn = self.MODULE.connect(**self.conn_args)
         except (self.MODULE.Warning, self.MODULE.Error) as e:
             self.error_handler(e, 'connect to', 'connecting to',
-                               core.exitvals['dbms_connect']['num'])
+                               core.exitvals['dbms_connect']['num'],
+                               downgrade_errs)
             if isinstance(e, self.MODULE.Error):
                 self.conn = None
                 self.ssh.close_tunnel()
@@ -681,8 +685,7 @@ Options must be supplied as a dict.
         Returns False on error, otherwise True.
 
         Parameters:
-            downgrade_errs: if True, errors encountered while closing
-                            the connection are treated as warnings
+            see error_handler()
 
         Dependencies:
             class vars: DBMS_NAME, MODULE
@@ -697,7 +700,8 @@ Options must be supplied as a dict.
         pd = self.prefix + self.delim
 
         # main cursor, if any
-        self.close_cursor(None, downgrade_errs)
+        if self.cur is not None:
+            self.close_cursor(None, downgrade_errs)
 
         # DBMS connection
         if self.conn is None:
@@ -732,7 +736,7 @@ Options must be supplied as a dict.
         return ret
 
 
-    def get_cursor(self, main=True):
+    def get_cursor(self, main=True, downgrade_errs=False):
 
         """
         Get a cursor for the DBMS connection.
@@ -742,6 +746,7 @@ Options must be supplied as a dict.
         Parameters:
             main: if True, treat this as the "main" cursor: store it in
                   the object and use it by default in other methods
+            see error_handler() for the rest
 
         Dependencies:
             class vars: DBMS_NAME, MODULE
@@ -759,7 +764,8 @@ Options must be supplied as a dict.
                 cur = None
             # should this be dbms_query?
             self.error_handler(e, 'get cursor for', 'getting cursor for',
-                               core.exitvals['dbms_connect']['num'])
+                               core.exitvals['dbms_connect']['num'],
+                               downgrade_errs)
 
         if main:
             self.cur = cur
@@ -784,9 +790,9 @@ Options must be supplied as a dict.
         Returns False on error, otherwise True.
 
         Parameters:
-            cur: the cursor to close; if None, the "main" cursor is used
-            downgrade_errs: if True, errors encountered while closing
-                            the connection are treated as warnings
+            cur: the cursor to close; if None, the "main" cursor is
+                 closed
+            see error_handler() for the rest
 
         Dependencies:
             class vars: DBMS_NAME, MODULE
@@ -831,7 +837,7 @@ Options must be supplied as a dict.
                        core.pps(pd))
             )
 
-        return ret
+        return not err
 
 
 #log status
