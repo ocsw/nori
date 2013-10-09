@@ -588,12 +588,11 @@ Options must be supplied as a dict.
             methods: render_exception()
             modules: (contents of MODULE), core
         """
-
+        pd = self.prefix + self.delim
         if isinstance(e, self.MODULE.Warning) or downgrade_errs:
             msg = ('problem {0} {1} DBMS '
                    '(config prefix/delim {2})' .
-                   format(err_verb, self.DBMS_NAME,
-                          core.pps(self.prefix + self.delim)))
+                   format(err_verb, self.DBMS_NAME, core.pps(pd)))
             return core.generic_error_handler(
                 e, msg, renderer=self.render_exception,
                 use_logger=self.warn_use_logger,
@@ -603,8 +602,7 @@ Options must be supplied as a dict.
         else:
             msg = ('could not {0} {1} DBMS '
                    '(config prefix/delim {2})' .
-                   format(err_verb, self__.DBMS_NAME,
-                          core.pps(self.prefix + self.delim)))
+                   format(err_verb, self.DBMS_NAME, core.pps(pd)))
             return core.generic_error_handler(
                 e, msg, renderer=self.render_exception,
                 use_logger=self.err_use_logger,
@@ -648,7 +646,7 @@ Options must be supplied as a dict.
 
         # SSH tunnel
         if self.tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
-            self.ssh.open_tunnel(self__.DBMS_NAME + ' connection',
+            self.ssh.open_tunnel(self.DBMS_NAME + ' connection',
                                  atexit_reg=True,
                                  use_logger=self.err_use_logger,
                                  warn_only=self.err_warn_only)
@@ -656,7 +654,7 @@ Options must be supplied as a dict.
         # DBMS connection
         core.status_logger.info(
             'Connecting to {0} DBMS (config prefix/delim {1})...' .
-            format(self.DBMS_NAME, core.pps(self.prefix + self.delim))
+            format(self.DBMS_NAME, core.pps(pd))
         )
         try:
             self.conn = self.MODULE.connect(**self.conn_args)
@@ -694,6 +692,8 @@ Options must be supplied as a dict.
 
         """
 
+        pd = self.prefix + self.delim
+
         # main cursor, if any
         self.close_cursor(None, downgrade_errs)
 
@@ -702,7 +702,7 @@ Options must be supplied as a dict.
             core.status_logger.info(
                 '{0} connection (config prefix/delim {1})\n'
                 'was already closed.' .
-                format(self.DBMS_NAME, core.pps(self.prefix + self.delim))
+                format(self.DBMS_NAME, core.pps(pd))
             )
         else:
             ret = True
@@ -720,8 +720,7 @@ Options must be supplied as a dict.
                 core.status_logger.info(
                     '{0} connection (config prefix/delim {1})\n'
                     'has been closed.' .
-                    format(self.DBMS_NAME,
-                           core.pps(self.prefix + self.delim))
+                    format(self.DBMS_NAME, core.pps(pd))
                 )
 
         # SSH tunnel
@@ -744,14 +743,12 @@ Options must be supplied as a dict.
 
         Dependencies:
             class vars: DBMS_NAME, MODULE
-            instance vars: prefix, delim, cur
+            instance vars: cur
             methods: close_cursor(), error_handler()
             config settings: [prefix+delim+:] cursor_options
             modules: atexit, (contents of MODULE), core
 
         """
-
-        pd = self.prefix + self.delim
 
         try:
             cur = self.MODULE.cursor(**core.cfg[pd + 'cursor_options'])
@@ -799,11 +796,13 @@ Options must be supplied as a dict.
 
         """
 
+        pd = self.prefix + self.delim
+
         if cur is None and self.cur is None:
             core.status_logger.debug(
                 'Main {0} cursor (config prefix/delim {1})\n'
                 'was already closed.' .
-                format(self.DBMS_NAME, core.pps(self.prefix + self.delim))
+                format(self.DBMS_NAME, core.pps(pd))
             )
             return True
 
@@ -827,7 +826,7 @@ Options must be supplied as a dict.
                 '{0}{1} cursor (config prefix/delim {2})\n'
                 'has been closed.' .
                 format('Main ' if main else '', self.DBMS_NAME,
-                       core.pps(self.prefix + self.delim))
+                       core.pps(pd))
             )
 
         return ret
