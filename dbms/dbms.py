@@ -48,6 +48,7 @@ from __future__ import print_function
 from pprint import pprint as pp  # for debugging
 
 import getpass
+import atexit
 
 
 ###############
