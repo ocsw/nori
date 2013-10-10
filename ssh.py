@@ -470,7 +470,7 @@ Can be None, to wait forever, or a number >= 1.
         core.run_with_logging().
         For remote commands, add the remote command/argument list to the
         list returned from this function.
-        See also get_ssh_tunnel_cmd().
+        See also get_tunnel_cmd().
         Dependencies:
             instance vars: prefix, delim
             config settings: [prefix+delim+:] ssh_host, ssh_port,
@@ -499,12 +499,12 @@ Can be None, to wait forever, or a number >= 1.
         """
         Assemble a list containing the ssh tunnel command and its args.
         Can be used with (e.g.) core.run_command() or
-        core.run_with_logging(), but see open_ssh_tunnel(), below.
+        core.run_with_logging(), but see open_tunnel(), below.
         Dependencies:
             instance vars: prefix, delim
             config settings: [prefix+delim+:] local_port, remote_host,
                              remote_port
-            functions: get_ssh_cmd()
+            functions: get_cmd()
             modules: core
             external commands: ssh
         """
@@ -514,7 +514,7 @@ Can be None, to wait forever, or a number >= 1.
                                    core.cfg[pd + 'remote_host'],
                                    core.cfg[pd + 'remote_port']))
         tunnel_arg.append('-N')
-        cmd = get_ssh_cmd(prefix, delim)
+        cmd = get_cmd(prefix, delim)
         return cmd[0] + tunnel_arg + cmd[1:]
 
 
@@ -619,7 +619,7 @@ Can be None, to wait forever, or a number >= 1.
     def close_tunnel(self):
         """
         Close an SSH tunnel, including logging.
-        For tunnels opened with open_ssh_tunnel().
+        For tunnels opened with open_tunnel().
         Can be called even if the tunnel already died / was closed / was
         killed.
         Dependencies:
