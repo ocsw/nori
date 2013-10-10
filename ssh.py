@@ -140,6 +140,18 @@ class SSH(object):
 
     """This class wraps all of the SSH functionality."""
 
+    ################################
+    # class variables: housekeeping
+    ################################
+
+    # these are used to keep track of all tunnels for last-minute
+    # cleanup; see close_tunnels()
+    # NOTE: * do not override them in subclasses
+    #       * refer to them with SSH.var
+    atexit_close_tunnnels_registered = False
+    open_tunnels = []  # actually contains SSH objects with open tunnels
+
+
     ###############
     # housekeeping
     ###############
@@ -153,6 +165,20 @@ class SSH(object):
         """
         self.prefix = prefix
         self.delim = delim
+
+
+    @classmethod
+    def close_tunnels(cls):
+        """
+        Close all SSH tunnels.
+        NOTE: * do not override in subclasses
+              * call with SSH.close_tunnels()
+        Dependencies:
+            class vars: open_tunnels
+            instance methods: close_tunnel()
+        """
+        for ssh_obj in cls.open_tunnels:
+            ssh_obj.close_tunnel()
 
 
     #####################################
@@ -511,8 +537,9 @@ Can be None, to wait forever, or a number >= 1.
             see core.generic_error_handler() for the rest
 
         Dependencies:
+            class vars: atexit_close_tunnels_registered, open_tunnels
             instance vars: prefix, delim, descr, p_obj
-            methods: get_ssh_tunnel_cmd(), close_ssh_tunnel()
+            methods: get_tunnel_cmd(), close_tunnels()
             config settings: [prefix+delim+:] (remote_host),
                              (remote_port), local_host, local_port,
                              tun_timeout
@@ -532,13 +559,11 @@ Can be None, to wait forever, or a number >= 1.
         core.output_logger.info('Running SSH tunnel command for {0}...' .
                                 format(descr))
 
-        # run the command and set up our own exit callback
+        # run the command
         p = core.run_with_logging(
-            'SSH tunnel for {0}'.format(descr), self.get_ssh_tunnel_cmd(),
+            'SSH tunnel for {0}'.format(descr), self.get_tunnel_cmd(),
             bg=True, atexit_reg=False
         )
-        self.p_obj = p
-        atexit.register(self.close_ssh_tunnel)
 
         # test the tunnel
         waited = 0
@@ -578,8 +603,14 @@ Can be None, to wait forever, or a number >= 1.
                 connected = False
 
         if connected:
+            self.p_obj = p
             core.status_logger.info('SSH tunnel for {0} established.' .
                                     format(descr))
+            if self not in SSH.open_tunnels:
+                SSH.open_tunnels.append(self)
+            if not SSH.atexit_close_tunnels_registered:
+                atexit.register(SSH.close_tunnels)
+                SSH.atexit_close_tunnels_registered = True
             return p
         else:
             return False
@@ -592,6 +623,7 @@ Can be None, to wait forever, or a number >= 1.
         Can be called even if the tunnel already died / was closed / was
         killed.
         Dependencies:
+            class vars: open_tunnels
             instance vars: descr, p_obj
             modules: core
         """
@@ -602,3 +634,5 @@ Can be None, to wait forever, or a number >= 1.
         else:
             core.status_logger.info('SSH tunnel for {0} has been closed.' .
                                     format(self.descr))
+        if self in SSH.open_tunnels:
+            SSH.open_tunnels.remove(self)
