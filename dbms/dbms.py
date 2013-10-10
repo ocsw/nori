@@ -729,16 +729,15 @@ Options must be supplied as a dict.
         # SSH tunnel
         if self.tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
             if self.err_no_exit:
+                # atexit_reg = True, exit_val = None
                 self.ssh.open_tunnel(self.DBMS_NAME + ' connection',
-                                     atexit_reg=True,
-                                     use_logger=self.err_use_logger,
-                                     warn_only=self.err_warn_only, None)
+                                     True, self.err_use_logger,
+                                     self.err_warn_only, None)
             else:
+                # atexit_reg = True
                 self.ssh.open_tunnel(self.DBMS_NAME + ' connection',
-                                     atexit_reg=True,
-                                     use_logger=self.err_use_logger,
-                                     warn_only=self.err_warn_only)
-
+                                     True, self.err_use_logger,
+                                     self.err_warn_only)
         # DBMS connection
         core.status_logger.info(
             'Connecting to {0} DBMS (config prefix/delim {1})...' .
