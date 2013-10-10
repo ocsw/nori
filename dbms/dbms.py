@@ -141,10 +141,11 @@ class DBMS(object):
 
     def __init__(self, prefix, delim='_', err_use_logger=True,
                  err_warn_only=False, err_no_exit=False,
-                 warn_use_logger=True, warn_warn_only=False,
+                 warn_use_logger=True, warn_warn_only=True,
                  warn_no_exit=False):
         """
         Populate instance variables.
+        See also save_err_warn() / restore_err_warn().
         Parameters:
             prefix, delim: prefix and delimiter that start the setting
                            names to use
@@ -156,6 +157,8 @@ class DBMS(object):
             see core.generic_error_handler() for the rest;
                 err_* apply to DBMS errors, and warn_* apply to DBMS
                 warnings
+                note that if warn_warn_only is False, warnings will be
+                treated as errors
         """
         self.prefix = prefix
         self.delim = delim
@@ -570,18 +573,20 @@ Options must be supplied as a dict.
     # logging and error handling
     #############################
 
-    def error_handler(self, e, err_verb, warn_verb, exit_val,
-                      downgrade_errs=False):
+    def error_handler(self, e, err_verb, warn_verb, exit_val):
+
         """
         Handle DBMS exceptions with various options.
+
         If it returns, returns False.
+
         Parameters:
             err_verb: a string describing the action that failed, for
                       errors (e.g., 'connect to')
             warn_verb: a string describing the action that failed, for
                        warnings (e.g., 'connecting to')
-            downgrade_errs: if True, errors are treated as warnings
             see core.generic_error_handler() for the rest
+
         Dependencies:
             class vars: DBMS_NAME, MODULE
             instance vars: prefix, delim, err_use_logger, err_warn_only,
@@ -589,28 +594,32 @@ Options must be supplied as a dict.
                            warn_no_exit
             methods: render_exception()
             modules: (contents of MODULE), core
+
         """
+
         pd = self.prefix + self.delim
-        if isinstance(e, self.MODULE.Warning) or downgrade_errs:
+
+        if isinstance(e, self.MODULE.Warning):
+            use_logger = self.warn_use_logger
+            warn_only = self.warn_warn_only
+            exit_val=None if self.warn_no_exit else exit_val
+        if isinstance(e, self.MODULE.Error):
+            use_logger = self.err_use_logger
+            warn_only = self.err_warn_only
+            exit_val=None if self.err_no_exit else exit_val
+
+        if warn_only:
             msg = ('problem {0} {1} DBMS '
                    '(config prefix/delim {2})' .
-                   format(err_verb, self.DBMS_NAME, core.pps(pd)))
-            return core.generic_error_handler(
-                e, msg, renderer=self.render_exception,
-                use_logger=self.warn_use_logger,
-                warn_only=self.warn_warn_only,
-                exit_val=None if self.warn_no_exit else exit_val
-            )
+                   format(warn_verb, self.DBMS_NAME, core.pps(pd)))
         else:
             msg = ('could not {0} {1} DBMS '
                    '(config prefix/delim {2})' .
                    format(err_verb, self.DBMS_NAME, core.pps(pd)))
-            return core.generic_error_handler(
-                e, msg, renderer=self.render_exception,
-                use_logger=self.err_use_logger,
-                warn_only=self.err_warn_only,
-                exit_val=None if self.err_no_exit else exit_val
-            )
+
+        return core.generic_error_handler(
+            e, msg, self.render_exception, use_logger, warn_only, exit_val
+        )
 
 
     def render_exception(self, e):
@@ -622,8 +631,51 @@ Options must be supplied as a dict.
         return 'Details: {0}'.format(e)
 
 
-    def wrap_call(self, func, err_verb, warn_verb, downgrade_errs=False,
-                  *args, **kwargs):
+    def save_err_warn(self):
+        """
+        Save the err.* and warn.* settings before temporary changes.
+        Dependencies:
+            instance vars: err_use_logger, err_warn_only, err_no_exit,
+                           warn_use_logger, warn_warn_only,
+                           warn_no_exit, err_use_logger_saved,
+                           err_warn_only_saved, err_no_exit_saved,
+                           warn_use_logger_saved, warn_warn_only_saved,
+                           warn_no_exit_saved
+        """
+        self.err_use_logger_saved = err_use_logger
+        self.err_warn_only_saved = err_warn_only
+        self.err_no_exit_saved = err_no_exit
+        self.warn_use_logger_saved = warn_use_logger
+        self.warn_warn_only_saved = warn_warn_only
+        self.warn_no_exit_saved = warn_no_exit
+
+
+    def restore_err_warn(self):
+        """
+        Restore the err.* and warn.* settings after temporary changes.
+        Dependencies:
+            instance vars: err_use_logger, err_warn_only, err_no_exit,
+                           warn_use_logger, warn_warn_only,
+                           warn_no_exit, err_use_logger_saved,
+                           err_warn_only_saved, err_no_exit_saved,
+                           warn_use_logger_saved, warn_warn_only_saved,
+                           warn_no_exit_saved
+        """
+        self.err_use_logger = err_use_logger_saved
+        self.err_warn_only = err_warn_only_saved
+        self.err_no_exit = err_no_exit_saved
+        self.warn_use_logger = warn_use_logger_saved
+        self.warn_warn_only = warn_warn_only_saved
+        self.warn_no_exit = warn_no_exit_saved
+        del(self.err_use_logger_saved)
+        del(self.err_warn_only_saved)
+        del(self.err_no_exit_saved)
+        del(self.warn_use_logger_saved)
+        del(self.warn_warn_only_saved)
+        del(self.warn_no_exit_saved)
+
+
+    def wrap_call(self, func, err_verb, warn_verb, *args, **kwargs):
         """
         Wrap a DBMS function call in error handling.
         Returns a tuple: (success?, function_return_value)
@@ -633,6 +685,7 @@ Options must be supplied as a dict.
             see error_handler() for the rest
         Dependencies:
             class vars: MODULE
+            instance vars: err_warn_only
             methods: error_handler()
             modules: (module containing func), core
         """
@@ -642,9 +695,9 @@ Options must be supplied as a dict.
         except (self.MODULE.Warning, self.MODULE.Error) as e:
             self.error_handler(
                 e, err_verb, warn_verb,
-                core.exitvals['dbms_execute']['num'], downgrade_errs
+                core.exitvals['dbms_execute']['num']
             )
-            if isinstance(e, self.MODULE.Error) and not downgrade_errs:
+            if isinstance(e, self.MODULE.Error) and not self.err_warn_only:
                 err = True
         return (not err, ret)
 
@@ -653,21 +706,18 @@ Options must be supplied as a dict.
     # DBMS connections and queries
     ###############################
 
-    def connect(self, downgrade_errs=False):
+    def connect(self):
 
         """
         Connect to the DBMS, including any SSH tunnel.
 
         Returns False on error, otherwise True.
 
-        Parameters:
-            see error_handler()
-
         Dependencies:
             class vars: DBMS_NAME, MODULE
-            instance vars: prefix, delim, tunnel_config, ssh,
-                           err_use_logger, err_warn_only, conn_args,
-                           conn
+            instance vars: prefix, delim, tunnel_config, ssh, conn_args,
+                           conn, err_use_logger, err_warn_only,
+                           err_no_exit
             methods: close(), error_handler()
             config settings: [prefix+delim+:] use_ssh_tunnel
             modules: atexit, (contents of MODULE), core, (ssh.SSH)
@@ -692,8 +742,7 @@ Options must be supplied as a dict.
             self.conn = self.MODULE.connect(**self.conn_args)
         except (self.MODULE.Warning, self.MODULE.Error) as e:
             self.error_handler(e, 'connect to', 'connecting to',
-                               core.exitvals['dbms_connect']['num'],
-                               downgrade_errs)
+                               core.exitvals['dbms_connect']['num'])
             if isinstance(e, self.MODULE.Error):
                 self.conn = None
                 self.ssh.close_tunnel()
@@ -704,7 +753,7 @@ Options must be supplied as a dict.
         return True
 
 
-    def close(self, downgrade_errs=True):
+    def close(self, force_no_exit=True):
 
         """
         Close the DBMS connection, including any SSH tunnel.
@@ -712,13 +761,16 @@ Options must be supplied as a dict.
         Returns False on error, otherwise True.
 
         Parameters:
-            see error_handler()
+            force_no_exit: if True, don't exit on errors/warnings,
+                           regardless of the values of err_no_exit and
+                           warn_no_exit
 
         Dependencies:
             class vars: DBMS_NAME, MODULE
-            instance vars: prefix, delim, tunnel_config, conn, ssh,
-                           err_warn_only
-            methods: close_cursor(), error_handler()
+            instance vars: prefix, delim, tunnel_config, ssh, conn, cur,
+                           err_warn_only, err_no_exit, warn_no_exit
+            methods: close_cursor(), save_err_warn(),
+                     restore_err_warn(), error_handler()
             config settings: [prefix+delim+:] use_ssh_tunnel
             modules: (contents of MODULE), core, (ssh.SSH)
 
@@ -728,7 +780,7 @@ Options must be supplied as a dict.
 
         # main cursor, if any
         if self.cur is not None:
-            self.close_cursor(None, downgrade_errs)
+            self.close_cursor(None, force_no_exit)
 
         # DBMS connection
         if self.conn is None:
@@ -742,11 +794,17 @@ Options must be supplied as a dict.
             try:
                 self.conn.close()
             except (self.MODULE.Warning, self.MODULE.Error) as e:
+                if force_no_exit:
+                    self.save_err_warn()
+                    self.err_no_exit = True
+                    self.warn_no_exit = True
                 self.error_handler(e, 'close connection to',
                                    'closing connection to',
-                                   core.exitvals['dbms_connect']['num'],
-                                   downgrade_errs)
-                if isinstance(e, self.MODULE.Error) and not downgrade_errs:
+                                   core.exitvals['dbms_connect']['num'])
+                if force_no_exit:
+                    self.restore_err_warn()
+                if (isinstance(e, self.MODULE.Error) and
+                      not self.err_warn_only):
                     err = True
             self.conn = None
             if not err:
@@ -763,7 +821,7 @@ Options must be supplied as a dict.
         return not err
 
 
-    def get_cursor(self, main=True, downgrade_errs=False):
+    def get_cursor(self, main=True):
 
         """
         Get a cursor for the DBMS connection.
@@ -773,7 +831,6 @@ Options must be supplied as a dict.
         Parameters:
             main: if True, treat this as the "main" cursor: store it in
                   the object and use it by default in other methods
-            see error_handler() for the rest
 
         Dependencies:
             class vars: DBMS_NAME, MODULE
@@ -787,12 +844,10 @@ Options must be supplied as a dict.
         try:
             cur = self.MODULE.cursor(**core.cfg[pd + 'cursor_options'])
         except (self.MODULE.Warning, self.MODULE.Error) as e:
+            self.error_handler(e, 'get cursor for', 'getting cursor for',
+                               core.exitvals['dbms_connect']['num'])
             if isinstance(e, self.MODULE.Error):
                 cur = None
-            # should this be dbms_query?
-            self.error_handler(e, 'get cursor for', 'getting cursor for',
-                               core.exitvals['dbms_connect']['num'],
-                               downgrade_errs)
 
         if main:
             self.cur = cur
@@ -805,29 +860,30 @@ Options must be supplied as a dict.
         return cur
 
 
-    def close_cursor(self, cur=None, downgrade_errs=True):
+    def close_cursor(self, cur=None, force_no_exit=True):
 
         """
         Close the DBMS cursor.
 
         Can be called more than once for the "main" cursor, but calling
-        on an already-closed non-main cursor will cause an error
-        (subject to downgrade_errs).
+        on an already-closed non-main cursor will cause an error.
 
         Returns False on error, otherwise True.
 
         Parameters:
             cur: the cursor to close; if None, the "main" cursor is
                  closed
-            see error_handler() for the rest
+            force_no_exit: if True, don't exit on errors/warnings,
+                           regardless of the values of err_no_exit and
+                           warn_no_exit
 
         Dependencies:
             class vars: DBMS_NAME, MODULE
-            instance vars: prefix, delim, tunnel_config, conn, ssh,
-                           err_warn_only
-            methods: close_cursor(), error_handler()
-            config settings: [prefix+delim+:] use_ssh_tunnel
-            modules: (contents of MODULE), core, (ssh.SSH)
+            instance vars: prefix, delim, cur, err_warn_only,
+                           err_no_exit, warn_no_exit
+            methods: save_err_warn(), restore_err_warn(),
+                     error_handler()
+            modules: (contents of MODULE), core
 
         """
 
@@ -848,12 +904,19 @@ Options must be supplied as a dict.
             else:
                 cur.close()
         except (self.MODULE.Warning, self.MODULE.Error) as e:
+            if force_no_exit:
+                self.save_err_warn()
+                self.err_no_exit = True
+                self.warn_no_exit = True
             self.error_handler(
                 e, 'close {0}cursor for'.format('main ' if main else ''),
                 'closing {0}cursor for'.format('main ' if main else ''),
-                core.exitvals['dbms_connect']['num'], downgrade_errs
+                core.exitvals['dbms_connect']['num']
             )
-            if isinstance(e, self.MODULE.Error) and not downgrade_errs:
+            if force_no_exit:
+                self.restore_err_warn()
+            if (isinstance(e, self.MODULE.Error) and
+                  not self.err_warn_only):
                 err = True
         self.conn = None
         if not err:
@@ -867,18 +930,21 @@ Options must be supplied as a dict.
         return not err
 
 
-    def execute(self, query, *param, cur=None, downgrade_errs=False):
+    def execute(self, cur, query, *param):
         """
         Wrapper: execute a DBMS query.
         Returns False on error, otherwise True.
         Parameters:
             cur: the cursor to use; if None, the "main" cursor is used
             query/param: the query and its parameters
-            see error_handler() for the rest
+        Dependencies:
+            instance vars: cur
+            methods: wrap_call()
+            modules: (cur's module)
         """
         cur = cur if cur else self.cur
         return self.wrap_call(cur.execute, 'execute query on',
-                              'executing query on', downgrade_errs, query,
+                              'executing query on', query,
                               *param)[0]
 
 
