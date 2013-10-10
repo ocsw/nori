@@ -380,7 +380,7 @@ Additional options for the {0} connection.
 Options must be supplied as a dict.
 '''.format(self.DBMS_NAME)
             ),
-            # no default here; it can be set by subclasses
+            default={},
         )
 
         core.config_settings[pd + 'cursor_options'] = dict(
@@ -391,7 +391,7 @@ Additional options for creating {0} cursors.
 Options must be supplied as a dict.
 '''.format(self.DBMS_NAME)
             ),
-            # no default here; it can be set by subclasses
+            default={},
         )
 
         setting_list = [
@@ -546,7 +546,7 @@ Options must be supplied as a dict.
         if pd + 'connect_db' in core.cfg:
             self.conn_args['database'] = core.cfg[pd + 'connect_db']
         if pd + 'connect_options' in core.cfg:
-            self.conn_args.update(pd + 'connect_options')
+            self.conn_args.update(core.cfg[pd + 'connect_options'])
 
 
     def read_password_file(self):
