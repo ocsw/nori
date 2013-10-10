@@ -196,8 +196,8 @@ class DBMS(object):
             class vars: open_conns
             instance methods: close()
         """
-        for dbms in cls.open_conns:
-            dbms.close()
+        for dbms_obj in cls.open_conns:
+            dbms_obj.close()
 
 
     @classmethod
@@ -210,8 +210,8 @@ class DBMS(object):
             class vars: open_cursors
             instance methods: close_cursor()
         """
-        for (dbms, cur) in cls.open_cursors:
-            dbms.close_cursor(cur)
+        for (dbms_obj, cur) in cls.open_cursors:
+            dbms_obj.close_cursor(cur)
 
 
     #####################################
@@ -863,14 +863,14 @@ Options must be supplied as a dict.
                       not self.err_warn_only):
                     err = True
             self.conn = None
-            if self in DBMS.open_conns:
-                DBMS.open_conns.remove(self)
             if not err:
                 core.status_logger.info(
                     '{0} connection (config prefix/delim {1})\n'
                     'has been closed.' .
                     format(self.DBMS_NAME, core.pps(pd))
                 )
+        if self in DBMS.open_conns:
+            DBMS.open_conns.remove(self)
 
         # SSH tunnel
         if self.tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
@@ -960,35 +960,35 @@ Options must be supplied as a dict.
 
         main_str = 'main ' if cur is None else ''
 
+        err = False
         if cur is None and self.cur is None:
             core.status_logger.debug(
                 'Main {0} cursor (config prefix/delim {1})\n'
                 'was already closed.' .
                 format(self.DBMS_NAME, core.pps(pd))
             )
-            return True
+        else:
+            try:
+                if cur is None:
+                    self.cur.close()
+                else:
+                    cur.close()
+            except (self.MODULE.Warning, self.MODULE.Error) as e:
+                if force_no_exit:
+                    self.save_err_warn()
+                    self.err_no_exit = True
+                    self.warn_no_exit = True
+                self.error_handler(
+                    e, 'close {0}cursor for'.format(main_str),
+                    'closing {0}cursor for'.format(main_str),
+                    core.exitvals['dbms_connect']['num']
+                )
+                if force_no_exit:
+                    self.restore_err_warn()
+                if (isinstance(e, self.MODULE.Error) and
+                      not self.err_warn_only):
+                    err = True
 
-        err = False
-        try:
-            if cur is None:
-                self.cur.close()
-            else:
-                cur.close()
-        except (self.MODULE.Warning, self.MODULE.Error) as e:
-            if force_no_exit:
-                self.save_err_warn()
-                self.err_no_exit = True
-                self.warn_no_exit = True
-            self.error_handler(
-                e, 'close {0}cursor for'.format(main_str),
-                'closing {0}cursor for'.format(main_str),
-                core.exitvals['dbms_connect']['num']
-            )
-            if force_no_exit:
-                self.restore_err_warn()
-            if (isinstance(e, self.MODULE.Error) and
-                  not self.err_warn_only):
-                err = True
         if cur is None:
             self.cur = None
             if (self, None) in DBMS.open_cursors:
