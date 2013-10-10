@@ -784,6 +784,7 @@ Options must be supplied as a dict.
                 self.ssh.open_tunnel(self.DBMS_NAME + ' connection',
                                      True, self.err_use_logger,
                                      self.err_warn_only)
+
         # DBMS connection
         core.status_logger.info(
             'Connecting to {0} DBMS (config prefix/delim {1})...' .
@@ -878,7 +879,7 @@ Options must be supplied as a dict.
         return not err
 
 
-    def get_cursor(self, main=True):
+    def cursor(self, main=True):
 
         """
         Get a cursor for the DBMS connection.

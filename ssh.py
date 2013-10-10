@@ -535,7 +535,7 @@ Can be None, to wait forever, or a number >= 1.
         # run the command and set up our own exit callback
         p = core.run_with_logging(
             'SSH tunnel for {0}'.format(descr), self.get_ssh_tunnel_cmd(),
-            bg=True, atexit_register=False
+            bg=True, atexit_reg=False
         )
         self.p_obj = p
         atexit.register(self.close_ssh_tunnel)
