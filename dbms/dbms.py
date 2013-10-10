@@ -1276,15 +1276,13 @@ Options must be supplied as a dict.
                               'rolling back transaction on')[0]
 
 
-#log status
+#log queries?
 #
 #err vars in docs
 #redo-config func
 #
 #exec, incl. cursor open, commit/rollback
-#   'execute query on'
 #fetch, incl. cursor close, incl. auto
-#   'retrieve data from'
 #change db
 #get db list
 #   run a get-database-list command
