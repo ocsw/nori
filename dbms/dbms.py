@@ -135,6 +135,20 @@ class DBMS(object):
     SOCKET_SEARCH_PATH = []
 
 
+    ################################
+    # class variables: housekeeping
+    ################################
+
+    # these are used to keep track of all connections/cursors for last-
+    # minute cleanup; see close_conns() and close_cursors()
+    # NOTE: * do not override them in subclasses
+    #       * refer to them with DBMS.var
+    atexit_close_conns_registered = False
+    atexit_close_cursors_registered = False
+    open_conns = []  # actually contains DBMS objects with open conns
+    open_cursors = []    # actually contains tuples: (DBMS obj, cur obj)
+
+
     ###############
     # housekeeping
     ###############
@@ -170,6 +184,34 @@ class DBMS(object):
         self.warn_no_exit = warn_no_exit
         self.conn = None
         self.cur = None
+
+
+    @classmethod
+    def close_conns(cls):
+        """
+        Close all DBMS connections.
+        NOTE: * do not override in subclasses
+              * call with DBMS.close_conns()
+        Dependencies:
+            class vars: open_conns
+            instance methods: close()
+        """
+        for dbms in cls.open_conns:
+            dbms.close()
+
+
+    @classmethod
+    def close_cursors(cls):
+        """
+        Close all DBMS cursors.
+        NOTE: * do not override in subclasses
+              * call with DBMS.close_cursors()
+        Dependencies:
+            class vars: open_cursors
+            instance methods: close_cursor()
+        """
+        for (dbms, cur) in cls.open_cursors:
+            dbms.close_cursor(cur)
 
 
     #####################################
@@ -717,11 +759,12 @@ Options must be supplied as a dict.
         Returns False on error, otherwise True.
 
         Dependencies:
-            class vars: DBMS_NAME, MODULE
+            class vars: DBMS_NAME, MODULE,
+                        atexit_close_conns_registered, open_conns
             instance vars: prefix, delim, tunnel_config, ssh, conn_args,
                            conn, err_use_logger, err_warn_only,
                            err_no_exit
-            methods: close(), error_handler()
+            methods: close_conns(), error_handler()
             config settings: [prefix+delim+:] use_ssh_tunnel
             modules: atexit, (contents of MODULE), core, (ssh.SSH)
 
@@ -755,7 +798,11 @@ Options must be supplied as a dict.
                 self.conn = None
                 self.ssh.close_tunnel()
                 return False
-        atexit.register(self.close)
+        if self not in DBMS.open_conns:
+            DBMS.open_conns.append(self)
+        if not DBMS.atexit_close_conns_registered:
+            atexit.register(DBMS.close_conns)
+            DBMS.atexit_close_conns_registered = True
         core.status_logger.info('{0} connection established.' .
                                 format(self.DBMS_NAME))
         return True
@@ -774,7 +821,7 @@ Options must be supplied as a dict.
                            warn_no_exit
 
         Dependencies:
-            class vars: DBMS_NAME, MODULE
+            class vars: DBMS_NAME, MODULE, open_conns
             instance vars: prefix, delim, tunnel_config, ssh, conn, cur,
                            err_warn_only, err_no_exit, warn_no_exit
             methods: close_cursor(), save_err_warn(),
@@ -815,6 +862,8 @@ Options must be supplied as a dict.
                       not self.err_warn_only):
                     err = True
             self.conn = None
+            if self in DBMS.open_conns:
+                DBMS.open_conns.remove(self)
             if not err:
                 core.status_logger.info(
                     '{0} connection (config prefix/delim {1})\n'
@@ -841,9 +890,10 @@ Options must be supplied as a dict.
                   the object and use it by default in other methods
 
         Dependencies:
-            class vars: DBMS_NAME, MODULE
+            class vars: DBMS_NAME, MODULE,
+                        atexit_close_cursors_registered, open_cursors
             instance vars: prefix, delim, conn, cur
-            methods: close_cursor(), error_handler()
+            methods: close_cursors(), error_handler()
             config settings: [prefix+delim+:] cursor_options
             modules: atexit, (contents of MODULE), core
 
@@ -862,7 +912,15 @@ Options must be supplied as a dict.
         if main:
             self.cur = cur
         if cur:
-            atexit.register(self.close_cursor, cur=None if main else cur)
+            if main:
+                if (self, None) not in DBMS.open_cursors:
+                    DBMS.open_cursors.append((self, None))
+            else:
+                if (self, cur) not in DBMS.open_cursors:
+                    DBMS.open_cursors.append((self, cur))
+            if not DBMS.atexit_close_cursors_registered:
+                atexit.register(DBMS.close_cursors)
+                DBMS.atexit_close_cursors_registered = True
             core.status_logger.debug('Got {0}{1} cursor.' .
                                      format('main ' if main else '',
                                             self.DBMS_NAME))
@@ -888,7 +946,7 @@ Options must be supplied as a dict.
                            warn_no_exit
 
         Dependencies:
-            class vars: DBMS_NAME, MODULE
+            class vars: DBMS_NAME, MODULE, open_cursors
             instance vars: prefix, delim, cur, err_warn_only,
                            err_no_exit, warn_no_exit
             methods: save_err_warn(), restore_err_warn(),
@@ -899,6 +957,8 @@ Options must be supplied as a dict.
 
         pd = self.prefix + self.delim
 
+        main_str = 'main ' if cur is None else ''
+
         if cur is None and self.cur is None:
             core.status_logger.debug(
                 'Main {0} cursor (config prefix/delim {1})\n'
@@ -907,12 +967,12 @@ Options must be supplied as a dict.
             )
             return True
 
-        main_str = 'main ' if cur is None else ''
-        cur = cur if cur else self.cur
-
         err = False
         try:
-            cur.close()
+            if cur is None:
+                self.cur.close()
+            else:
+                cur.close()
         except (self.MODULE.Warning, self.MODULE.Error) as e:
             if force_no_exit:
                 self.save_err_warn()
@@ -928,7 +988,14 @@ Options must be supplied as a dict.
             if (isinstance(e, self.MODULE.Error) and
                   not self.err_warn_only):
                 err = True
-        self.cur = None
+        if cur is None:
+            self.cur = None
+            if (self, None) in DBMS.open_cursors:
+                DBMS.open_cursors.remove((self, None))
+        else:
+            cur = None
+            if (self, cur) in DBMS.open_cursors:
+                DBMS.open_cursors.remove((self, cur))
         if not err:
             core.status_logger.debug(
                 '{0}{1} cursor (config prefix/delim {2})\n'
