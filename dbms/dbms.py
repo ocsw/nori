@@ -1007,22 +1007,272 @@ Options must be supplied as a dict.
         return not err
 
 
-    def execute(self, cur, query, *param):
+    def callproc(self, cur, procname, param=None):
+        """
+        Wrapper: call a stored procedure.
+        Returns False on error, otherwise True.
+        Warning: this method is optional in DBAPI 2.0.  Test for its
+        existence in your DBMS first with:
+            if hasattr(dbms_obj.cur, 'callproc'):
+                ...
+        Parameters:
+            cur: the cursor to use; if None, the "main" cursor is used
+            procname: the name of the stored procedure to call
+            param: if not None, the parameters to pass to the stored
+                   procedure
+        Dependencies:
+            class vars: DBMS_NAME
+            instance vars: cur
+            methods: wrap_call()
+            modules: (cur's module), core, sys
+        """
+        cur = cur if cur else self.cur
+        if not hasattr(cur, 'callproc'):
+            core.email_logger.error(
+                "Internal Error: callproc() was called on a {0} object,"
+                "which doesn't support it; exiting." .
+                format(self.DBMS_NAME)
+            )
+            sys.exit(core.exitvals['internal']['num'])
+        if param is None:
+            return self.wrap_call(cur.callproc, 'call stored procedure on',
+                                  'calling stored procedure on',
+                                  procname)[0]
+        else:
+            return self.wrap_call(cur.callproc, 'call stored procedure on',
+                                  'calling stored procedure on', procname,
+                                  param)[0]
+
+
+    def execute(self, cur, query, param=None):
         """
         Wrapper: execute a DBMS query.
         Returns False on error, otherwise True.
         Parameters:
             cur: the cursor to use; if None, the "main" cursor is used
-            query/param: the query and its parameters
+            query: the query to execute
+            param: if not None, the parameters to substitute into the
+                   query
         Dependencies:
             instance vars: cur
             methods: wrap_call()
             modules: (cur's module)
         """
         cur = cur if cur else self.cur
-        return self.wrap_call(cur.execute, 'execute query on',
-                              'executing query on', query,
-                              *param)[0]
+        if param is None:
+            return self.wrap_call(cur.execute, 'execute query on',
+                                  'executing query on', query)[0]
+        else:
+            return self.wrap_call(cur.execute, 'execute query on',
+                                  'executing query on', query, param)[0]
+
+
+    def executemany(self, cur, query, param_seq):
+        """
+        Wrapper: execute a DBMS query on multiple parameter sets.
+        Returns False on error, otherwise True.
+        Parameters:
+            cur: the cursor to use; if None, the "main" cursor is used
+            query, param_seq: the query and its parameters
+        Dependencies:
+            instance vars: cur
+            methods: wrap_call()
+            modules: (cur's module)
+        """
+        cur = cur if cur else self.cur
+        return self.wrap_call(cur.executemany, 'execute queries on',
+                              'executing queries on', query, param_seq)[0]
+
+
+    def fetchone(self, cur):
+        """
+        Wrapper: fetch the next row of a query result set.
+        Returns a tuple: (success?, fetched_row)
+        Parameters:
+            cur: the cursor to use; if None, the "main" cursor is used
+        Dependencies:
+            instance vars: cur
+            methods: wrap_call()
+            modules: (cur's module)
+        """
+        cur = cur if cur else self.cur
+        return self.wrap_call(cur.fetchone, 'retrieve data from',
+                              'retrieving data from')
+
+
+    def fetchmany(self, cur, size=None):
+        """
+        Wrapper: fetch the next set of rows of a query result set.
+        Returns a tuple: (success?, fetched_rows)
+        Parameters:
+            cur: the cursor to use; if None, the "main" cursor is used
+            size: if not None, the number of rows to fetch
+        Dependencies:
+            instance vars: cur
+            methods: wrap_call()
+            modules: (cur's module)
+        """
+        cur = cur if cur else self.cur
+        if size is None:
+            return self.wrap_call(cur.fetchmany, 'retrieve data from',
+                                  'retrieving data from')
+        else:
+            return self.wrap_call(cur.fetchmany, 'retrieve data from',
+                                  'retrieving data from', size)
+
+
+    def fetchall(self, cur):
+        """
+        Wrapper: fetch all (remaining) rows of a query result set.
+        Returns a tuple: (success?, fetched_rows)
+        Parameters:
+            cur: the cursor to use; if None, the "main" cursor is used
+        Dependencies:
+            instance vars: cur
+            methods: wrap_call()
+            modules: (cur's module)
+        """
+        cur = cur if cur else self.cur
+        return self.wrap_call(cur.fetchall, 'retrieve data from',
+                              'retrieving data from')
+
+
+    def nextset(self, cur):
+        """
+        Wrapper: skip to the next query result set.
+        Returns False on error, None if there are no more sets,
+        otherwise True.
+        Warning: this method is optional in DBAPI 2.0.  Test for its
+        existence in your DBMS first with:
+            if hasattr(dbms_obj.cur, 'nextset'):
+                ...
+        Parameters:
+            cur: the cursor to use; if None, the "main" cursor is used
+        Dependencies:
+            class vars: DBMS_NAME
+            instance vars: cur
+            methods: wrap_call()
+            modules: (cur's module), core, sys
+        """
+        cur = cur if cur else self.cur
+        if not hasattr(cur, 'nextset'):
+            core.email_logger.error(
+                "Internal Error: nextset() was called on a {0} object,"
+                "which doesn't support it; exiting." .
+                format(self.DBMS_NAME)
+            )
+            sys.exit(core.exitvals['internal']['num'])
+        ret = self.wrap_call(cur.nextset, 'skip to the next set on',
+                             'skipping to the next set on')
+        if ret[1] is None:
+            return None
+        else:
+            return ret[0]
+
+
+    def setinputsizes(self, cur, sizes):
+        """
+        Wrapper: predefine parameter sizes.
+        Returns False on error, otherwise True.
+        Warning: this method is part of DBAPI 2.0, but is frequently
+        omitted.  Test for its existence in your DBMS first with:
+            if hasattr(dbms_obj.cur, 'setinputsizes'):
+                ...
+        Parameters:
+            cur: the cursor to use; if None, the "main" cursor is used
+            sizes: a sequence of parameter sizes
+        Dependencies:
+            class vars: DBMS_NAME
+            instance vars: cur
+            methods: wrap_call()
+            modules: (cur's module), core, sys
+        """
+        cur = cur if cur else self.cur
+        if not hasattr(cur, 'setinputsizes'):
+            core.email_logger.error(
+                "Internal Error: setinputsizes() was called on a {0} "
+                "object, which doesn't support it; exiting." .
+                format(self.DBMS_NAME)
+            )
+            sys.exit(core.exitvals['internal']['num'])
+        ret = self.wrap_call(cur.setinputsizes, 'set input sizes on',
+                             'setting input sizes on', sizes)[0]
+
+
+    def setoutputsizes(self, cur, size, column=None):
+        """
+        Wrapper: set a large-column buffer size.
+        Returns False on error, otherwise True.
+        Warning: this method is part of DBAPI 2.0, but is frequently
+        omitted.  Test for its existence in your DBMS first with:
+            if hasattr(dbms_obj.cur, 'setoutputsizes'):
+                ...
+        Parameters:
+            cur: the cursor to use; if None, the "main" cursor is used
+            size: the column-buffer size
+            column: if not None, the index of the column in the result
+                    sequence
+        Dependencies:
+            class vars: DBMS_NAME
+            instance vars: cur
+            methods: wrap_call()
+            modules: (cur's module), core, sys
+        """
+        cur = cur if cur else self.cur
+        if not hasattr(cur, 'setoutputsizes'):
+            core.email_logger.error(
+                "Internal Error: setoutputsizes() was called on a {0} "
+                "object, which doesn't support it; exiting." .
+                format(self.DBMS_NAME)
+            )
+            sys.exit(core.exitvals['internal']['num'])
+        if column is None:
+            ret = self.wrap_call(cur.setoutputsizes, 'set output size on',
+                                 'setting output size on', size)[0]
+        else:
+            ret = self.wrap_call(cur.setoutputsizes, 'set output size on',
+                                 'setting output size on', size, column)[0]
+
+
+    def commit(self):
+        """
+        Wrapper: commit any pending transaction.
+        Applies to all of the connection's cursors.
+        Returns False on error, otherwise True.
+        Dependencies:
+            instance vars: conn
+            methods: wrap_call()
+            modules: (conn's module)
+        """
+        return self.wrap_call(self.conn.commit, 'commit transaction on',
+                              'committing transaction on')[0]
+
+
+    def rollback(self):
+        """
+        Wrapper: roll back any pending transaction.
+        Applies to all of the connection's cursors.
+        Returns False on error, otherwise True.
+        Warning: this method is optional in DBAPI 2.0.  Test for its
+        existence in your DBMS first with:
+            if hasattr(dbms_obj.conn, 'rollback'):
+                ...
+        Dependencies:
+            class vars: DBMS_NAME
+            instance vars: conn
+            methods: wrap_call()
+            modules: (conn's module), core, sys
+        """
+        if not hasattr(self.conn, 'rollback'):
+            core.email_logger.error(
+                "Internal Error: rollback() was called on a {0} object,"
+                "which doesn't support it; exiting." .
+                format(self.DBMS_NAME)
+            )
+            sys.exit(core.exitvals['internal']['num'])
+        return self.wrap_call(self.conn.rollback,
+                              'roll back transaction on',
+                              'rolling back transaction on')[0]
 
 
 #log status
