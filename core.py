@@ -1116,6 +1116,10 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # starting timestamp (see run_mode(); listed here for centralization)
 start_time = None
 
+# internal; see command-running functions
+_atexit_kill_bg_commands_registered = False
+_running_bg_commands = []  # contains process objects
+
 
 #########################
 # configuration settings
@@ -3631,9 +3635,12 @@ def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
         kwargs: passed to subprocess.Popen(); but see env_add
 
     Dependencies:
-        globals: exitvals['internal'], exitvals['external'], email_logger,
-                 _devnull_fo
-        functions: scalar_to_list(), multi_fan_out(), pps()
+        globals: exitvals['internal'], exitvals['external'],
+                 email_logger, _devnull_fo,
+                 _atexit_kill_bg_commands_registered,
+                 _running_bg_commands
+        functions: scalar_to_list(), multi_fan_out(), pps(),
+                   kill_bg_commands()
         modules: copy, os, subprocess, threading, sys, atexit
 
     """
@@ -3734,10 +3741,25 @@ Exiting.''' .
                                  args=(stream_tuples, ))
             t.start()
             if atexit_reg:
-                atexit.register(kill_bg_command, p)
+                if p not in _running_bg_commands:
+                    _running_bg_commands.append(p)
+                if not _atexit_kill_bg_commands_registered:
+                    atexit.register(kill_bg_commands)
+                    _atexit_kill_bg_commands_registered = True
 
     # return something
     return p.wait() if not bg else p
+
+
+def kill_bg_commands()
+    """
+    Kill all background commands.
+    Dependencies:
+        globals: _running_bg_commands
+        functions: kill_bg_command()
+    """
+    for p_obj in _running_bg_commands:
+        kill_bg_command(p_obj)
 
 
 def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
@@ -3767,7 +3789,8 @@ def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
                       TimeoutExpired exception
 
     Dependencies:
-        globals: email_logger, exitvals['internal']
+        globals: email_logger, exitvals['internal'],
+                 _running_bg_commands
         modules: (subprocess), time, sys
         Python: 2.6
 
@@ -3780,8 +3803,14 @@ def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
                            'less than 3.3.')
         sys.exit(exitvals['internal']['num'])
 
+    def cleanup(p):
+        """Remove the process object from the atexit list."""
+        if p in _running_bg_commands:
+            _running_bg_commands.remove(p)
+
     # is it already dead?
     if p.poll() is not None:
+        cleanup(p)
         return (p.wait(), True)
 
     # SIGTERM
@@ -3792,6 +3821,7 @@ def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
         # called
         pass
     if p.poll() is not None:
+        cleanup(p)
         return (p.wait(), False)
 
     # SIGKILL
@@ -3799,6 +3829,7 @@ def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
         for i in range(kill_timeout):
             time.sleep(1)
             if p.poll() is not none:
+                cleanup(p)
                 return (p.wait(), False)
     try:
         p.kill()
@@ -3806,6 +3837,7 @@ def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
         # apparently happens only if it's dead and p.wait() was already
         # called
         pass
+    cleanup(p)
 
     # hopefully it's actually dead by now, otherwise this could hang
     if sys.hexversion >= 0x03030000:
