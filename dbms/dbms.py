@@ -717,7 +717,8 @@ Options must be supplied as a dict.
         del(self.warn_no_exit_saved)
 
 
-    def wrap_call(self, func, err_verb, warn_verb, *args, **kwargs):
+    def wrap_call(self, func, err_verb='call function on',
+                  warn_verb='calling function on', *args, **kwargs):
         """
         Wrap a DBMS function call in error handling.
         Returns a tuple: (success?, function_return_value)
