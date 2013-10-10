@@ -3751,7 +3751,7 @@ Exiting.''' .
     return p.wait() if not bg else p
 
 
-def kill_bg_commands()
+def kill_bg_commands():
     """
     Kill all background commands.
     Dependencies:
