@@ -188,6 +188,7 @@ class DBMS(object):
         self.warn_no_exit = warn_no_exit
         self.conn = None
         self.cur = None
+        self.cur_is_auto = False
 
 
     @classmethod
@@ -1012,6 +1013,30 @@ Options must be supplied as a dict.
         return not err
 
 
+    def auto_cursor(self):
+        """
+        Automatically create the main cursor if there isn't one.
+        Dependencies:
+            instance vars: cur, cur_is_auto
+            methods: cursor()
+        """
+        if self.cur is None:
+            if self.cursor() is not None:
+                self.cur_is_auto = True
+
+
+    def auto_close_cursor(self):
+        """
+        Close the main cursor if it was automatically created.
+        Dependencies:
+            instance vars: cur_is_auto
+            methods: close_cursor()
+        """
+        if self.cur_is_auto:
+            self.close_cursor()
+            self.cur_is_auto = False
+
+
     ######################################
     # DBAPI 2.0 cursor/connection methods
     ######################################
@@ -1021,9 +1046,12 @@ Options must be supplied as a dict.
     # by the appropriate subclass
     #
 
-    def callproc(self, cur, procname, param=None):
+    def callproc(self, cur, procname, param=None, has_results=False):
         """
         Wrapper: call a stored procedure.
+        If using the main cursor, and it has not been created yet,
+        creates it.  If has_results is False, also closes it when
+        finished.
         Returns False on error, otherwise True.
         Warning: this method is optional in DBAPI 2.0.  Test for its
         existence in your DBMS first with:
@@ -1032,14 +1060,18 @@ Options must be supplied as a dict.
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
             procname: the name of the stored procedure to call
-            param: if not None, the parameters to pass to the stored
-                   procedure
+            param: if not None, a sequence or mapping containing the
+                   parameters to pass to the stored procedure
+            has_results: if False, assume the stored procedure does not
+                         return a result set, and close the cursor if it
+                         was created automatically
         Dependencies:
             class vars: DBMS_NAME
             instance vars: cur
-            methods: wrap_call()
+            methods: auto_cursor(), auto_close_cursor(), wrap_call()
             modules: (cur's module), core, sys
         """
+        self.auto_cursor()
         cur = cur if cur else self.cur
         if not hasattr(cur, 'callproc'):
             core.email_logger.error(
@@ -1049,106 +1081,146 @@ Options must be supplied as a dict.
             )
             sys.exit(core.exitvals['internal']['num'])
         if param is None:
-            return self.wrap_call(cur.callproc, 'call stored procedure on',
-                                  'calling stored procedure on',
-                                  procname)[0]
+            ret = self.wrap_call(cur.callproc, 'call stored procedure on',
+                                 'calling stored procedure on',
+                                 procname)[0]
         else:
-            return self.wrap_call(cur.callproc, 'call stored procedure on',
-                                  'calling stored procedure on', procname,
-                                  param)[0]
+            ret = self.wrap_call(cur.callproc, 'call stored procedure on',
+                                 'calling stored procedure on', procname,
+                                 param)[0]
+        if not has_results:
+            self.auto_close_cursor()
+        return ret
 
 
-    def execute(self, cur, query, param=None):
+    def execute(self, cur, query, param=None, has_results=False):
         """
         Wrapper: execute a DBMS query.
+        If using the main cursor, and it has not been created yet,
+        creates it.  If has_results is False, also closes it when
+        finished.
         Returns False on error, otherwise True.
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
             query: the query to execute
-            param: if not None, the parameters to substitute into the
-                   query
+            param: if not None, a sequence or mapping containing the
+                   parameters to substitute into the query
+            has_results: if False, assume the stored procedure does not
+                         return a result set, and close the cursor if it
+                         was created automatically
         Dependencies:
             instance vars: cur
-            methods: wrap_call()
+            methods: auto_cursor(), auto_close_cursor(), wrap_call()
             modules: (cur's module)
         """
+        self.auto_cursor()
         cur = cur if cur else self.cur
         if param is None:
-            return self.wrap_call(cur.execute, 'execute query on',
-                                  'executing query on', query)[0]
+            ret = self.wrap_call(cur.execute, 'execute query on',
+                                 'executing query on', query)[0]
         else:
-            return self.wrap_call(cur.execute, 'execute query on',
-                                  'executing query on', query, param)[0]
+            ret = self.wrap_call(cur.execute, 'execute query on',
+                                 'executing query on', query, param)[0]
+        if not has_results:
+            self.auto_close_cursor()
+        return ret
 
 
-    def executemany(self, cur, query, param_seq):
+    def executemany(self, cur, query, param_seq, has_results=False):
         """
         Wrapper: execute a DBMS query on multiple parameter sets.
+        If using the main cursor, and it has not been created yet,
+        creates it.  If has_results is False, also closes it when
+        finished.
         Returns False on error, otherwise True.
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
-            query, param_seq: the query and its parameters
+            query: the query to execute
+            param: if not None, a sequence of sequences or mappings
+                   containing the parameters to substitute into the
+                   query
+            has_results: if False, assume the stored procedure does not
+                         return a result set, and close the cursor if it
+                         was created automatically
         Dependencies:
             instance vars: cur
-            methods: wrap_call()
+            methods: auto_cursor(), auto_close_cursor(), wrap_call()
             modules: (cur's module)
         """
+        self.auto_cursor()
         cur = cur if cur else self.cur
-        return self.wrap_call(cur.executemany, 'execute queries on',
-                              'executing queries on', query, param_seq)[0]
+        ret = self.wrap_call(cur.executemany, 'execute queries on',
+                             'executing queries on', query, param_seq)[0]
+        if not has_results:
+            self.auto_close_cursor()
+        return ret
 
 
     def fetchone(self, cur):
         """
         Wrapper: fetch the next row of a query result set.
+        If using the main cursor, and it was automatically created, and
+        the last row has been fetched, closes the cursor.
         Returns a tuple: (success?, fetched_row)
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
         Dependencies:
             instance vars: cur
-            methods: wrap_call()
+            methods: auto_close_cursor(), wrap_call()
             modules: (cur's module)
         """
         cur = cur if cur else self.cur
-        return self.wrap_call(cur.fetchone, 'retrieve data from',
-                              'retrieving data from')
+        ret = self.wrap_call(cur.fetchone, 'retrieve data from',
+                             'retrieving data from')
+        if ret[1] is None:
+            self.auto_close_cursor()
+        return ret
 
 
     def fetchmany(self, cur, size=None):
         """
         Wrapper: fetch the next set of rows of a query result set.
+        If using the main cursor, and it was automatically created, and
+        the last row has been fetched, closes the cursor.
         Returns a tuple: (success?, fetched_rows)
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
             size: if not None, the number of rows to fetch
         Dependencies:
             instance vars: cur
-            methods: wrap_call()
+            methods: auto_close_cursor(), wrap_call()
             modules: (cur's module)
         """
         cur = cur if cur else self.cur
         if size is None:
-            return self.wrap_call(cur.fetchmany, 'retrieve data from',
-                                  'retrieving data from')
+            ret = self.wrap_call(cur.fetchmany, 'retrieve data from',
+                                 'retrieving data from')
         else:
-            return self.wrap_call(cur.fetchmany, 'retrieve data from',
-                                  'retrieving data from', size)
+            ret = self.wrap_call(cur.fetchmany, 'retrieve data from',
+                                 'retrieving data from', size)
+        if not ret[1]:
+            self.auto_close_cursor()
+        return ret
 
 
     def fetchall(self, cur):
         """
         Wrapper: fetch all (remaining) rows of a query result set.
+        If using the main cursor, and it was automatically created, and
+        the last row has been fetched, closes the cursor.
         Returns a tuple: (success?, fetched_rows)
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
         Dependencies:
             instance vars: cur
-            methods: wrap_call()
+            methods: auto_close_cursor(), wrap_call()
             modules: (cur's module)
         """
         cur = cur if cur else self.cur
-        return self.wrap_call(cur.fetchall, 'retrieve data from',
-                              'retrieving data from')
+        ret = self.wrap_call(cur.fetchall, 'retrieve data from',
+                             'retrieving data from')
+        self.auto_close_cursor()
+        return ret
 
 
     def nextset(self, cur):
