@@ -288,6 +288,15 @@ don't use any (such as getting the list of databases).
         DBMS.validate_config(self)
 
 
+    ######################################
+    # DBAPI 2.0 cursor/connection methods
+    ######################################
+
+    # not implemented
+    #del(self.nextset)
+    #del(self.setoutputsize)
+
+
     ##################
     # nori extensions
     ##################

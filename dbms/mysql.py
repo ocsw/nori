@@ -252,6 +252,16 @@ See the {0} documentation for more information.
             return 'Error Code / Details: {0}'.format(e)
 
 
+    ######################################
+    # DBAPI 2.0 cursor/connection methods
+    ######################################
+
+    # not implemented
+    #del(self.nextset)
+    #del(self.setinputsizes)
+    #del(self.setoutputsize)
+
+
     ##################
     # nori extensions
     ##################
