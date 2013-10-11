@@ -1414,10 +1414,12 @@ Options must be supplied as a dict.
         return False  # no generic version of this function
 
 
+###########
+
 #err vars in docs
 #redo-config func
 #
-#exec, incl. cursor close if no results, commit/rollback
+#exec, incl. commit/rollback
 #
 #warnings
 #pooling
