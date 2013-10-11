@@ -1397,21 +1397,10 @@ Options must be supplied as a dict.
         return False  # no generic version of this function
 
 
-#log queries?
-#
 #err vars in docs
 #redo-config func
 #
-#exec, incl. cursor open, commit/rollback
-#fetch, incl. cursor close, incl. auto
-#change db
-#get db list
-#   run a get-database-list command
-#   (may not be possible/straightforward for all DBMSes)
-#      MySQL:
-#        "SHOW DATABASES;"
-#      PostgreSQL:
-#        "SELECT datname FROM pg_catalog.pg_database;"
+#exec, incl. cursor close if no results, commit/rollback
 #
 #warnings
 #pooling
@@ -1419,5 +1408,3 @@ Options must be supplied as a dict.
 #conversion, incl. unicode
 #buffering?
 #autocommit
-#
-#which package
