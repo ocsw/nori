@@ -173,6 +173,10 @@ class DBMS(object):
                 warnings
                 note that if warn_warn_only is False, warnings will be
                 treated as errors
+        Dependencies:
+            instance vars: prefix, delim, err_use_logger, err_warn_only,
+                           err_no_exit, warn_use_logger, warn_warn_only,
+                           warn_no_exit, conn, cur, cur_is_auto
         """
         self.prefix = prefix
         self.delim = delim
@@ -749,7 +753,7 @@ Options must be supplied as a dict.
 
 
     ###############################
-    # DBMS connections and queries
+    # DBMS connections and cursors
     ###############################
 
     def connect(self):
@@ -888,7 +892,7 @@ Options must be supplied as a dict.
         Returns the cursor object, or None on error.
 
         Parameters:
-            main: if True, treat this as the "main" cursor: store it in
+            main: if True, treat this as the main cursor: store it in
                   the object and use it by default in other methods
 
         Dependencies:
@@ -935,13 +939,13 @@ Options must be supplied as a dict.
         """
         Close the DBMS cursor.
 
-        Can be called more than once for the "main" cursor, but calling
+        Can be called more than once for the main cursor, but calling
         on an already-closed non-main cursor will cause an error.
 
         Returns False on error, otherwise True.
 
         Parameters:
-            cur: the cursor to close; if None, the "main" cursor is
+            cur: the cursor to close; if None, the main cursor is
                  closed
             force_no_exit: if True, don't exit on errors/warnings,
                            regardless of the values of err_no_exit and
@@ -1008,6 +1012,15 @@ Options must be supplied as a dict.
         return not err
 
 
+    ######################################
+    # DBAPI 2.0 cursor/connection methods
+    ######################################
+
+    #
+    # methods that don't exist for a particular DBMS should be deleted
+    # by the appropriate subclass
+    #
+
     def callproc(self, cur, procname, param=None):
         """
         Wrapper: call a stored procedure.
@@ -1017,7 +1030,7 @@ Options must be supplied as a dict.
             if hasattr(dbms_obj.cur, 'callproc'):
                 ...
         Parameters:
-            cur: the cursor to use; if None, the "main" cursor is used
+            cur: the cursor to use; if None, the main cursor is used
             procname: the name of the stored procedure to call
             param: if not None, the parameters to pass to the stored
                    procedure
@@ -1050,7 +1063,7 @@ Options must be supplied as a dict.
         Wrapper: execute a DBMS query.
         Returns False on error, otherwise True.
         Parameters:
-            cur: the cursor to use; if None, the "main" cursor is used
+            cur: the cursor to use; if None, the main cursor is used
             query: the query to execute
             param: if not None, the parameters to substitute into the
                    query
@@ -1073,7 +1086,7 @@ Options must be supplied as a dict.
         Wrapper: execute a DBMS query on multiple parameter sets.
         Returns False on error, otherwise True.
         Parameters:
-            cur: the cursor to use; if None, the "main" cursor is used
+            cur: the cursor to use; if None, the main cursor is used
             query, param_seq: the query and its parameters
         Dependencies:
             instance vars: cur
@@ -1090,7 +1103,7 @@ Options must be supplied as a dict.
         Wrapper: fetch the next row of a query result set.
         Returns a tuple: (success?, fetched_row)
         Parameters:
-            cur: the cursor to use; if None, the "main" cursor is used
+            cur: the cursor to use; if None, the main cursor is used
         Dependencies:
             instance vars: cur
             methods: wrap_call()
@@ -1106,7 +1119,7 @@ Options must be supplied as a dict.
         Wrapper: fetch the next set of rows of a query result set.
         Returns a tuple: (success?, fetched_rows)
         Parameters:
-            cur: the cursor to use; if None, the "main" cursor is used
+            cur: the cursor to use; if None, the main cursor is used
             size: if not None, the number of rows to fetch
         Dependencies:
             instance vars: cur
@@ -1127,7 +1140,7 @@ Options must be supplied as a dict.
         Wrapper: fetch all (remaining) rows of a query result set.
         Returns a tuple: (success?, fetched_rows)
         Parameters:
-            cur: the cursor to use; if None, the "main" cursor is used
+            cur: the cursor to use; if None, the main cursor is used
         Dependencies:
             instance vars: cur
             methods: wrap_call()
@@ -1148,7 +1161,7 @@ Options must be supplied as a dict.
             if hasattr(dbms_obj.cur, 'nextset'):
                 ...
         Parameters:
-            cur: the cursor to use; if None, the "main" cursor is used
+            cur: the cursor to use; if None, the main cursor is used
         Dependencies:
             class vars: DBMS_NAME
             instance vars: cur
@@ -1180,7 +1193,7 @@ Options must be supplied as a dict.
             if hasattr(dbms_obj.cur, 'setinputsizes'):
                 ...
         Parameters:
-            cur: the cursor to use; if None, the "main" cursor is used
+            cur: the cursor to use; if None, the main cursor is used
             sizes: a sequence of parameter sizes
         Dependencies:
             class vars: DBMS_NAME
@@ -1209,7 +1222,7 @@ Options must be supplied as a dict.
             if hasattr(dbms_obj.cur, 'setoutputsizes'):
                 ...
         Parameters:
-            cur: the cursor to use; if None, the "main" cursor is used
+            cur: the cursor to use; if None, the main cursor is used
             size: the column-buffer size
             column: if not None, the index of the column in the result
                     sequence
