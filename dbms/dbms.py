@@ -741,6 +741,7 @@ Options must be supplied as a dict.
                                  'args:\n{1}\nand kwargs:\n{2}' .
                                  format(func, args, kwargs))
         err = False
+        ret = None
         try:
             ret = func(*args, **kwargs)
         except (self.MODULE.Warning, self.MODULE.Error) as e:
