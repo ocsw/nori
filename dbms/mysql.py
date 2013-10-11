@@ -250,3 +250,39 @@ See the {0} documentation for more information.
             return 'Error code: {0}\nDetails: {1}'.format(e.errno, e.msg)
         else:
             return 'Error Code / Details: {0}'.format(e)
+
+
+    ##################
+    # nori extensions
+    ##################
+
+    def get_db_list(self, cur):
+        """
+        Get the list of databases from a DBMS.
+        Returns a tuple: (success?, fetched_rows)
+        Parameters:
+            cur: the cursor to use; if None, the main cursor is used
+        Dependencies:
+            methods: execute(), fetchall()
+        """
+        if not self.execute(cur, 'SHOW DATABASES;', has_results=True):
+            return (False, None)
+        print(self.cur.rowcount)
+        print(self.cur.with_rows)
+        return self.fetchall(cur)
+
+
+    def change_db(self, cur, db_name):
+        """
+        Change the current database used by a cursor.
+        Returns False on error, otherwise True.
+        Parameters:
+            cur: the cursor to use; if None, the main cursor is used
+            db_name: the database to change to
+        Dependencies:
+            methods: execute()
+        """
+        # do string interpolation because execute()'s parameter
+        # substitution only works for data, not db/table/column names
+        # (it forces '' around the string)
+        return self.execute(cur, 'USE `{0}`;'.format(db_name))

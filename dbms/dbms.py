@@ -1362,6 +1362,41 @@ Options must be supplied as a dict.
                               'rolling back transaction on')[0]
 
 
+    ##################
+    # nori extensions
+    ##################
+
+    def get_db_list(self, cur):
+        """
+        Get the list of databases from a DBMS.
+        Returns a tuple: (success?, fetched_rows)
+        May not be possible or even coherent for all DBMSes; subclasses
+        should override or delete this method.
+        Warning: test for its existence in your DBMS first with:
+            if hasattr(dbms_obj.conn, 'get_db_list'):
+                ...
+        Parameters:
+            cur: the cursor to use; if None, the main cursor is used
+        """
+        return (False, None)  # no generic version of this function
+
+
+    def change_db(self, cur, db_name):
+        """
+        Change the current database used by a cursor.
+        Returns False on error, otherwise True.
+        May not be possible or even coherent for all DBMSes; subclasses
+        should override or delete this method.
+        Warning: test for its existence in your DBMS first with:
+            if hasattr(dbms_obj.conn, 'change_db'):
+                ...
+        Parameters:
+            cur: the cursor to use; if None, the main cursor is used
+            db_name: the database to change to
+        """
+        return False  # no generic version of this function
+
+
 #log queries?
 #
 #err vars in docs

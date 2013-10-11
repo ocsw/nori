@@ -286,3 +286,26 @@ don't use any (such as getting the list of databases).
             core.setting_check_is_set(pd + 'port')
         core.setting_check_is_set(pd + 'connect_db')
         DBMS.validate_config(self)
+
+
+    ##################
+    # nori extensions
+    ##################
+
+    def get_db_list(self, cur):
+        """
+        Get the list of databases from a DBMS.
+        Returns a tuple: (success?, fetched_rows)
+        Parameters:
+            cur: the cursor to use; if None, the main cursor is used
+        Dependencies:
+            methods: execute(), fetchall()
+        """
+        if not self.execute(cur,
+                            'SELECT datname FROM pg_catalog.pg_database;'):
+            return (False, None)
+        return self.fetchall(cur)
+
+
+    # can't do this in PostgreSQL without re-opening the connection
+    #del(self.change_db)
