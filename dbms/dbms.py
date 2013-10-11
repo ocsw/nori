@@ -119,7 +119,8 @@ class DBMS(object):
     DBMS_NAME = ''
 
     # required feature(s) for config settings, etc.
-    # subclasses should add to this
+    # subclasses should override and add to this, e.g.:
+    #     REQUIRES = DBMS.REQUIRES + ['dbms.mysql']
     REQUIRES = ['dbms']
 
     # module object containing connect(), etc.
