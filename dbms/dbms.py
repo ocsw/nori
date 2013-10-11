@@ -1213,13 +1213,13 @@ Options must be supplied as a dict.
                              'setting input sizes on', sizes)[0]
 
 
-    def setoutputsizes(self, cur, size, column=None):
+    def setoutputsize(self, cur, size, column=None):
         """
         Wrapper: set a large-column buffer size.
         Returns False on error, otherwise True.
         Warning: this method is part of DBAPI 2.0, but is frequently
         omitted.  Test for its existence in your DBMS first with:
-            if hasattr(dbms_obj.cur, 'setoutputsizes'):
+            if hasattr(dbms_obj.cur, 'setoutputsize'):
                 ...
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
@@ -1233,18 +1233,18 @@ Options must be supplied as a dict.
             modules: (cur's module), core, sys
         """
         cur = cur if cur else self.cur
-        if not hasattr(cur, 'setoutputsizes'):
+        if not hasattr(cur, 'setoutputsize'):
             core.email_logger.error(
-                "Internal Error: setoutputsizes() was called on a {0} "
+                "Internal Error: setoutputsize() was called on a {0} "
                 "object, which doesn't support it; exiting." .
                 format(self.DBMS_NAME)
             )
             sys.exit(core.exitvals['internal']['num'])
         if column is None:
-            ret = self.wrap_call(cur.setoutputsizes, 'set output size on',
+            ret = self.wrap_call(cur.setoutputsize, 'set output size on',
                                  'setting output size on', size)[0]
         else:
-            ret = self.wrap_call(cur.setoutputsizes, 'set output size on',
+            ret = self.wrap_call(cur.setoutputsize, 'set output size on',
                                  'setting output size on', size, column)[0]
 
 
