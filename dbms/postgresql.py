@@ -111,6 +111,9 @@ class PostgreSQL(DBMS):
     # this is a list of directories (without trailing /)
     SOCKET_SEARCH_PATH = ['/tmp', '/var/run/postgresql', '/var/run']
 
+    # methods supported by this DBMS; see below for removals
+    _SUPPORTED_METHODS = DBMS._SUPPORTED_METHODS
+
 
     #####################################
     # startup and config file processing
@@ -292,9 +295,9 @@ don't use any (such as getting the list of databases).
     # DBAPI 2.0 cursor/connection methods
     ######################################
 
-    # not implemented
-    #del(self.nextset)
-    #del(self.setoutputsize)
+    # unsupported methods
+    _SUPPORTED_METHODS.remove('nextset')
+    _SUPPORTED_METHODS.remove('setoutputsize')
 
 
     ##################
@@ -317,4 +320,4 @@ don't use any (such as getting the list of databases).
 
 
     # can't do this in PostgreSQL without re-opening the connection
-    #del(self.change_db)
+    _SUPPORTED_METHODS.remove('change_db')

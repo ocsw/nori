@@ -105,6 +105,9 @@ class MySQL(DBMS):
         '/tmp/mysql.sock',
     ]
 
+    # methods supported by this DBMS; see below for removals
+    _SUPPORTED_METHODS = DBMS._SUPPORTED_METHODS
+
 
     #####################################
     # startup and config file processing
@@ -256,10 +259,10 @@ See the {0} documentation for more information.
     # DBAPI 2.0 cursor/connection methods
     ######################################
 
-    # not implemented
-    #del(self.nextset)
-    #del(self.setinputsizes)
-    #del(self.setoutputsize)
+    # unsupported methods
+    _SUPPORTED_METHODS.remove('nextset')
+    _SUPPORTED_METHODS.remove('setinputsizes')
+    _SUPPORTED_METHODS.remove('setoutputsize')
 
 
     ##################
