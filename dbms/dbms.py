@@ -1419,14 +1419,13 @@ Options must be supplied as a dict.
 
 ###########
 
-#err vars in docs
-#redo-config func
+#docstrings, etc., incl. err vars
 #
 #exec, incl. commit/rollback
+#autocommit
 #
 #warnings
 #pooling
 #dicts
 #conversion, incl. unicode
 #buffering?
-#autocommit
