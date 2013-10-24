@@ -164,6 +164,18 @@ class DBMS(object):
     # housekeeping
     ###############
 
+    @classmethod
+    def supports_method(cls, method_name):
+        """
+        Test if a method is supported by a DBMS.
+        Parameters:
+            method_name: the name of the method to check.
+        Dependencies:
+            class vars: _SUPPORTED_METHODS
+        """
+        return method_name in cls._SUPPORTED_METHODS
+
+
     def __init__(self, prefix, delim='_', err_use_logger=True,
                  err_warn_only=False, err_no_exit=False,
                  warn_use_logger=True, warn_warn_only=True,
@@ -734,28 +746,17 @@ Options must be supplied as a dict.
 
 
     @classmethod
-    def supports_method(cls, method_name):
-        """
-        Test if a method is supported by a DBMS.
-        Parameters:
-            method_name: the name of the method to check.
-        Dependencies:
-            class vars: _SUPPORTED_METHODS
-        """
-        return method_name in cls._SUPPORTED_METHODS
-
-
-    @classmethod
     def check_supported(cls, method_name):
         """
         Check if a method is supported by a DBMS, else error/exit.
         Parameters:
             method_name: the name of the method to check.
         Dependencies:
-            class vars: _SUPPORTED_METHODS, DBMS_NAME
+            class vars: DBMS_NAME
+            methods: supports_method()
             modules: sys, core
         """
-        if method_name not in cls._SUPPORTED_METHODS:
+        if not cls.supports_method(method_name):
             core.email_logger.error(
                 "Internal Error: {0}() was called on a {1} object,"
                 "which doesn't support it; exiting." .
