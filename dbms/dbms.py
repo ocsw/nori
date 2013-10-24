@@ -1183,6 +1183,8 @@ Options must be supplied as a dict.
             has_results: if False, assume the stored procedure does not
                          return a result set, and close the cursor if it
                          was created automatically
+                         (in most cases, cur.executemany() can't return
+                         results, but True is allowed here just in case)
         Dependencies:
             instance vars: cur
             methods: check_supported(), auto_cursor(),
