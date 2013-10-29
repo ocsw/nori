@@ -66,6 +66,7 @@ from __future__ import print_function
 from pprint import pprint as pp  # for debugging
 
 import sys
+import copy
 
 
 #########
@@ -136,7 +137,7 @@ class PostgreSQL(DBMS):
 
     # methods and features supported by this DBMS;
     # see below for removals
-    _SUPPORTED = DBMS._SUPPORTED
+    _SUPPORTED = copy.copy(DBMS._SUPPORTED)
 
 
     #####################################

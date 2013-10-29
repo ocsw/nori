@@ -3382,6 +3382,7 @@ def generic_error_handler(e, msg, renderer=render_generic_exception,
 
     """
 
+    details = ''
     if e is not None:
         details = renderer(e)
 

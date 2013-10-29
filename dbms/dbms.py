@@ -331,7 +331,7 @@ class DBMS(object):
 
     # methods and features supported by this DBMS;
     # subclasses must override this and remove unsupported items, e.g.:
-    #     _SUPPORTED = DBMS._SUPPORTED
+    #     _SUPPORTED = copy.copy(DBMS._SUPPORTED)
     #     _SUPPORTED.remove('nextset')
     _SUPPORTED = [
         'callproc', 'execute', 'executemany', 'fetchone', 'fetchmany',
