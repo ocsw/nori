@@ -275,8 +275,8 @@ don't use any (such as getting the list of databases).
         Only does checks that aren't done in DBMS.validate_config().
         Dependencies:
             instance vars: ignore, prefix, delim, tunnel_config
-            config settings: [prefix+delim+:] use_ssh_tunnel, host, port,
-                             connect_db
+            config settings: [prefix+delim+:] use_ssh_tunnel, host,
+                             port, connect_db
             modules: core, dbms.DBMS
             Python: 2.0/3.2, for callable()
         """

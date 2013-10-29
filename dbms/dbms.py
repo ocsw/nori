@@ -131,7 +131,7 @@ class DBMS(object):
     DEFAULT_LOCAL_PORT = None
     DEFAULT_REMOTE_PORT = None
 
-    # where to look for the socket file, to set the default
+    # where to look for the socket file, to set the default;
     # format can vary by subclass (e.g., files vs. directories)
     SOCKET_SEARCH_PATH = []
 
