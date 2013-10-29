@@ -114,7 +114,7 @@ core.exitvals['ssh_connect'] = dict(
     num=20,
     descr=(
 '''
-error establishing SSH connection
+Error establishing SSH connection.
 '''
     ),
 )
@@ -123,7 +123,7 @@ core.exitvals['ssh_tunnel'] = dict(
     num=21,
     descr=(
 '''
-error establishing SSH tunnel
+Error establishing SSH tunnel.
 '''
     ),
 )
