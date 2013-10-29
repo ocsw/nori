@@ -266,6 +266,30 @@ See the {0} documentation for more information.
     _SUPPORTED.remove('setoutputsize')
 
 
+    ###########################
+    # DBAPI extension wrappers
+    ###########################
+
+    def _autocommit(self, what=None):
+        """
+        Get or set the built-in autocommit status of a DBMS connection.
+        If what is True or False, returns True on success, False on
+        error.  If what is None, returns True/False, or None on error.
+        This internal method handles (only) the DBMS's autocommit
+        functionality.
+        Parameters:
+            what: if True, turn autocommit on; if False, turn it off;
+                  if None, return the current status
+        Dependencies:
+            instance vars: conn
+            modules: (conn's module)
+        """
+        if what is None:
+            return self.conn.autocommit
+        self.conn.autocommit = what
+        return True
+
+
     ##################
     # nori extensions
     ##################

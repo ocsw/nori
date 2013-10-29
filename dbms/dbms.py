@@ -142,7 +142,7 @@ class DBMS(object):
     _SUPPORTED = [
         'callproc', 'execute', 'executemany', 'fetchone', 'fetchmany',
         'fetchall', 'nextset', 'setinputsizes', 'setoutputsize', 'commit',
-        'rollback', 'get_db_list', 'change_db',
+        'rollback', 'get_db_list', 'change_db', 'autocommit',
     ]
 
 
@@ -199,7 +199,8 @@ class DBMS(object):
         Dependencies:
             instance vars: prefix, delim, err_use_logger, err_warn_only,
                            err_no_exit, warn_use_logger, warn_warn_only,
-                           warn_no_exit, conn, cur, cur_is_auto
+                           warn_no_exit, conn, cur, cur_is_auto,
+                           fake_autocommit
         """
         self.prefix = prefix
         self.delim = delim
@@ -212,6 +213,7 @@ class DBMS(object):
         self.conn = None
         self.cur = None
         self.cur_is_auto = False
+        self.fake_autocommit = False
 
 
     @classmethod
@@ -1096,7 +1098,8 @@ Options must be supplied as a dict.
         Wrapper: call a stored procedure.
         If using the main cursor, and it has not been created yet,
         creates it.  If has_results is False, also closes it when
-        finished.
+        finished.  If using fake autocommit (see autocommit()) and
+        has_results is False, does a commit after the query.
         Returns False on error, otherwise True.
         Warning: this method is optional in DBAPI 2.0.  Test for its
         existence in your DBMS first with:
@@ -1111,9 +1114,9 @@ Options must be supplied as a dict.
                          return a result set, and close the cursor if it
                          was created automatically
         Dependencies:
-            instance vars: cur
+            instance vars: cur, fake_autocommit
             methods: check_supports_method(), auto_cursor(),
-                     auto_close_cursor(), wrap_call()
+                     auto_close_cursor(), wrap_call(), commit()
             modules: (cur's module)
         """
         self.check_supports_method('callproc')
@@ -1129,6 +1132,9 @@ Options must be supplied as a dict.
                                  param)[0]
         if not has_results:
             self.auto_close_cursor()
+            if self.fake_autocommmit:
+                if not self.commit():
+                    return False
         return ret
 
 
@@ -1137,7 +1143,8 @@ Options must be supplied as a dict.
         Wrapper: execute a DBMS query.
         If using the main cursor, and it has not been created yet,
         creates it.  If has_results is False, also closes it when
-        finished.
+        finished.  If using fake autocommit (see autocommit()) and
+        has_results is False, does a commit after the query.
         Returns False on error, otherwise True.
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
@@ -1148,9 +1155,9 @@ Options must be supplied as a dict.
                          return a result set, and close the cursor if it
                          was created automatically
         Dependencies:
-            instance vars: cur
+            instance vars: cur, fake_autocommit
             methods: check_supports_method(), auto_cursor(),
-                     auto_close_cursor(), wrap_call()
+                     auto_close_cursor(), wrap_call(), commit()
             modules: (cur's module)
         """
         self.check_supports_method('execute')
@@ -1164,6 +1171,9 @@ Options must be supplied as a dict.
                                  'executing query on', query, param)[0]
         if not has_results:
             self.auto_close_cursor()
+            if self.fake_autocommmit:
+                if not self.commit():
+                    return False
         return ret
 
 
@@ -1172,7 +1182,8 @@ Options must be supplied as a dict.
         Wrapper: execute a DBMS query on multiple parameter sets.
         If using the main cursor, and it has not been created yet,
         creates it.  If has_results is False, also closes it when
-        finished.
+        finished.  If using fake autocommit (see autocommit()) and
+        has_results is False, does a commit after the query.
         Returns False on error, otherwise True.
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
@@ -1186,9 +1197,9 @@ Options must be supplied as a dict.
                          (in most cases, cur.executemany() can't return
                          results, but True is allowed here just in case)
         Dependencies:
-            instance vars: cur
+            instance vars: cur, fake_autocommit
             methods: check_supports_method(), auto_cursor(),
-                     auto_close_cursor(), wrap_call()
+                     auto_close_cursor(), wrap_call(), commit()
             modules: (cur's module)
         """
         self.check_supports_method('executemany')
@@ -1198,6 +1209,9 @@ Options must be supplied as a dict.
                              'executing queries on', query, param_seq)[0]
         if not has_results:
             self.auto_close_cursor()
+            if self.fake_autocommmit:
+                if not self.commit():
+                    return False
         return ret
 
 
@@ -1205,14 +1219,16 @@ Options must be supplied as a dict.
         """
         Wrapper: fetch the next row of a query result set.
         If using the main cursor, and it was automatically created, and
-        the last row has been fetched, closes the cursor.
+        the last row has been fetched, closes the cursor.  If using fake
+        autocommit (see autocommit()), does a commit when the last row
+        has been fetched.
         Returns a tuple: (success?, fetched_row)
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
         Dependencies:
-            instance vars: cur
+            instance vars: cur, fake_autocommit
             methods: check_supports_method(), auto_close_cursor(),
-                     wrap_call()
+                     wrap_call(), commit()
             modules: (cur's module)
         """
         self.check_supports_method('fetchone')
@@ -1221,6 +1237,12 @@ Options must be supplied as a dict.
                              'retrieving data from')
         if ret[1] is None:
             self.auto_close_cursor()
+            # even SELECTs need COMMIT to prevent taking up resources;
+            # see:
+            # http://initd.org/psycopg/docs/connection.html#connection.autocommit
+            if self.fake_autocommmit:
+                if not self.commit():
+                    ret[0] = False
         return ret
 
 
@@ -1228,15 +1250,17 @@ Options must be supplied as a dict.
         """
         Wrapper: fetch the next set of rows of a query result set.
         If using the main cursor, and it was automatically created, and
-        the last row has been fetched, closes the cursor.
+        the last row has been fetched, closes the cursor.  If using fake
+        autocommit (see autocommit()), does a commit when the last row
+        has been fetched.
         Returns a tuple: (success?, fetched_rows)
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
             size: if not None, the number of rows to fetch
         Dependencies:
-            instance vars: cur
+            instance vars: cur, fake_autocommit
             methods: check_supports_method(), auto_close_cursor(),
-                     wrap_call()
+                     wrap_call(), commit()
             modules: (cur's module)
         """
         self.check_supports_method('fetchmany')
@@ -1249,6 +1273,12 @@ Options must be supplied as a dict.
                                  'retrieving data from', size)
         if not ret[1]:
             self.auto_close_cursor()
+            # even SELECTs need COMMIT to prevent taking up resources;
+            # see:
+            # http://initd.org/psycopg/docs/connection.html#connection.autocommit
+            if self.fake_autocommmit:
+                if not self.commit():
+                    ret[0] = False
         return ret
 
 
@@ -1256,14 +1286,15 @@ Options must be supplied as a dict.
         """
         Wrapper: fetch all (remaining) rows of a query result set.
         If using the main cursor, and it was automatically created, and
-        the last row has been fetched, closes the cursor.
+        the last row has been fetched, closes the cursor.  If using fake
+        autocommit (see autocommit()), does a commit.
         Returns a tuple: (success?, fetched_rows)
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
         Dependencies:
-            instance vars: cur
+            instance vars: cur, fake_autocommit
             methods: check_supports_method(), auto_close_cursor(),
-                     wrap_call()
+                     wrap_call(), commit()
             modules: (cur's module)
         """
         self.check_supports_method('fetchall')
@@ -1271,6 +1302,12 @@ Options must be supplied as a dict.
         ret = self.wrap_call(cur.fetchall, 'retrieve data from',
                              'retrieving data from')
         self.auto_close_cursor()
+        # even SELECTs need COMMIT to prevent taking up resources;
+        # see:
+        # http://initd.org/psycopg/docs/connection.html#connection.autocommit
+        if self.fake_autocommmit:
+            if not self.commit():
+                ret[0] = False
         return ret
 
 
@@ -1383,6 +1420,45 @@ Options must be supplied as a dict.
         return self.wrap_call(self.conn.rollback,
                               'roll back transaction on',
                               'rolling back transaction on')[0]
+
+
+    ###########################
+    # DBAPI extension wrappers
+    ###########################
+
+    def autocommit(self, what=None):
+
+        """
+        Get or set the autocommit status of a DBMS connection.
+
+        If what is True or False, returns True on success, False on
+        error.  If what is None, returns True/False, or None on error.
+
+        If the DBMS does not support autocommit, simulates it; see the
+        call and fetch wrappers, above.
+
+        DBMSes that support autocommit must have 'autocommit' in
+        _SUPPORTS, and implement the _autocommit() internal method.
+
+        Parameters:
+            what: if True, turn autocommit on; if False, turn it off;
+                  if None, return the current status
+
+        Dependencies:
+            instance vars: fake_autocommit
+            methods: supports(), _autocommit()
+
+        """
+
+        # built-in support?
+        if self.supports('autocommit'):
+            return self._autocommit(what)
+
+        if what is None:
+            return self.fake_autocommit
+
+        self.fake_autocommit = what
+        return True
 
 
     ##################
