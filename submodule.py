@@ -9,12 +9,12 @@ for license and usage information.
 DOCSTRING CONTENTS:
 -------------------
 
-1) About and Requirements
-2) API Variables
-3) API Functions
-4) API Classes
-5) Usage in Scripts
-6) Modification Notes
+    1) About and Requirements
+    2) API Variables
+    3) API Functions
+    4) API Classes
+    5) Usage in Scripts
+    6) Modification Notes
 
 
 1) ABOUT AND REQUIREMENTS:

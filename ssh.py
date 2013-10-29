@@ -9,8 +9,8 @@ license and usage information.
 DOCSTRING CONTENTS:
 -------------------
 
-1) About and Requirements
-2) API Classes
+    1) About and Requirements
+    2) API Classes
 
 
 1) ABOUT AND REQUIREMENTS:
@@ -18,7 +18,9 @@ DOCSTRING CONTENTS:
 
     This submodule provides SSH functionality, including remote command
     execution and tunnels.  It requires the 'ssh' command line utility,
-    which must be in the execution search path.
+    which must be in the execution search path.  If the utility is not
+    available, the module will load, but SSH functionality will not be
+    available.
 
 
 2) API CLASSES:
