@@ -1494,11 +1494,3 @@ Options must be supplied as a dict.
             db_name: the database to change to
         """
         return False  # no generic version of this function
-
-
-###########
-
-#docstrings, etc., incl. err vars
-#
-#exec, incl. commit/rollback
-#autocommit
