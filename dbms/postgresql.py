@@ -88,7 +88,7 @@ class PostgreSQL(DBMS):
     # class variables: constants
     #############################
 
-    # what to call the DBMS
+    # what the DBMS is called
     DBMS_NAME = 'PostgreSQL'
 
     # required feature(s) for config settings, etc.

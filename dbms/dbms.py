@@ -114,7 +114,7 @@ class DBMS(object):
     # class variables: constants
     #############################
 
-    # what to call the DBMS; subclasses must be define this
+    # what the DBMS is called; subclasses must be define this
     # (e.g.: 'MySQL')
     DBMS_NAME = ''
 

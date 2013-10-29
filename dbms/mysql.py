@@ -84,7 +84,7 @@ class MySQL(DBMS):
     # class variables: constants
     #############################
 
-    # what to call the DBMS
+    # what the DBMS is called
     DBMS_NAME = 'MySQL'
 
     # required feature(s) for config settings, etc.
