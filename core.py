@@ -1944,7 +1944,7 @@ def str_to_bool(s):
           s.lower() == 'no' or
           s == '0'):
         return False
-    raise ValueError
+    raise ValueError('invalid boolean representation: {0}'.format(pps(s)))
 
 
 def is_legal_identifier(s):
