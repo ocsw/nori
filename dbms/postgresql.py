@@ -9,16 +9,44 @@ for license and usage information.
 DOCSTRING CONTENTS:
 -------------------
 
-1) About and Requirements
-2) API Classes
+    1) About and Requirements
+    2) API Classes
 
 
 1) ABOUT AND REQUIREMENTS:
 --------------------------
 
+    This submodule provides PostgreSQL connectivity.  It requires the
+    Psycopg2 package.  If the package is not available, the module will
+    load, but PostgreSQL connectivity will not be available.
+
 
 2) API CLASSES:
 ---------------
+
+    PostgreSQL(DBMS)
+        This class adapts the DBMS functionality to PostgreSQL.
+
+        Startup and Config File Processing
+        ----------------------------------
+
+        apply_config_defaults_extra()
+            Apply configuration defaults that are
+            last-minute/complicated.
+
+
+        DBAPI 2.0 Cursor/Connection Methods
+        -----------------------------------
+
+        nextset() is not supported.
+
+        setoutputsize() is not supported.
+
+
+        Nori Extensions
+        ---------------
+
+        change_db() is not supported.
 
 """
 

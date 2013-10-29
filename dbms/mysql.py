@@ -9,16 +9,41 @@ for license and usage information.
 DOCSTRING CONTENTS:
 -------------------
 
-1) About and Requirements
-2) API Classes
+    1) About and Requirements
+    2) API Classes
 
 
 1) ABOUT AND REQUIREMENTS:
 --------------------------
 
+    This submodule provides MySQL connectivity.  It requires the MySQL
+    Connector package.  If the package is not available, the module will
+    load, but MySQL connectivity will not be available.
+
 
 2) API CLASSES:
 ---------------
+
+    MySQL(DBMS)
+        This class adapts the DBMS functionality to MySQL.
+        Only differences from the DBMS class are listed below.
+
+        Startup and Config File Processing
+        ----------------------------------
+
+        apply_config_defaults_extra()
+            Apply configuration defaults that are
+            last-minute/complicated.
+
+
+        DBAPI 2.0 Cursor/Connection Methods
+        -----------------------------------
+
+        nextset() is not supported.
+
+        setinputsizes() is not supported.
+
+        setoutputsize() is not supported.
 
 """
 

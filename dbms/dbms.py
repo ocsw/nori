@@ -9,26 +9,220 @@ for license and usage information.
 DOCSTRING CONTENTS:
 -------------------
 
-1) About and Requirements
-2) API Classes
-3) Usage in Scripts
-4) Modification Notes
+    1) About and Requirements
+    2) API Classes
+    3) Usage in Scripts
 
 
 1) ABOUT AND REQUIREMENTS:
 --------------------------
 
+    This submodule provides database connectivity, including DBAPI 2.0
+    wrappers and a few extensions.  It requires a submodule for each
+    specific DBMS.
+
 
 2) API CLASSES:
 ---------------
+
+    DBMS(object)
+        This class wraps all of the DBMS functionality.
+        DO NOT INSTANTIATE; USE SUBCLASSES ONLY.
+
+        Class Variables: Constants
+        --------------------------
+
+        DBMS_NAME
+            What the DBMS is called.
+
+        REQUIRES
+            Required feature(s) for config settings, etc.
+
+        MODULE
+            Module object containing connect(), etc.
+
+        DEFAULT_LOCAL_PORT
+        DEFAULT_REMOTE_PORT
+            Local and remote ports for tunnels (remote is also for
+            direct connections).
+
+        SOCKET_SEARCH_PATH
+            Where to look for the socket file, to set the default.
+
+
+        Instance Variables
+        ------------------
+
+        err_use_logger
+        err_warn_only
+        err_no_exit
+        warn_use_logger
+        warn_warn_only
+        warn_no_exit
+            How to handle errors and warnings; see __init__().
+
+        ssh
+            SSH object for the DBMS connection.
+
+        conn
+            DBMS connection object.
+
+        cur
+            Main DBMS cursor object.
+
+
+        Housekeeping
+        ------------
+
+        supports()
+            Class method: Test if a method or feature is supported by a
+            DBMS.
+
+        __init__()
+            Populate instance variables.
+
+        close_conns()
+            Class method: Close all DBMS connections.
+
+        close_cursors()
+            Class method: Close all DBMS cursors.
+
+
+        Startup and Config File Processing
+        ----------------------------------
+
+        create_settings()
+            Add a block of DBMS config settings to the script.
+
+        settings_extra_text()
+            Add extra text to config setting descriptions.
+
+        validate_config()
+            Validate DBMS config settings.
+
+        populate_conn_args()
+            Turn the config settings into a dictionary of connection
+            args.
+
+        read_password_file()
+            Get and the password from the password file.
+
+
+        Logging and Error Handling
+        --------------------------
+
+        error_handler()
+            Handle DBMS exceptions with various options.
+
+        render_exception()
+            Return a formatted string for a DBMS-related exception.
+
+        save_err_warn()
+            Save the err.* and warn.* settings before temporary changes.
+
+        restore_err_warn()
+            Restore the err.* and warn.* settings after temporary
+            changes.
+
+        check_supports_method()
+            Class method: Check if a method is supported by a DBMS, else
+            error/exit.
+
+        wrap_call()
+            Wrap a DBMS function call in error handling.
+
+
+        DBMS Connections and Cursors
+        ----------------------------
+
+        connect()
+            Connect to the DBMS, including any SSH tunnel.
+
+        close()
+            Close the DBMS connection, including any SSH tunnel.
+
+        cursor()
+            Get a cursor for the DBMS connection.
+
+        close_cursor()
+            Close a DBMS cursor.
+
+        auto_cursor()
+            Automatically create the main cursor if there isn't one.
+
+        auto_close_cursor()
+            Close the main cursor if it was automatically created.
+
+
+        DBAPI 2.0 Cursor/Connection Methods
+        -----------------------------------
+
+        callproc()
+            Wrapper: call a stored procedure.
+
+        execute()
+            Wrapper: execute a DBMS query.
+
+        executemany()
+            Wrapper: execute a DBMS query on multiple parameter sets.
+
+        fetchone()
+            Wrapper: fetch the next row of a query result set.
+
+        fetchmany()
+            Wrapper: fetch the next set of rows of a query result set.
+
+        fetchall()
+            Wrapper: fetch all (remaining) rows of a query result set.
+
+        nextset()
+            Wrapper: skip to the next query result set.
+
+        setinputsizes()
+            Wrapper: predefine parameter sizes.
+
+        setoutputsize()
+            Wrapper: set a large-column buffer size.
+
+        commit()
+            Wrapper: commit any pending transaction.
+
+        rollback()
+            Wrapper: roll back any pending transaction.
+
+
+        DBAPI Extension Wrappers
+        ------------------------
+
+        autocommit()
+            Get or set the autocommit status of the DBMS connection.
+
+
+        Nori Extensions
+        ---------------
+
+        get_db_list()
+            Get the list of databases from the DBMS.
+
+        change_db()
+            Change the current database used by a cursor.
 
 
 3) USAGE IN SCRIPTS:
 --------------------
 
-
-4) MODIFICATION NOTES:
-----------------------
+    Minimal usage (with the MySQL submodule) looks like this:
+        [settings in the config file]
+        db = nori.MySQL('mysqlstuff')
+        db.create_settings()
+        def run_mode_hook():
+            db.connect()
+            db.execute(None, 'SELECT * FROM table where col=%s;',
+                       ['col_value'], has_results=True)
+            print(db.fetchall())
+            db.execute(None, 'INSERT INTO table (col) VALUES (%s);',
+                       ['col_value'], has_results=False)
+            db.close()
 
 """
 
@@ -989,7 +1183,7 @@ Options must be supplied as a dict.
     def close_cursor(self, cur=None, force_no_exit=True):
 
         """
-        Close the DBMS cursor.
+        Close a DBMS cursor.
 
         Can be called more than once for the main cursor, but calling
         on an already-closed non-main cursor will cause an error.
