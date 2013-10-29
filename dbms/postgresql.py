@@ -111,8 +111,9 @@ class PostgreSQL(DBMS):
     # this is a list of directories (without trailing /)
     SOCKET_SEARCH_PATH = ['/tmp', '/var/run/postgresql', '/var/run']
 
-    # methods supported by this DBMS; see below for removals
-    _SUPPORTED_METHODS = DBMS._SUPPORTED_METHODS
+    # methods and features supported by this DBMS;
+    # see below for removals
+    _SUPPORTED = DBMS._SUPPORTED
 
 
     #####################################
@@ -296,8 +297,8 @@ don't use any (such as getting the list of databases).
     ######################################
 
     # unsupported methods
-    _SUPPORTED_METHODS.remove('nextset')
-    _SUPPORTED_METHODS.remove('setoutputsize')
+    _SUPPORTED.remove('nextset')
+    _SUPPORTED.remove('setoutputsize')
 
 
     ##################
@@ -320,4 +321,4 @@ don't use any (such as getting the list of databases).
 
 
     # can't do this in PostgreSQL without re-opening the connection
-    _SUPPORTED_METHODS.remove('change_db')
+    _SUPPORTED.remove('change_db')

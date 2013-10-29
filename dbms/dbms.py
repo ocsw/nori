@@ -135,11 +135,11 @@ class DBMS(object):
     # format can vary by subclass (e.g., files vs. directories)
     SOCKET_SEARCH_PATH = []
 
-    # methods supported by this DBMS; subclasses must override this
-    # and remove unsupported methods, e.g.:
-    #     _SUPPORTED_METHODS = DBMS._SUPPORTED_METHODS
-    #     _SUPPORTED_METHODS.remove('nextset')
-    _SUPPORTED_METHODS = [
+    # methods and features supported by this DBMS;
+    # subclasses must override this and remove unsupported items, e.g.:
+    #     _SUPPORTED = DBMS._SUPPORTED
+    #     _SUPPORTED.remove('nextset')
+    _SUPPORTED = [
         'callproc', 'execute', 'executemany', 'fetchone', 'fetchmany',
         'fetchall', 'nextset', 'setinputsizes', 'setoutputsize', 'commit',
         'rollback', 'get_db_list', 'change_db',
@@ -165,15 +165,15 @@ class DBMS(object):
     ###############
 
     @classmethod
-    def supports_method(cls, method_name):
+    def supports(cls, name):
         """
-        Test if a method is supported by a DBMS.
+        Test if a method or feature is supported by a DBMS.
         Parameters:
-            method_name: the name of the method to check.
+            name: the name of the method or feature to check.
         Dependencies:
-            class vars: _SUPPORTED_METHODS
+            class vars: _SUPPORTED
         """
-        return method_name in cls._SUPPORTED_METHODS
+        return name in cls._SUPPORTED
 
 
     def __init__(self, prefix, delim='_', err_use_logger=True,
@@ -746,17 +746,17 @@ Options must be supplied as a dict.
 
 
     @classmethod
-    def check_supported(cls, method_name):
+    def check_supports_method(cls, method_name):
         """
         Check if a method is supported by a DBMS, else error/exit.
         Parameters:
             method_name: the name of the method to check.
         Dependencies:
             class vars: DBMS_NAME
-            methods: supports_method()
+            methods: supports()
             modules: sys, core
         """
-        if not cls.supports_method(method_name):
+        if not cls.supports(method_name):
             core.email_logger.error(
                 "Internal Error: {0}() was called on a {1} object,"
                 "which doesn't support it; exiting." .
@@ -1088,7 +1088,7 @@ Options must be supplied as a dict.
     #
     # Not all of these methods are implemented by every DBMS.  Methods
     # that are particularly DBMS-dependent are noted, but if in doubt,
-    # check using supports_method() before using.
+    # check using supports() before using.
     #
 
     def callproc(self, cur, procname, param=None, has_results=False):
@@ -1100,7 +1100,7 @@ Options must be supplied as a dict.
         Returns False on error, otherwise True.
         Warning: this method is optional in DBAPI 2.0.  Test for its
         existence in your DBMS first with:
-            if dbms_obj.supports_method('callproc'):
+            if dbms_obj.supports('callproc'):
                 ...
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
@@ -1112,11 +1112,11 @@ Options must be supplied as a dict.
                          was created automatically
         Dependencies:
             instance vars: cur
-            methods: check_supported(), auto_cursor(),
+            methods: check_supports_method(), auto_cursor(),
                      auto_close_cursor(), wrap_call()
             modules: (cur's module)
         """
-        self.check_supported('callproc')
+        self.check_supports_method('callproc')
         self.auto_cursor()
         cur = cur if cur else self.cur
         if param is None:
@@ -1149,11 +1149,11 @@ Options must be supplied as a dict.
                          was created automatically
         Dependencies:
             instance vars: cur
-            methods: check_supported(), auto_cursor(),
+            methods: check_supports_method(), auto_cursor(),
                      auto_close_cursor(), wrap_call()
             modules: (cur's module)
         """
-        self.check_supported('execute')
+        self.check_supports_method('execute')
         self.auto_cursor()
         cur = cur if cur else self.cur
         if param is None:
@@ -1187,11 +1187,11 @@ Options must be supplied as a dict.
                          results, but True is allowed here just in case)
         Dependencies:
             instance vars: cur
-            methods: check_supported(), auto_cursor(),
+            methods: check_supports_method(), auto_cursor(),
                      auto_close_cursor(), wrap_call()
             modules: (cur's module)
         """
-        self.check_supported('executemany')
+        self.check_supports_method('executemany')
         self.auto_cursor()
         cur = cur if cur else self.cur
         ret = self.wrap_call(cur.executemany, 'execute queries on',
@@ -1211,10 +1211,11 @@ Options must be supplied as a dict.
             cur: the cursor to use; if None, the main cursor is used
         Dependencies:
             instance vars: cur
-            methods: check_supported(), auto_close_cursor(), wrap_call()
+            methods: check_supports_method(), auto_close_cursor(),
+                     wrap_call()
             modules: (cur's module)
         """
-        self.check_supported('fetchone')
+        self.check_supports_method('fetchone')
         cur = cur if cur else self.cur
         ret = self.wrap_call(cur.fetchone, 'retrieve data from',
                              'retrieving data from')
@@ -1234,10 +1235,11 @@ Options must be supplied as a dict.
             size: if not None, the number of rows to fetch
         Dependencies:
             instance vars: cur
-            methods: check_supported(), auto_close_cursor(), wrap_call()
+            methods: check_supports_method(), auto_close_cursor(),
+                     wrap_call()
             modules: (cur's module)
         """
-        self.check_supported('fetchmany')
+        self.check_supports_method('fetchmany')
         cur = cur if cur else self.cur
         if size is None:
             ret = self.wrap_call(cur.fetchmany, 'retrieve data from',
@@ -1260,10 +1262,11 @@ Options must be supplied as a dict.
             cur: the cursor to use; if None, the main cursor is used
         Dependencies:
             instance vars: cur
-            methods: check_supported(), auto_close_cursor(), wrap_call()
+            methods: check_supports_method(), auto_close_cursor(),
+                     wrap_call()
             modules: (cur's module)
         """
-        self.check_supported('fetchall')
+        self.check_supports_method('fetchall')
         cur = cur if cur else self.cur
         ret = self.wrap_call(cur.fetchall, 'retrieve data from',
                              'retrieving data from')
@@ -1278,16 +1281,16 @@ Options must be supplied as a dict.
         otherwise True.
         Warning: this method is optional in DBAPI 2.0.  Test for its
         existence in your DBMS first with:
-            if dbms_obj.supports_method('nextset'):
+            if dbms_obj.supports('nextset'):
                 ...
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
         Dependencies:
             instance vars: cur
-            methods: check_supported(), wrap_call()
+            methods: check_supports_method(), wrap_call()
             modules: (cur's module)
         """
-        self.check_supported('nextset')
+        self.check_supports_method('nextset')
         cur = cur if cur else self.cur
         ret = self.wrap_call(cur.nextset, 'skip to the next set on',
                              'skipping to the next set on')
@@ -1303,17 +1306,17 @@ Options must be supplied as a dict.
         Returns False on error, otherwise True.
         Warning: this method is part of DBAPI 2.0, but is frequently
         omitted.  Test for its existence in your DBMS first with:
-            if dbms_obj.supports_method('setinputsizes'):
+            if dbms_obj.supports('setinputsizes'):
                 ...
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
             sizes: a sequence of parameter sizes
         Dependencies:
             instance vars: cur
-            methods: check_supported(), wrap_call()
+            methods: check_supports_method(), wrap_call()
             modules: (cur's module)
         """
-        self.check_supported('setinputsizes')
+        self.check_supports_method('setinputsizes')
         cur = cur if cur else self.cur
         ret = self.wrap_call(cur.setinputsizes, 'set input sizes on',
                              'setting input sizes on', sizes)[0]
@@ -1325,7 +1328,7 @@ Options must be supplied as a dict.
         Returns False on error, otherwise True.
         Warning: this method is part of DBAPI 2.0, but is frequently
         omitted.  Test for its existence in your DBMS first with:
-            if dbms_obj.supports_method('setoutputsize'):
+            if dbms_obj.supports('setoutputsize'):
                 ...
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
@@ -1334,10 +1337,10 @@ Options must be supplied as a dict.
                     sequence
         Dependencies:
             instance vars: cur
-            methods: check_supported(), wrap_call()
+            methods: check_supports_method(), wrap_call()
             modules: (cur's module)
         """
-        self.check_supported('setoutputsize')
+        self.check_supports_method('setoutputsize')
         cur = cur if cur else self.cur
         if column is None:
             ret = self.wrap_call(cur.setoutputsize, 'set output size on',
@@ -1354,10 +1357,10 @@ Options must be supplied as a dict.
         Returns False on error, otherwise True.
         Dependencies:
             instance vars: conn
-            methods: check_supported(), wrap_call()
+            methods: check_supports_method(), wrap_call()
             modules: (conn's module)
         """
-        self.check_supported('commit')
+        self.check_supports_method('commit')
         return self.wrap_call(self.conn.commit, 'commit transaction on',
                               'committing transaction on')[0]
 
@@ -1369,14 +1372,14 @@ Options must be supplied as a dict.
         Returns False on error, otherwise True.
         Warning: this method is optional in DBAPI 2.0.  Test for its
         existence in your DBMS first with:
-            if dbms_obj.supports_method('rollback'):
+            if dbms_obj.supports('rollback'):
                 ...
         Dependencies:
             instance vars: conn
-            methods: check_supported(), wrap_call()
+            methods: check_supports_method(), wrap_call()
             modules: (conn's module)
         """
-        self.check_supported('rollback')
+        self.check_supports_method('rollback')
         return self.wrap_call(self.conn.rollback,
                               'roll back transaction on',
                               'rolling back transaction on')[0]
@@ -1393,7 +1396,7 @@ Options must be supplied as a dict.
         May not be possible or even coherent for all DBMSes; subclasses
         should override or delete this method.
         Warning: test for its existence in your DBMS first with:
-            if dbms_obj.supports_method('get_db_list'):
+            if dbms_obj.supports('get_db_list'):
                 ...
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
@@ -1408,7 +1411,7 @@ Options must be supplied as a dict.
         May not be possible or even coherent for all DBMSes; subclasses
         should override or delete this method.
         Warning: test for its existence in your DBMS first with:
-            if dbms_obj.supports_method('change_db'):
+            if dbms_obj.supports('change_db'):
                 ...
         Parameters:
             cur: the cursor to use; if None, the main cursor is used

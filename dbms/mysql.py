@@ -105,8 +105,9 @@ class MySQL(DBMS):
         '/tmp/mysql.sock',
     ]
 
-    # methods supported by this DBMS; see below for removals
-    _SUPPORTED_METHODS = DBMS._SUPPORTED_METHODS
+    # methods and features supported by this DBMS;
+    # see below for removals
+    _SUPPORTED = DBMS._SUPPORTED
 
 
     #####################################
@@ -260,9 +261,9 @@ See the {0} documentation for more information.
     ######################################
 
     # unsupported methods
-    _SUPPORTED_METHODS.remove('nextset')
-    _SUPPORTED_METHODS.remove('setinputsizes')
-    _SUPPORTED_METHODS.remove('setoutputsize')
+    _SUPPORTED.remove('nextset')
+    _SUPPORTED.remove('setinputsizes')
+    _SUPPORTED.remove('setoutputsize')
 
 
     ##################
