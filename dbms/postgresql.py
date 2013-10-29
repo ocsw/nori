@@ -128,11 +128,12 @@ class PostgreSQL(DBMS):
 
         Dependencies:
             class vars: DBMS_NAME, DEFAULT_REMOTE_PORT
-            instance vars: prefix, delim
+            instance vars: _prefix, _delim
             methods: settings_extra_text(),
                      apply_config_defaults_extra()
-            config settings: [prefix+delim+:] use_ssh_tunnel, protocol,
-                             host, port, socket_file, connect_db
+            config settings: [_prefix+_delim+:] use_ssh_tunnel,
+                             protocol, host, port, socket_file,
+                             connect_db
             modules: core, dbms.DBMS
 
         """
@@ -141,7 +142,7 @@ class PostgreSQL(DBMS):
         DBMS.create_settings(self, heading, extra_text, ignore,
                              extra_requires, tunnel)
 
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
 
         # add notes about SSL
         core.config_settings[pd + 'use_ssh_tunnel']['descr'] = (
@@ -233,13 +234,13 @@ don't use any (such as getting the list of databases).
 
         Dependencies:
             class vars: SOCKET_SEARCH_PATH
-            instance vars: prefix, delim
-            config settings: [prefix+delim+:] host, port, remote_port
+            instance vars: _prefix, _delim
+            config settings: [_prefix+_delim+:] host, port, remote_port
             modules: core
 
         """
 
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
 
         # pd + 'host': first try to find a socket, then fall back to TCP
         for d in self.SOCKET_SEARCH_PATH:
@@ -269,16 +270,16 @@ don't use any (such as getting the list of databases).
         Validate DBMS config settings.
         Only does checks that aren't done in DBMS.validate_config().
         Dependencies:
-            instance vars: ignore, prefix, delim, tunnel_config
-            config settings: [prefix+delim+:] use_ssh_tunnel, host,
+            instance vars: _ignore, _prefix, _delim, _tunnel_config
+            config settings: [_prefix+_delim+:] use_ssh_tunnel, host,
                              port, connect_db
             modules: core, dbms.DBMS
             Python: 2.0/3.2, for callable()
         """
-        if callable(self.ignore) and self.ignore():
+        if callable(self._ignore) and self._ignore():
             return
-        pd = self.prefix + self.delim
-        if not self.tunnel_config or not core.cfg[pd + 'use_ssh_tunnel']:
+        pd = self._prefix + self._delim
+        if not self._tunnel_config or not core.cfg[pd + 'use_ssh_tunnel']:
             core.setting_check_not_blank(pd + 'host')
             if core.cfg[pd + 'host'][0] == '/':
                 core.setting_check_dir_search(pd + 'host')

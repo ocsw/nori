@@ -163,8 +163,8 @@ class SSH(object):
             prefix, delim: prefix and delimiter that start the setting
                            names to use
         """
-        self.prefix = prefix
-        self.delim = delim
+        self._prefix = prefix
+        self._delim = delim
 
 
     @classmethod
@@ -223,9 +223,9 @@ class SSH(object):
                                  must be set)
 
         Dependencies:
-            instance vars: prefix, delim, tunnel_config, ignore
+            instance vars: _prefix, _delim, _tunnel_config, _ignore
             methods: validate_config()
-            config settings: [prefix+delim+:] (heading), ssh_host,
+            config settings: [_prefix+_delim+:] (heading), ssh_host,
                              ssh_port, ssh_user, ssh_key_file,
                              ssh_options, local_host, local_port,
                              remote_host, remote_port, tun_timeout
@@ -239,9 +239,9 @@ class SSH(object):
         core.config_settings['exec_path']['no_print'] = False
         core.config_settings['print_cmds']['no_print'] = False
 
-        pd = self.prefix + self.delim
-        self.tunnel_config = tunnel
-        self.ignore = ignore
+        pd = self._prefix + self._delim
+        self._tunnel_config = tunnel
+        self._ignore = ignore
 
         if heading:
             core.config_settings[pd + 'heading'] = dict(
@@ -419,8 +419,8 @@ Can be None, to wait forever, or a number >= 1.
         """
         Validate SSH config settings.
         Dependencies:
-            instance vars: prefix, delim, ignore, tunnel_config
-            config settings: [prefix+delim+:] (heading), ssh_host,
+            instance vars: _prefix, _delim, _ignore, _tunnel_config
+            config settings: [_prefix+_delim+:] (heading), ssh_host,
                              ssh_port, ssh_user, ssh_key_file,
                              ssh_options, local_host, local_port,
                              remote_host, remote_port, tun_timeout
@@ -428,8 +428,8 @@ Can be None, to wait forever, or a number >= 1.
             modules: types.NoneType [if using Python 2], core
             Python: 2.0/3.2, for callable()
         """
-        pd = self.prefix + self.delim
-        if callable(self.ignore) and self.ignore():
+        pd = self._prefix + self._delim
+        if callable(self._ignore) and self._ignore():
             return
         core.setting_check_not_blank(pd + 'ssh_host')
         if core.setting_is_set(pd + 'ssh_port'):
@@ -448,7 +448,7 @@ Can be None, to wait forever, or a number >= 1.
                                             core.STRING_TYPES)
             else:
                 core.setting_check_not_blank(pd + 'ssh_options')
-        if self.tunnel_config:
+        if self._tunnel_config:
             core.setting_check_not_blank(pd + 'local_host')
             core.setting_check_num(pd + 'local_port', 1, 65535)
             core.setting_check_not_blank(pd + 'remote_host')
@@ -472,13 +472,13 @@ Can be None, to wait forever, or a number >= 1.
         list returned from this function.
         See also get_tunnel_cmd().
         Dependencies:
-            instance vars: prefix, delim
-            config settings: [prefix+delim+:] ssh_host, ssh_port,
+            instance vars: _prefix, _delim
+            config settings: [_prefix+_delim+:] ssh_host, ssh_port,
                              ssh_user, ssh_key_file, ssh_options
             modules: shlex, core
             external commands: ssh
         """
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
         cmd = ['ssh']
         if pd + 'ssh_port' in core.cfg:
             cmd += ['-p', str(core.cfg[pd + 'ssh_port'])]
@@ -501,20 +501,20 @@ Can be None, to wait forever, or a number >= 1.
         Can be used with (e.g.) core.run_command() or
         core.run_with_logging(), but see open_tunnel(), below.
         Dependencies:
-            instance vars: prefix, delim
-            config settings: [prefix+delim+:] local_port, remote_host,
+            instance vars: _prefix, _delim
+            config settings: [_prefix+_delim+:] local_port, remote_host,
                              remote_port
             functions: get_cmd()
             modules: core
             external commands: ssh
         """
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
         tunnel_arg = ['-L']
         tunnel_arg.append(':'.join(core.cfg[pd + 'local_port'],
                                    core.cfg[pd + 'remote_host'],
                                    core.cfg[pd + 'remote_port']))
         tunnel_arg.append('-N')
-        cmd = get_cmd(prefix, delim)
+        cmd = self.get_cmd()
         return cmd[0] + tunnel_arg + cmd[1:]
 
 
@@ -538,9 +538,9 @@ Can be None, to wait forever, or a number >= 1.
 
         Dependencies:
             class vars: atexit_close_tunnels_registered, open_tunnels
-            instance vars: prefix, delim, descr, p_obj
+            instance vars: _prefix, _delim, descr, p_obj
             methods: get_tunnel_cmd(), close_tunnels()
-            config settings: [prefix+delim+:] (remote_host),
+            config settings: [_prefix+_delim+:] (remote_host),
                              (remote_port), local_host, local_port,
                              tun_timeout
             modules: (subprocess), atexit, core
@@ -548,7 +548,7 @@ Can be None, to wait forever, or a number >= 1.
 
         """
 
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
         self.descr = descr
 
         # log that we're running the command

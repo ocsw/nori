@@ -127,10 +127,10 @@ class MySQL(DBMS):
 
         Dependencies:
             class vars: DEFAULT_REMOTE_PORT, SOCKET_SEARCH_PATH
-            instance vars: prefix, delim
+            instance vars: _prefix, _delim
             methods: settings_extra_text(),
                      apply_config_defaults_extra()
-            config settings: [prefix+delim+:] use_ssh_tunnel, port,
+            config settings: [_prefix+_delim+:] use_ssh_tunnel, port,
                              socket_file
             modules: core, dbms.DBMS
 
@@ -140,7 +140,7 @@ class MySQL(DBMS):
         DBMS.create_settings(self, heading, extra_text, ignore,
                              extra_requires, tunnel)
 
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
 
         # add notes about SSL
         core.config_settings[pd + 'use_ssh_tunnel']['descr'] = (
@@ -197,13 +197,13 @@ See the {0} documentation for more information.
         Apply configuration defaults that are last-minute/complicated.
 
         Dependencies:
-            instance vars: prefix, delim
-            config settings: [prefix+delim+:] port, remote_port
+            instance vars: _prefix, _delim
+            config settings: [_prefix+_delim+:] port, remote_port
             modules: core
 
         """
 
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
 
         # pd + 'port', pd + 'remote_port': clarify default
         for s_name in [pd + 'port', pd + 'remote_port']:
@@ -219,16 +219,16 @@ See the {0} documentation for more information.
         Validate DBMS config settings.
         Only does checks that aren't done in DBMS.validate_config().
         Dependencies:
-            instance vars: ignore, prefix, delim, tunnel_config
-            config settings: [prefix+delim+:] use_ssh_tunnel, protocol,
-                             host, port, socket_file
+            instance vars: _ignore, _prefix, _delim, _tunnel_config
+            config settings: [_prefix+_delim+:] use_ssh_tunnel,
+                             protocol, host, port, socket_file
             modules: core, dbms.DBMS
             Python: 2.0/3.2, for callable()
         """
-        if callable(self.ignore) and self.ignore():
+        if callable(self._ignore) and self._ignore():
             return
-        pd = self.prefix + self.delim
-        if not self.tunnel_config or not core.cfg[pd + 'use_ssh_tunnel']:
+        pd = self._prefix + self._delim
+        if not self._tunnel_config or not core.cfg[pd + 'use_ssh_tunnel']:
             core.setting_check_list(pd + 'protocol', ['tcp', 'socket'])
             if core.cfg[pd + 'protocol'] == 'tcp':
                 core.setting_check_is_set(pd + 'host')

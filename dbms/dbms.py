@@ -154,10 +154,10 @@ class DBMS(object):
     # minute cleanup; see close_conns() and close_cursors()
     # NOTE: * do not override them in subclasses
     #       * refer to them with DBMS.var
-    atexit_close_conns_registered = False
-    atexit_close_cursors_registered = False
-    open_conns = []  # actually contains DBMS objects with open conns
-    open_cursors = []    # actually contains tuples: (DBMS obj, cur obj)
+    _atexit_close_conns_registered = False
+    _atexit_close_cursors_registered = False
+    _open_conns = []  # actually contains DBMS objects with open conns
+    _open_cursors = []    # contains tuples: (DBMS obj, cur obj)
 
 
     ###############
@@ -197,23 +197,28 @@ class DBMS(object):
                 note that if warn_warn_only is False, warnings will be
                 treated as errors
         Dependencies:
-            instance vars: prefix, delim, err_use_logger, err_warn_only,
-                           err_no_exit, warn_use_logger, warn_warn_only,
-                           warn_no_exit, conn, cur, cur_is_auto,
-                           fake_autocommit
+            instance vars: _prefix, _delim, _tunnel_config, _ignore,
+                           err_use_logger, err_warn_only, err_no_exit,
+                           warn_use_logger, warn_warn_only,
+                           warn_no_exit, ssh, conn, cur, _cur_is_auto,
+                           _fake_autocommit
         """
-        self.prefix = prefix
-        self.delim = delim
+        self._prefix = prefix
+        self._delim = delim
+        self._tunnel_config = False  # see create_settings()
+        self._ignore = None  # see create_settings()
+        self._conn_args = {}  # see populate_conn_args()
         self.err_use_logger = err_use_logger
         self.err_warn_only = err_warn_only
         self.err_no_exit = err_no_exit
         self.warn_use_logger = warn_use_logger
         self.warn_warn_only = warn_warn_only
         self.warn_no_exit = warn_no_exit
-        self.conn = None
-        self.cur = None
-        self.cur_is_auto = False
-        self.fake_autocommit = False
+        self.ssh = None  # see create_settings()
+        self.conn = None  # see connect()
+        self.cur = None  # see cursor()
+        self._cur_is_auto = False  # see auto_cursor
+        self._fake_autocommit = False  # see autocommit()
 
 
     @classmethod
@@ -223,10 +228,10 @@ class DBMS(object):
         NOTE: * do not override in subclasses
               * call with DBMS.close_conns()
         Dependencies:
-            class vars: open_conns
+            class vars: _open_conns
             instance methods: close()
         """
-        for dbms_obj in cls.open_conns:
+        for dbms_obj in cls._open_conns:
             dbms_obj.close()
 
 
@@ -237,10 +242,10 @@ class DBMS(object):
         NOTE: * do not override in subclasses
               * call with DBMS.close_cursors()
         Dependencies:
-            class vars: open_cursors
+            class vars: _open_cursors
             instance methods: close_cursor()
         """
-        for (dbms_obj, cur) in cls.open_cursors:
+        for (dbms_obj, cur) in cls._open_cursors:
             dbms_obj.close_cursor(cur)
 
 
@@ -276,20 +281,20 @@ class DBMS(object):
         Dependencies:
             class vars: DBMS_NAME, REQUIRES, DEFAULT_REMOTE_PORT,
                         DEFAULT_LOCAL_PORT
-            instance vars: prefix, delim, tunnel_config, ignore, ssh
+            instance vars: _prefix, _delim, _tunnel_config, _ignore, ssh
             methods: _ignore_ssh_settings, settings_extra_text(),
                      validate_config(), populate_conn_args()
-            config settings: [prefix+delim+:] (heading), use_ssh_tunnel,
-                             protocol, host, port, socket_file, user,
-                             password, pw_file, connect_db,
-                             connect_options, cursor_options
+            config settings: [_prefix+_delim+:] (heading),
+                             use_ssh_tunnel, protocol, host, port,
+                             socket_file, user, password, pw_file,
+                             connect_db, connect_options, cursor_options
             modules: getpass, core, ssh.SSH
 
         """
 
-        pd = self.prefix + self.delim
-        self.tunnel_config = tunnel
-        self.ignore = ignore
+        pd = self._prefix + self._delim
+        self._tunnel_config = tunnel
+        self._ignore = ignore
 
         if heading:
             core.config_settings[pd + 'heading'] = dict(
@@ -316,7 +321,7 @@ If True, specify the host in {0}_ssh_host and the port in
                               format(pd + 'use_ssh_tunnel'))
             if extra_text:
                 ssh_extra_text += '\n\n' + extra_text
-            self.ssh = SSH(self.prefix, self.delim)
+            self.ssh = SSH(self._prefix, self._delim)
             self.ssh.create_settings(
                 extra_text=ssh_extra_text,
                 ignore=self._ignore_ssh_settings,
@@ -428,7 +433,7 @@ be trimmed.
 Recommended filename: '/etc/{1}/{2}.pw'.
 
 Ignored if {3}password is set.
-'''.format(self.DBMS_NAME, core.script_shortname, self.prefix, pd),
+'''.format(self.DBMS_NAME, core.script_shortname, self._prefix, pd),
             ),
 
             cl_coercer=str,
@@ -494,11 +499,11 @@ Options must be supplied as a dict.
         """
         If true, ignore the SSH config settings.
         Dependencies:
-            instance vars: prefix, delim
-            config settings: [prefix+delim+:] use_ssh_tunnel
+            instance vars: _prefix, _delim
+            config settings: [_prefix+_delim+:] use_ssh_tunnel
             modules: core
         """
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
         return not core.cfg[pd + 'use_ssh_tunnel']
 
 
@@ -514,10 +519,10 @@ Options must be supplied as a dict.
                         this is mainly intended to be used for things
                         like 'Ignored if [some setting] is False.'
         Dependencies:
-            instance vars: prefix, delim
+            instance vars: _prefix, _delim
             modules: core
         """
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
         if extra_text:
             for s_name in setting_list:
                 if 'descr' in core.config_settings[pd + s_name]:
@@ -537,20 +542,20 @@ Options must be supplied as a dict.
         it's easy to be more restrictive in subclasses, but hard to be
         more lenient.
         Dependencies:
-            instance vars: ignore, prefix, delim, tunnel_config
-            config settings: [prefix+delim+:] use_ssh_tunnel, protocol,
-                             host, port, socket_file, user, password,
-                             pw_file, connect_db, connect_options,
-                             cursor_options
+            instance vars: _ignore, _prefix, _delim, _tunnel_config
+            config settings: [_prefix+_delim+:] use_ssh_tunnel,
+                             protocol, host, port, socket_file, user,
+                             password, pw_file, connect_db,
+                             connect_options, cursor_options
             modules: core
             Python: 2.0/3.2, for callable()
         """
-        if callable(self.ignore) and self.ignore():
+        if callable(self._ignore) and self._ignore():
             return
-        pd = self.prefix + self.delim
-        if self.tunnel_config:
+        pd = self._prefix + self._delim
+        if self._tunnel_config:
             core.setting_check_type(pd + 'use_ssh_tunnel', (bool, ))
-        if not self.tunnel_config or not core.cfg[pd + 'use_ssh_tunnel']:
+        if not self._tunnel_config or not core.cfg[pd + 'use_ssh_tunnel']:
             if (pd + 'protocol' not in core.config_settings or
                   (pd + 'protocol' in core.cfg and
                    core.cfg[pd + 'protocol'] == 'tcp')):
@@ -581,55 +586,55 @@ Options must be supplied as a dict.
         """
         Turn the config settings into a dictionary of connection args.
         Dependencies:
-            instance vars: prefix, delim, tunnel_config, conn_args
+            instance vars: _prefix, _delim, _tunnel_config, _conn_args
             methods: read_password_file()
-            config_settings: [prefix+delim+:] use_ssh_tunnel,
+            config_settings: [_prefix+_delim+:] use_ssh_tunnel,
                              local_host, local_port, protocol, host,
                              port, socket_file, user, password, pw_file,
                              connect_db, connect_options
             modules: core
         """
-        pd = self.prefix + self.delim
-        self.conn_args = {}
-        if self.tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
-            self.conn_args['host'] = core.cfg[pd + 'local_host']
-            self.conn_args['port'] = core.cfg[pd + 'local_port']
+        pd = self._prefix + self._delim
+        self._conn_args = {}
+        if self._tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
+            self._conn_args['host'] = core.cfg[pd + 'local_host']
+            self._conn_args['port'] = core.cfg[pd + 'local_port']
         else:
             if (pd + 'protocol' not in core.config_settings or
                   (pd + 'protocol' in core.cfg and
                    core.cfg[pd + 'protocol'] == 'tcp')):
                 if pd + 'host' in core.cfg:
-                    self.conn_args['host'] = core.cfg[pd + 'host']
+                    self._conn_args['host'] = core.cfg[pd + 'host']
                 if pd + 'port' in core.cfg:
-                    self.conn_args['port'] = core.cfg[pd + 'port']
+                    self._conn_args['port'] = core.cfg[pd + 'port']
             elif (pd + 'protocol' not in core.config_settings or
                   (pd + 'protocol' in core.cfg and
                    core.cfg[pd + 'protocol'] == 'socket')):
                 if pd + 'socket_file' in core.cfg:
-                    self.conn_args['unix_socket'] = (
+                    self._conn_args['unix_socket'] = (
                         core.cfg[pd + 'socket_file']
                     )
         if pd + 'user' in core.cfg:
-            self.conn_args['user'] = core.cfg[pd + 'user']
+            self._conn_args['user'] = core.cfg[pd + 'user']
         if pd + 'password' in core.cfg:
-            self.conn_args['password'] = core.cfg[pd + 'password']
+            self._conn_args['password'] = core.cfg[pd + 'password']
         elif pd + 'pw_file' in core.cfg:
-            self.conn_args['password'] = self.read_password_file()
+            self._conn_args['password'] = self.read_password_file()
         if pd + 'connect_db' in core.cfg:
-            self.conn_args['database'] = core.cfg[pd + 'connect_db']
+            self._conn_args['database'] = core.cfg[pd + 'connect_db']
         if pd + 'connect_options' in core.cfg:
-            self.conn_args.update(core.cfg[pd + 'connect_options'])
+            self._conn_args.update(core.cfg[pd + 'connect_options'])
 
 
     def read_password_file(self):
         """
         Get and the password from the password file.
         Dependencies:
-            instance vars: prefix, delim
-            config_settings: [prefix+delim+:] pw_file
+            instance vars: _prefix, _delim
+            config_settings: [_prefix+_delim+:] pw_file
             modules: core
         """
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
         try:
             with open(core.fix_path(core.cfg[pd + 'pw_file']), 'r') as pf:
                 return pf.read().strip()
@@ -661,15 +666,15 @@ Options must be supplied as a dict.
 
         Dependencies:
             class vars: DBMS_NAME, MODULE
-            instance vars: prefix, delim, err_use_logger, err_warn_only,
-                           err_no_exit, warn_use_logger, warn_warn_only,
-                           warn_no_exit
+            instance vars: _prefix, _delim, err_use_logger,
+                           err_warn_only, err_no_exit, warn_use_logger,
+                           warn_warn_only, warn_no_exit
             methods: render_exception()
             modules: (contents of MODULE), core
 
         """
 
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
 
         if isinstance(e, self.MODULE.Warning):
             use_logger = self.warn_use_logger
@@ -709,17 +714,17 @@ Options must be supplied as a dict.
         Dependencies:
             instance vars: err_use_logger, err_warn_only, err_no_exit,
                            warn_use_logger, warn_warn_only,
-                           warn_no_exit, err_use_logger_saved,
-                           err_warn_only_saved, err_no_exit_saved,
-                           warn_use_logger_saved, warn_warn_only_saved,
-                           warn_no_exit_saved
+                           warn_no_exit, _err_use_logger_saved,
+                           _err_warn_only_saved, _err_no_exit_saved,
+                           _warn_use_logger_saved,
+                           _warn_warn_only_saved, _warn_no_exit_saved
         """
-        self.err_use_logger_saved = self.err_use_logger
-        self.err_warn_only_saved = self.err_warn_only
-        self.err_no_exit_saved = self.err_no_exit
-        self.warn_use_logger_saved = self.warn_use_logger
-        self.warn_warn_only_saved = self.warn_warn_only
-        self.warn_no_exit_saved = self.warn_no_exit
+        self._err_use_logger_saved = self.err_use_logger
+        self._err_warn_only_saved = self.err_warn_only
+        self._err_no_exit_saved = self.err_no_exit
+        self._warn_use_logger_saved = self.warn_use_logger
+        self._warn_warn_only_saved = self.warn_warn_only
+        self._warn_no_exit_saved = self.warn_no_exit
 
 
     def restore_err_warn(self):
@@ -728,23 +733,23 @@ Options must be supplied as a dict.
         Dependencies:
             instance vars: err_use_logger, err_warn_only, err_no_exit,
                            warn_use_logger, warn_warn_only,
-                           warn_no_exit, err_use_logger_saved,
-                           err_warn_only_saved, err_no_exit_saved,
-                           warn_use_logger_saved, warn_warn_only_saved,
-                           warn_no_exit_saved
+                           warn_no_exit, _err_use_logger_saved,
+                           _err_warn_only_saved, _err_no_exit_saved,
+                           _warn_use_logger_saved,
+                           _warn_warn_only_saved, _warn_no_exit_saved
         """
-        self.err_use_logger = self.err_use_logger_saved
-        self.err_warn_only = self.err_warn_only_saved
-        self.err_no_exit = self.err_no_exit_saved
-        self.warn_use_logger = self.warn_use_logger_saved
-        self.warn_warn_only = self.warn_warn_only_saved
-        self.warn_no_exit = self.warn_no_exit_saved
-        del(self.err_use_logger_saved)
-        del(self.err_warn_only_saved)
-        del(self.err_no_exit_saved)
-        del(self.warn_use_logger_saved)
-        del(self.warn_warn_only_saved)
-        del(self.warn_no_exit_saved)
+        self.err_use_logger = self._err_use_logger_saved
+        self.err_warn_only = self._err_warn_only_saved
+        self.err_no_exit = self._err_no_exit_saved
+        self.warn_use_logger = self._warn_use_logger_saved
+        self.warn_warn_only = self._warn_warn_only_saved
+        self.warn_no_exit = self._warn_no_exit_saved
+        del(self._err_use_logger_saved)
+        del(self._err_warn_only_saved)
+        del(self._err_no_exit_saved)
+        del(self._warn_use_logger_saved)
+        del(self._warn_warn_only_saved)
+        del(self._warn_no_exit_saved)
 
 
     @classmethod
@@ -812,20 +817,20 @@ Options must be supplied as a dict.
 
         Dependencies:
             class vars: DBMS_NAME, MODULE,
-                        atexit_close_conns_registered, open_conns
-            instance vars: prefix, delim, tunnel_config, ssh, conn_args,
-                           conn, err_use_logger, err_warn_only,
-                           err_no_exit
+                        _atexit_close_conns_registered, _open_conns
+            instance vars: _prefix, _delim, _tunnel_config, ssh,
+                           _conn_args, conn, err_use_logger,
+                           err_warn_only, err_no_exit
             methods: close_conns(), error_handler()
-            config settings: [prefix+delim+:] use_ssh_tunnel
+            config settings: [_prefix+_delim+:] use_ssh_tunnel
             modules: atexit, (contents of MODULE), core, (ssh.SSH)
 
         """
 
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
 
         # SSH tunnel
-        if self.tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
+        if self._tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
             if self.err_no_exit:
                 # atexit_reg = True, exit_val = None
                 self.ssh.open_tunnel(self.DBMS_NAME + ' connection',
@@ -843,7 +848,7 @@ Options must be supplied as a dict.
             format(self.DBMS_NAME, core.pps(pd))
         )
         try:
-            self.conn = self.MODULE.connect(**self.conn_args)
+            self.conn = self.MODULE.connect(**self._conn_args)
         except (self.MODULE.Warning, self.MODULE.Error) as e:
             self.error_handler(e, 'connect to', 'connecting to',
                                core.exitvals['dbms_connect']['num'])
@@ -851,11 +856,11 @@ Options must be supplied as a dict.
                 self.conn = None
                 self.ssh.close_tunnel()
                 return False
-        if self not in DBMS.open_conns:
-            DBMS.open_conns.append(self)
-        if not DBMS.atexit_close_conns_registered:
+        if self not in DBMS._open_conns:
+            DBMS._open_conns.append(self)
+        if not DBMS._atexit_close_conns_registered:
             atexit.register(DBMS.close_conns)
-            DBMS.atexit_close_conns_registered = True
+            DBMS._atexit_close_conns_registered = True
         core.status_logger.info('{0} connection established.' .
                                 format(self.DBMS_NAME))
         return True
@@ -874,17 +879,17 @@ Options must be supplied as a dict.
                            warn_no_exit
 
         Dependencies:
-            class vars: DBMS_NAME, MODULE, open_conns
-            instance vars: prefix, delim, tunnel_config, ssh, conn, cur,
-                           err_warn_only, err_no_exit, warn_no_exit
+            class vars: DBMS_NAME, MODULE, _open_conns
+            instance vars: _prefix, _delim, _tunnel_config, ssh, conn,
+                           cur, err_warn_only, err_no_exit, warn_no_exit
             methods: close_cursor(), save_err_warn(),
                      restore_err_warn(), error_handler()
-            config settings: [prefix+delim+:] use_ssh_tunnel
+            config settings: [_prefix+_delim+:] use_ssh_tunnel
             modules: (contents of MODULE), core, (ssh.SSH)
 
         """
 
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
 
         # main cursor, if any
         if self.cur is not None:
@@ -921,11 +926,11 @@ Options must be supplied as a dict.
                     'has been closed.' .
                     format(self.DBMS_NAME, core.pps(pd))
                 )
-        if self in DBMS.open_conns:
-            DBMS.open_conns.remove(self)
+        if self in DBMS._open_conns:
+            DBMS._open_conns.remove(self)
 
         # SSH tunnel
-        if self.tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
+        if self._tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
             self.ssh.close_tunnel()
 
         return not err
@@ -944,15 +949,15 @@ Options must be supplied as a dict.
 
         Dependencies:
             class vars: DBMS_NAME, MODULE,
-                        atexit_close_cursors_registered, open_cursors
-            instance vars: prefix, delim, conn, cur
+                        _atexit_close_cursors_registered, _open_cursors
+            instance vars: _prefix, _delim, conn, cur
             methods: close_cursors(), error_handler()
-            config settings: [prefix+delim+:] cursor_options
+            config settings: [_prefix+_delim+:] cursor_options
             modules: atexit, (contents of MODULE), core
 
         """
 
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
 
         try:
             cur = self.conn.cursor(**core.cfg[pd + 'cursor_options'])
@@ -966,14 +971,14 @@ Options must be supplied as a dict.
             self.cur = cur
         if cur:
             if main:
-                if (self, None) not in DBMS.open_cursors:
-                    DBMS.open_cursors.append((self, None))
+                if (self, None) not in DBMS._open_cursors:
+                    DBMS._open_cursors.append((self, None))
             else:
-                if (self, cur) not in DBMS.open_cursors:
-                    DBMS.open_cursors.append((self, cur))
-            if not DBMS.atexit_close_cursors_registered:
+                if (self, cur) not in DBMS._open_cursors:
+                    DBMS._open_cursors.append((self, cur))
+            if not DBMS._atexit_close_cursors_registered:
                 atexit.register(DBMS.close_cursors)
-                DBMS.atexit_close_cursors_registered = True
+                DBMS._atexit_close_cursors_registered = True
             core.status_logger.debug('Got {0}{1} cursor.' .
                                      format('main ' if main else '',
                                             self.DBMS_NAME))
@@ -999,8 +1004,8 @@ Options must be supplied as a dict.
                            warn_no_exit
 
         Dependencies:
-            class vars: DBMS_NAME, MODULE, open_cursors
-            instance vars: prefix, delim, cur, err_warn_only,
+            class vars: DBMS_NAME, MODULE, _open_cursors
+            instance vars: _prefix, _delim, cur, err_warn_only,
                            err_no_exit, warn_no_exit
             methods: save_err_warn(), restore_err_warn(),
                      error_handler()
@@ -1008,7 +1013,7 @@ Options must be supplied as a dict.
 
         """
 
-        pd = self.prefix + self.delim
+        pd = self._prefix + self._delim
 
         main_str = 'main ' if cur is None else ''
 
@@ -1043,12 +1048,12 @@ Options must be supplied as a dict.
 
         if cur is None:
             self.cur = None
-            if (self, None) in DBMS.open_cursors:
-                DBMS.open_cursors.remove((self, None))
+            if (self, None) in DBMS._open_cursors:
+                DBMS._open_cursors.remove((self, None))
         else:
             cur = None
-            if (self, cur) in DBMS.open_cursors:
-                DBMS.open_cursors.remove((self, cur))
+            if (self, cur) in DBMS._open_cursors:
+                DBMS._open_cursors.remove((self, cur))
         if not err:
             core.status_logger.debug(
                 '{0}{1} cursor (config prefix/delim {2})\n'
@@ -1063,24 +1068,24 @@ Options must be supplied as a dict.
         """
         Automatically create the main cursor if there isn't one.
         Dependencies:
-            instance vars: cur, cur_is_auto
+            instance vars: cur, _cur_is_auto
             methods: cursor()
         """
         if self.cur is None:
             if self.cursor() is not None:
-                self.cur_is_auto = True
+                self._cur_is_auto = True
 
 
     def auto_close_cursor(self):
         """
         Close the main cursor if it was automatically created.
         Dependencies:
-            instance vars: cur_is_auto
+            instance vars: _cur_is_auto
             methods: close_cursor()
         """
-        if self.cur_is_auto:
+        if self._cur_is_auto:
             self.close_cursor()
-            self.cur_is_auto = False
+            self._cur_is_auto = False
 
 
     ######################################
@@ -1114,7 +1119,7 @@ Options must be supplied as a dict.
                          return a result set, and close the cursor if it
                          was created automatically
         Dependencies:
-            instance vars: cur, fake_autocommit
+            instance vars: cur, _fake_autocommit
             methods: check_supports_method(), auto_cursor(),
                      auto_close_cursor(), wrap_call(), commit()
             modules: (cur's module)
@@ -1132,7 +1137,7 @@ Options must be supplied as a dict.
                                  param)[0]
         if not has_results:
             self.auto_close_cursor()
-            if self.fake_autocommmit:
+            if self._fake_autocommit:
                 if not self.commit():
                     return False
         return ret
@@ -1155,7 +1160,7 @@ Options must be supplied as a dict.
                          return a result set, and close the cursor if it
                          was created automatically
         Dependencies:
-            instance vars: cur, fake_autocommit
+            instance vars: cur, _fake_autocommit
             methods: check_supports_method(), auto_cursor(),
                      auto_close_cursor(), wrap_call(), commit()
             modules: (cur's module)
@@ -1171,7 +1176,7 @@ Options must be supplied as a dict.
                                  'executing query on', query, param)[0]
         if not has_results:
             self.auto_close_cursor()
-            if self.fake_autocommmit:
+            if self._fake_autocommit:
                 if not self.commit():
                     return False
         return ret
@@ -1197,7 +1202,7 @@ Options must be supplied as a dict.
                          (in most cases, cur.executemany() can't return
                          results, but True is allowed here just in case)
         Dependencies:
-            instance vars: cur, fake_autocommit
+            instance vars: cur, _fake_autocommit
             methods: check_supports_method(), auto_cursor(),
                      auto_close_cursor(), wrap_call(), commit()
             modules: (cur's module)
@@ -1209,7 +1214,7 @@ Options must be supplied as a dict.
                              'executing queries on', query, param_seq)[0]
         if not has_results:
             self.auto_close_cursor()
-            if self.fake_autocommmit:
+            if self._fake_autocommit:
                 if not self.commit():
                     return False
         return ret
@@ -1226,7 +1231,7 @@ Options must be supplied as a dict.
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
         Dependencies:
-            instance vars: cur, fake_autocommit
+            instance vars: cur, _fake_autocommit
             methods: check_supports_method(), auto_close_cursor(),
                      wrap_call(), commit()
             modules: (cur's module)
@@ -1240,7 +1245,7 @@ Options must be supplied as a dict.
             # even SELECTs need COMMIT to prevent taking up resources;
             # see:
             # http://initd.org/psycopg/docs/connection.html#connection.autocommit
-            if self.fake_autocommmit:
+            if self._fake_autocommit:
                 if not self.commit():
                     ret[0] = False
         return ret
@@ -1258,7 +1263,7 @@ Options must be supplied as a dict.
             cur: the cursor to use; if None, the main cursor is used
             size: if not None, the number of rows to fetch
         Dependencies:
-            instance vars: cur, fake_autocommit
+            instance vars: cur, _fake_autocommit
             methods: check_supports_method(), auto_close_cursor(),
                      wrap_call(), commit()
             modules: (cur's module)
@@ -1276,7 +1281,7 @@ Options must be supplied as a dict.
             # even SELECTs need COMMIT to prevent taking up resources;
             # see:
             # http://initd.org/psycopg/docs/connection.html#connection.autocommit
-            if self.fake_autocommmit:
+            if self._fake_autocommit:
                 if not self.commit():
                     ret[0] = False
         return ret
@@ -1292,7 +1297,7 @@ Options must be supplied as a dict.
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
         Dependencies:
-            instance vars: cur, fake_autocommit
+            instance vars: cur, _fake_autocommit
             methods: check_supports_method(), auto_close_cursor(),
                      wrap_call(), commit()
             modules: (cur's module)
@@ -1305,7 +1310,7 @@ Options must be supplied as a dict.
         # even SELECTs need COMMIT to prevent taking up resources;
         # see:
         # http://initd.org/psycopg/docs/connection.html#connection.autocommit
-        if self.fake_autocommmit:
+        if self._fake_autocommit:
             if not self.commit():
                 ret[0] = False
         return ret
@@ -1445,7 +1450,7 @@ Options must be supplied as a dict.
                   if None, return the current status
 
         Dependencies:
-            instance vars: fake_autocommit
+            instance vars: _fake_autocommit
             methods: supports(), _autocommit()
 
         """
@@ -1455,9 +1460,9 @@ Options must be supplied as a dict.
             return self._autocommit(what)
 
         if what is None:
-            return self.fake_autocommit
+            return self._fake_autocommit
 
-        self.fake_autocommit = what
+        self._fake_autocommit = what
         return True
 
 
