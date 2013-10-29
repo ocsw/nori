@@ -2097,8 +2097,10 @@ def check_file_type(file_path, file_label, type_char='f', follow_links=True,
             return False
 
     # file type?
+    t_names = []
     for t_char in type_char:
         t_func, t_name, unused = file_type_info(t_char)
+        t_names.append(t_name)
         if t_func is None:
             err_exit(
 '''Internal Error: type_char contains an illegal value ({0})
@@ -2122,8 +2124,8 @@ Exiting.''' .
                format(file_label, pps(file_path), t_name,
                ' or a symlink to one' if follow_links else ''))
     else:
-        msg = ('{0} ({1}) is not an allowed file type ({2}){3}.' .
-               format(file_label, pps(file_path), t_name,
+        msg = ('{0} ({1}) is not an allowed file type \n({2}){3}.' .
+               format(file_label, pps(file_path), ', '.join(t_names),
                '\nor a symlink to one' if follow_links else ''))
     return generic_error_handler(None, msg, use_logger=use_logger,
                                  warn_only=warn_only, exit_val=exit_val)
@@ -2179,7 +2181,7 @@ check_file_access(file_path={1}, file_label={2}, file_rwx={3},
 
 Exiting.''' .
                      format(*map(pps, [a_char, file_path, file_label,
-                                       file_rwx, use_logger, warn_only,
+                                       file_rwx[1:], use_logger, warn_only,
                                        exit_val])),
                      exitvals['internal']['num']
             )
@@ -2200,8 +2202,12 @@ Exiting.''' .
         if not access_ret:
             # doesn't exist?
             if a_char == 'f':
-                msg = ('{0} ({1}) does not exist.' .
+                msg = ('{0} ({1}) does not exist' .
                        format(file_label, pps(file_path)))
+                return generic_error_handler(
+                    None, msg, use_logger=use_logger, warn_only=warn_only,
+                    exit_val=exit_val
+                )
 
             # r/w/x strings
             err_word = {
@@ -2215,7 +2221,6 @@ Exiting.''' .
             # r/w/x messages
             msg = ('{0} ({1}) is not {2}' .
                    format(file_label, pps(file_path), err_word[a_char]))
-
             return generic_error_handler(None, msg, use_logger=use_logger,
                                          warn_only=warn_only,
                                          exit_val=exit_val)
@@ -2300,7 +2305,6 @@ Exiting.''' .
                         follow_links=True, must_exist=True,
                         use_logger=use_logger, warn_only=warn_only,
                         exit_val=exit_val)
-
     if not t:
         return t
     a = check_file_access(p_dir, file_label + "'s parent directory",
@@ -2593,7 +2597,7 @@ def touch_file(file_path, file_label, times=None, use_logger=False,
             with open(fix_path(file_path), 'a'):
                 # minor race condition here
                 os.utime(fix_path(file_path), times)
-    except OSError as e:
+    except (OSError, IOError) as e:
         # must_exist=True
         file_error_handler(e, 'touch', file_label, file_path, True,
                            use_logger, warn_only, exit_val)
