@@ -626,8 +626,8 @@ exitvals['no_error'] = dict(
     num=0,
     descr=(
 '''
-no error (e.g., run_every hasn't expired, or invocation was
-completed without errors)
+No error (e.g., run_every hasn't expired, or invocation was
+completed without errors).
 '''
     ),
 )
@@ -636,7 +636,7 @@ exitvals['argparse'] = dict(
     num=2,  # hardcoded in the argparse module
     descr=(
 '''
-error parsing the command line
+Error parsing the command line.
 '''
     ),
 )
@@ -645,9 +645,9 @@ exitvals['startup'] = dict(
     num=10,
     descr=(
 '''
-problem with the script invocation, the config file, or a
+Problem with the script invocation, the config file, or a
 setting (also used in command modes like 'disable' as a
-generic error value)
+generic error value).
 '''
     ),
 )
@@ -656,8 +656,8 @@ exitvals['lockfile'] = dict(
     num=11,
     descr=(
 '''
-previous lockfile still exists (possibly because the script
-was manually disabled)
+Previous lockfile still exists (possibly because the script
+was manually disabled).
 '''
     ),
 )
@@ -666,7 +666,7 @@ exitvals['internal'] = dict(
     num=250,
     descr=(
 '''
-internal error; should never happen
+Internal error; should never happen.
 '''
     ),
 )
@@ -675,8 +675,8 @@ exitvals['external'] = dict(
     num=251,
     descr=(
 '''
-problem with the OS or hardware (e.g., misconfiguration, out of RAM,
-etc.), that isn't covered by another exit value
+Problem with the OS or hardware (e.g., misconfiguration, out of RAM,
+etc.), that isn't covered by another exit value.
 '''
     ),
 )
