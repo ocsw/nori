@@ -1426,9 +1426,3 @@ Options must be supplied as a dict.
 #
 #exec, incl. commit/rollback
 #autocommit
-#
-#warnings
-#pooling
-#dicts
-#conversion, incl. unicode
-#buffering?
