@@ -873,11 +873,11 @@ Options must be supplied as a dict.
         if isinstance(e, self.MODULE.Warning):
             use_logger = self.warn_use_logger
             warn_only = self.warn_warn_only
-            exit_val=None if self.warn_no_exit else exit_val
+            exit_val = None if self.warn_no_exit else exit_val
         if isinstance(e, self.MODULE.Error):
             use_logger = self.err_use_logger
             warn_only = self.err_warn_only
-            exit_val=None if self.err_no_exit else exit_val
+            exit_val = None if self.err_no_exit else exit_val
 
         if warn_only:
             msg = ('problem {0} {1} DBMS '
