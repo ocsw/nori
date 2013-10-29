@@ -2117,56 +2117,16 @@ Exiting.''' .
         if t_func(st_mode):
             return True
 
-    # try to give info while being clear
-    # (to the user; the code, OTOH...)
-    if warn_only:
-        if len(type_char) == 1:
-            warn_str = ('Warning: {0} ({1}) is not a {2}{3}.' .
-                        format(file_label, pps(file_path), t_name,
-                               ' or a symlink to one' if follow_links
-                                                      else ''))
-        else:
-            warn_str = ('Warning: {0} ({1}) is not an allowed file type '
-                        '({2}){3}.' .
-                        format(file_label, pps(file_path), t_name,
-                               '\nor a symlink to one' if follow_links
-                                                       else ''))
-
-        if use_logger is None:
-            pass  # no messages
-        elif callable(use_logger):
-            use_logger(warn_str, warn_only)
-        elif use_logger:
-            email_logger.warn(warn_str)
-        else:
-            print('\n{0}\n'.format(warn_str), file=sys.stderr)
-
-        return False
-
-    else:  # not warn_only
-        if len(type_char) == 1:
-            err_str = ('Error: {0} ({1}) is not a {2}{3}; exiting.' .
-                 format(file_label, pps(file_path), t_name,
-                        ' or a symlink to one' if follow_links else ''))
-        else:
-            err_str = ('Error: {0} ({1}) is not an allowed file type '
-                       '({2}){3}; exiting.' .
-                       format(file_label, pps(file_path), t_name,
-                              '\nor a symlink to one' if follow_links
-                                                      else ''))
-
-        if use_logger is None:
-            pass  # no messages
-        elif callable(use_logger):
-            use_logger(err_str, warn_only)
-        elif use_logger:
-            email_logger.error(err_str)
-        else:
-            err_exit(err_str, exit_val)
-
-        if exit_val is not None:
-            sys.exit(exit_val)
-        return False
+    if len(type_char) == 1:
+        msg = ('{0} ({1}) is not a {2}{3}' .
+               format(file_label, pps(file_path), t_name,
+               ' or a symlink to one' if follow_links else ''))
+    else:
+        msg = ('{0} ({1}) is not an allowed file type ({2}){3}.' .
+               format(file_label, pps(file_path), t_name,
+               '\nor a symlink to one' if follow_links else ''))
+    return generic_error_handler(None, msg, use_logger=use_logger,
+                                 warn_only=warn_only, exit_val=exit_val)
 
 
 def check_file_access(file_path, file_label, file_rwx='r', use_logger=False,
@@ -2240,37 +2200,8 @@ Exiting.''' .
         if not access_ret:
             # doesn't exist?
             if a_char == 'f':
-                if warn_only:
-                    warn_msg = ('Warning: {0} ({1}) does not exist.' .
-                                format(file_label, pps(file_path)))
-
-                    if use_logger is None:
-                        pass  # no messages
-                    elif callable(use_logger):
-                        use_logger(warn_msg, warn_only)
-                    elif use_logger:
-                        email_logger.warn(warn_msg)
-                    else:
-                        print('\n{0}\n'.format(warn_msg), file=sys.stderr)
-
-                    return False
-
-                else:  # not warn_only
-                    err_msg = ('Error: {0} ({1}) does not exist; exiting.' .
-                     format(file_label, pps(file_path)))
-
-                    if use_logger is None:
-                        pass  # no messages
-                    elif callable(use_logger):
-                        use_logger(err_msg, warn_only)
-                    elif use_logger:
-                        email_logger.error(err_msg)
-                    else:
-                        err_exit(err_msg, exit_val)
-
-                    if exit_val is not None:
-                        sys.exit(exit_val)
-                    return False
+                msg = ('{0} ({1}) does not exist.' .
+                       format(file_label, pps(file_path)))
 
             # r/w/x strings
             err_word = {
@@ -2282,39 +2213,12 @@ Exiting.''' .
                 err_word['x'] = 'searchable'
 
             # r/w/x messages
-            if warn_only:
-                warn_msg = ('Warning: {0} ({1}) is not {2}.' .
-                            format(file_label, pps(file_path),
-                                   err_word[a_char]))
+            msg = ('{0} ({1}) is not {2}' .
+                   format(file_label, pps(file_path), err_word[a_char]))
 
-                if use_logger is None:
-                    pass  # no messages
-                elif callable(use_logger):
-                    use_logger(warn_msg, warn_only)
-                elif use_logger:
-                    email_logger.warn(warn_msg)
-                else:
-                    print('\n{0}\n'.format(warn_msg), file=sys.stderr)
-
-                return False
-
-            else:  # not warn_only
-                err_msg = ('Error: {0} ({1}) is not {2}; exiting.' .
-                           format(file_label, pps(file_path),
-                                  err_word[a_char]))
-
-                if use_logger is None:
-                    pass  # no messages
-                elif callable(use_logger):
-                    use_logger(err_msg, warn_only)
-                elif use_logger:
-                    email_logger.error(err_msg)
-                else:
-                    err_exit(err_msg, exit_val)
-
-                if exit_val is not None:
-                    sys.exit(exit_val)
-                return False
+            return generic_error_handler(None, msg, use_logger=use_logger,
+                                         warn_only=warn_only,
+                                         exit_val=exit_val)
 
     # success
     return True
