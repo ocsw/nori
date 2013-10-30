@@ -2072,11 +2072,10 @@ def check_file_type(file_path, file_label, type_char='f', follow_links=True,
         see file_error_handler() for the rest
 
     Dependencies:
-        globals: email_logger, exitvals['startup'], exitvals['internal']
+        globals: exitvals['startup'], exitvals['internal']
         functions: fix_path(), file_error_handler(), file_type_info(),
-                   pps(), err_exit()
-        modules: os, stat, sys
-        Python: 2.0/3.2, for callable()
+                   pps(), err_exit(), generic_error_handler()
+        modules: os, stat
 
     """
 
@@ -2147,17 +2146,17 @@ def check_file_access(file_path, file_label, file_rwx='r', use_logger=False,
         file_rwx: a string containing characters indicating which types
                   of access to check: 'r' (read), 'w' (write), and/or
                   'x' (execute, or search if the file is a directory)
-                  if blank, access is not checked; if this contains an
-                  illegal value, the script will exit with an internal
-                  error
+                  if blank, only existence is not checked; if this
+                  contains an illegal value, the script will exit with
+                  an internal error
         see file_error_handler() for the rest
 
     Dependencies:
-        globals: email_logger, exitvals['startup'], exitvals['internal']
+        globals: exitvals['startup'], exitvals['internal']
         functions: fix_path(), file_access_const(),
-                   file_error_handler(), pps(), err_exit()
-        modules: os, sys
-        Python: 2.0/3.2, for callable()
+                   file_error_handler(), generic_error_handler(), pps(),
+                   err_exit()
+        modules: os
 
     """
 
