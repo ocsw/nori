@@ -2299,7 +2299,7 @@ Exiting.''' .
             return a
 
     # parent directory type and access
-    p_dir = parentdir(file_path)
+    p_dir = parentdir(fix_path(file_path))
     t = check_file_type(p_dir, file_label + "'s parent directory", 'd',
                         follow_links=True, must_exist=True,
                         use_logger=use_logger, warn_only=warn_only,
@@ -2685,7 +2685,8 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
                           re_repl_escape(prefix + sep) + str(ft[1] + 1),
                           ft[0])
         try:
-            os.rename(fix_path(os.path.join(dir_path, ft[0])), new_name)
+            os.rename(fix_path(os.path.join(dir_path, ft[0])),
+                      fix_path(os.path.join(dir_path, new_name)))
         except OSError as e:
             email_logger.error('Error: could not rename file/directory '
                                '({0} -> {1});\nexiting.\n'
@@ -2713,7 +2714,8 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
                           re_repl_escape(prefix + sep + '1' + suffix),
                           f)
         try:
-            os.rename(fix_path(os.path.join(dir_path, f)), new_name)
+            os.rename(fix_path(os.path.join(dir_path, f)),
+                      fix_path(os.path.join(dir_path, new_name)))
         except OSError as e:
             email_logger.error('Error: could not rename file/directory '
                                '({0} -> {1});\nexiting.\n'
@@ -2786,7 +2788,7 @@ def prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
                   exit_val=exit_val)
             continue
 
-    # by date
+        # by date
         if days_f:
             try:
                 # 1440 = min per day
@@ -2854,8 +2856,8 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
                    '(|' + '|'.join(map(re.escape, ZIP_SUFFIXES)) + ')' +
                    '$')
     try:
-        f_list = [(f, 0) for f in os.listdir(fix_path(dir_path))
-                         if r.search(f)]
+        f_list = [f for f in os.listdir(fix_path(dir_path))
+                    if r.search(f)]
     except OSError as e:
         email_logger.error('Error: could not list directory {0}; exiting.\n'
                            'Details: [Errno {1}] {2}' .
@@ -2864,30 +2866,31 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
 
     # stat the files, get dates
     f_remain = []
-    for ft in f_list:
+    for f in f_list:
         try:
-            st_mtime = os.stat(fix_path(os.path.join(dir_path, ft[0])))[8]
+            st_mtime = os.stat(fix_path(os.path.join(dir_path, f)))[8]
         except OSError as e:
             email_logger.error('Error: could not stat file/directory {0}; '
                                'exiting.\nDetails: [Errno {1}] {2}' .
-                               format(pps(os.path.join(dir_path, ft[0])),
+                               format(pps(os.path.join(dir_path, f)),
                                       e.errno, e.strerror))
             sys.exit(exit_val)
-        # delete by date
-        if ((time.time() - st_mtime) >= (days_f * 86400)):  # secs/day
-            rm_rf(os.path.join(dir_path, ft[0]), 'file/directory',
+        # delete by date; 86400 = secs/day
+        if days_f and ((time.time() - st_mtime) >= (days_f * 86400)):
+            rm_rf(os.path.join(dir_path, f), 'file/directory',
                   must_exist=False, use_logger=True, warn_only=False,
                   exit_val=exit_val)
         else:
-            f_remain.append(ft)
+            f_remain.append((f, st_mtime))
 
     # delete by number
-    f_remain.sort(None, operator.itemgetter(1), False)
-    for i, ft in enumerate(f_remain):
-        if i >= num_f:
-            rm_rf(os.path.join(dir_path, ft[0]), 'file/directory',
-                  must_exist=False, use_logger=True, warn_only=False,
-                  exit_val=exit_val)
+    if num_f:
+        f_remain.sort(None, operator.itemgetter(1), True)
+        for i, ft in enumerate(f_remain):
+            if i >= num_f:
+                rm_rf(os.path.join(dir_path, ft[0]), 'file/directory',
+                    must_exist=False, use_logger=True, warn_only=False,
+                    exit_val=exit_val)
 
 
 def prune_files(layout, dir_path, prefix, sep, suffix, num_f, days_f,
@@ -2926,7 +2929,9 @@ def rotate_prune_output_logs():
         config settings: output_log, output_log_layout, output_log_sep,
                          output_log_num, output_log_days
         globals: cfg, status_logger, exitvals['startup']
-        functions: rotate_num_files, prune_files(), parentdir()
+        functions: rotate_num_files, prune_files(), fix_path(),
+                   parentdir()
+        modules: os
 
     """
 
@@ -2945,13 +2950,16 @@ def rotate_prune_output_logs():
 
     # rotate
     if cfg['output_log_layout'] == 'number':
-        rotate_num_files(parentdir(cfg['output_log']), cfg['output_log'],
+        rotate_num_files(parentdir(fix_path(cfg['output_log'])),
+                         os.path.basename(cfg['output_log']),
                          cfg['output_log_sep'], '',
                          exitvals['startup']['num'])
 
     # prune
-    prune_files(cfg['output_log_layout'], parentdir(cfg['output_log']),
-                cfg['output_log'], cfg['output_log_sep'], '',
+    prune_files(cfg['output_log_layout'],
+                parentdir(fix_path(cfg['output_log'])),
+                os.path.basename(cfg['output_log']),
+                cfg['output_log_sep'], '',
                 cfg['output_log_num'], cfg['output_log_days'],
                 exitvals['startup']['num'])
 
@@ -3095,7 +3103,7 @@ def init_logging_main():
         globals: cfg, status_logger, alert_logger, email_logger,
                  _syslog_handler, _stdout_handler, _stderr_handler,
                  FULL_DATE_FORMAT, exitvals['startup']
-        functions: init_syslog(), err_exit()
+        functions: fix_path(), init_syslog(), err_exit()
         classes: SMTPDiagHandler
         modules: logging, logging.handlers, sys
         Python: 2.7+/3.x, for SMTPHandler(secure)
@@ -3117,7 +3125,9 @@ def init_logging_main():
     # status log
     if cfg['status_log']:
         try:
-            status_log_handler = logging.FileHandler(cfg['status_log'], 'a')
+            status_log_handler = logging.FileHandler(
+                fix_path(cfg['status_log']), 'a'
+            )
         except IOError as e:
             err_exit('Error: could not open the status log ({0}); '
                      'exiting.\nDetails: [Errno {1}] {2}' .
@@ -3279,8 +3289,10 @@ def init_logging_output():
                                 time.strftime(cfg['output_log_date'],
                                               time.localtime(start_time)))
         # needed for prune_date_files(), for pruning by number
-        touch_file(output_log_path, 'the output log', None, use_logger=True,
-                   warn_only=False, exit_val=exitvals['startup']['num'])
+        if cfg['output_log_layout'] == 'date':
+            touch_file(output_log_path, 'the output log', None,
+                       use_logger=True, warn_only=False,
+                       exit_val=exitvals['startup']['num'])
 
     # rotate and prune output logs
     # (also tests in case there is no output log, and prints status
@@ -3295,11 +3307,19 @@ def init_logging_output():
     output_logger.addHandler(_stdout_handler)
     if cfg['output_log']:
         try:
-            output_handler = logging.FileHandler(cfg['output_log'])
+            # appending is always safe / the right thing to do, because
+            # either the file won't exist, or it will have been moved out of
+            # the way by the rotation - except in one case:
+            # if we're using a date layout, and the script has been run more
+            # recently than the datestring allows for, we should append so
+            # as not to lose information
+            output_handler = (
+                logging.FileHandler(fix_path(output_log_path), 'a')
+            )
         except IOError as e:
             email_logger.error('Error: could not open the output log '
                                '({0}); exiting.\nDetails: [Errno {1}] {2}' .
-                               format(pps(cfg['output_log']), e.errno,
+                               format(pps(output_log_path), e.errno,
                                       e.strerror))
             sys.exit(exitvals['startup']['num'])
         output_logger.addHandler(output_handler)
@@ -3312,16 +3332,16 @@ def init_logging_output():
         # if we're using a date layout, and the script has been run more
         # recently than the datestring allows for, we should append so
         # as not to lose information
-        output_log_fo = open(fix_path(cfg['output_log'])
+        output_log_fo = open(fix_path(output_log_path)
                                  if cfg['output_log']
                                  else os.devnull,
                              'a')
     except IOError as e:
         email_logger.error('Error: could not open the output log ({0}); '
                            'exiting.\nDetails: [Errno {1}] {2}' .
-                           format(pps(cfg['output_log'])
-                                      if cfg['output_log']
-                                      else os.devnull,
+                           format(pps(output_log_path
+                                          if cfg['output_log']
+                                          else os.devnull),
                                   e.errno, e.strerror))
         sys.exit(exitvals['startup']['num'])
 
