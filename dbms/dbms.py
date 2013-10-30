@@ -627,9 +627,9 @@ be trimmed.
 Recommended filename: '/etc/{1}/{2}.pw'.
 
 Ignored if {3}password is set.
-'''.format(self.DBMS_NAME, core.script_shortname, self._prefix, pd),
+'''.format(self.DBMS_NAME, core.script_shortname, self._prefix, pd)
             ),
-
+            # no default
             cl_coercer=str,
         )
 

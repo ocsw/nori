@@ -1840,6 +1840,8 @@ output_logger = None
 output_log_fo = None
 
 # internal, see logging functions
+_base_logger = None
+_null_handler = None
 _syslog_handler = None
 _stdout_handler = None
 _stderr_handler = None
@@ -3012,7 +3014,7 @@ def email_diagnostics():
     Dependencies:
         functions: render_config()
     """
-    return ('\n\n' + render_config() + '\n\n' + render_status(full=True))
+    return ('\n\n' + render_config() + '\n\n\n' + render_status(full=True))
 
 
 class SMTPDiagHandler(logging.handlers.SMTPHandler):
@@ -3101,8 +3103,9 @@ def init_logging_main():
                          alert_emails_host, alert_emails_cred,
                          alert_emails_sec, quiet, use_syslog, status_log
         globals: cfg, status_logger, alert_logger, email_logger,
-                 _syslog_handler, _stdout_handler, _stderr_handler,
-                 FULL_DATE_FORMAT, exitvals['startup']
+                 _base_logger, _null_handler, _syslog_handler,
+                 _stdout_handler, _stderr_handler, FULL_DATE_FORMAT,
+                 exitvals['startup']
         functions: fix_path(), init_syslog(), err_exit()
         classes: SMTPDiagHandler
         modules: logging, logging.handlers, sys
@@ -3110,17 +3113,22 @@ def init_logging_main():
 
     """
 
-    global status_logger, alert_logger, email_logger
-    global _syslog_handler, _stdout_handler, _stderr_handler
+    global status_logger, alert_logger, email_logger, _base_logger
+    global _null_handler, _syslog_handler, _stdout_handler, _stderr_handler
 
     # common to status messages and alerts/errors
-    base_logger = logging.getLogger(__name__)
+    _base_logger = logging.getLogger(__name__)
 
     # debug? this value will be used for child loggers as well
     if cfg['debug']:
-        base_logger.setLevel(logging.DEBUG)
+        _base_logger.setLevel(logging.DEBUG)
     else:
-        base_logger.setLevel(logging.INFO)
+        _base_logger.setLevel(logging.INFO)
+
+    # every logger must have at least one handler, so we have to account
+    # for the case in which everything else is turned off
+    _null_handler = logging.NullHandler()
+    _base_logger.addHandler(_null_handler)
 
     # status log
     if cfg['status_log']:
@@ -3138,12 +3146,12 @@ def init_logging_main():
                           FULL_DATE_FORMAT))
         # (syslog uses %e instead of %d, but it's less portable)
         status_log_handler.setFormatter(status_log_formatter)
-        base_logger.addHandler(status_log_handler)
+        _base_logger.addHandler(status_log_handler)
 
     #syslog
     if cfg['use_syslog']:
         _syslog_handler = init_syslog()
-        base_logger.addHandler(_syslog_handler)
+        _base_logger.addHandler(_syslog_handler)
 
     # specific to status messages
     status_logger = logging.getLogger(__name__ + '.status')
@@ -3168,12 +3176,12 @@ def init_logging_main():
                                         cfg['alert_emails_subject'],
                                         cfg['alert_emails_cred'],
                                         cfg['alert_emails_sec'])
+        email_logger.addHandler(email_handler)
     else:
         # if we turn off propagation temporarily (see
         # logging_email_stop_logging()), we will get errors unless
         # there's a handler
-        email_handler = logging.NullHandler()
-    email_logger.addHandler(email_handler)
+        email_logger.addHandler(_null_handler)
 
 
 def logging_stop_syslog():
@@ -3183,10 +3191,12 @@ def logging_stop_syslog():
     syslog frequently goes to a world-readable file!
     Call logging_start_stdouterr() when done.
     Dependencies:
-        globals: base_logger, _syslog_handler
+        config settings: use syslog
+        globals: cfg, _base_logger, _syslog_handler
         modules: logging
     """
-    base_logger.removeHandler(_syslog_handler)
+    if cfg['use_syslog']:
+        _base_logger.removeHandler(_syslog_handler)
 
 
 def logging_start_syslog():
@@ -3194,10 +3204,12 @@ def logging_start_syslog():
     Turn on syslog in the loggers.
     See logging_stop_syslog().
     Dependencies:
-        globals: base_logger, _syslog_handler
+        config settings: use syslog
+        globals: cfg, _base_logger, _syslog_handler
         modules: logging
     """
-    base_logger.addHandler(_syslog_handler)
+    if cfg['use_syslog']:
+        _base_logger.addHandler(_syslog_handler)
 
 
 def logging_stop_stdouterr():
@@ -3207,12 +3219,14 @@ def logging_stop_stdouterr():
     printed.
     Call logging_start_stdouterr() when done.
     Dependencies:
-        globals: status_logger, alert_logger, _stdout_handler,
+        config settings: quiet
+        globals: cfg, status_logger, alert_logger, _stdout_handler,
                  _stderr_handler
         modules: logging
     """
-    status_logger.removeHandler(_stdout_handler)
-    alert_logger.removeHandler(_stderr_handler)
+    if not cfg['quiet']:
+        status_logger.removeHandler(_stdout_handler)
+        alert_logger.removeHandler(_stderr_handler)
 
 
 def logging_start_stdouterr():
@@ -3220,12 +3234,14 @@ def logging_start_stdouterr():
     Turn on stdout/stderr printing in the loggers.
     See logging_stop_stdouterr().
     Dependencies:
-        globals: status_logger, alert_logger, _stdout_handler,
+        config settings: quiet
+        globals: cfg, status_logger, alert_logger, _stdout_handler,
                  _stderr_handler
         modules: logging
     """
-    status_logger.addHandler(_stdout_handler)
-    alert_logger.addHandler(_stderr_handler)
+    if not cfg['quiet']:
+        status_logger.addHandler(_stdout_handler)
+        alert_logger.addHandler(_stderr_handler)
 
 
 def logging_email_stop_logging():
@@ -3268,11 +3284,12 @@ def init_logging_output():
     run_with_logging().
 
     Dependencies:
-        config settings: output_log, output_log_layout, output_log_sep,
-                         output_log_date, (output_log_num),
-                         (output_log_days)
+        config settings: quiet, output_log, output_log_layout,
+                         output_log_sep, output_log_date,
+                         (output_log_num), (output_log_days)
         globals: cfg, output_logger, output_log_fo, email_logger,
-                 start_time, exitvals['startup']
+                 _null_handler, _stdout_handler, start_time,
+                 exitvals['startup']
         functions: fix_path(), rotate_prune_output_logs(), pps(),
                    end_logging_output
         modules: logging, sys, os, time, atexit
@@ -3288,8 +3305,7 @@ def init_logging_output():
             output_log_path += (cfg['output_log_sep'] +
                                 time.strftime(cfg['output_log_date'],
                                               time.localtime(start_time)))
-        # needed for prune_date_files(), for pruning by number
-        if cfg['output_log_layout'] == 'date':
+            # needed for prune_date_files(), for pruning by number
             touch_file(output_log_path, 'the output log', None,
                        use_logger=True, warn_only=False,
                        exit_val=exitvals['startup']['num'])
@@ -3304,7 +3320,8 @@ def init_logging_output():
     # this is for adding things like pre- and post-run status messages
     output_logger = logging.getLogger(__name__ + '.output')
     output_logger.propagate = False
-    output_logger.addHandler(_stdout_handler)
+    if not cfg['quiet']:
+        output_logger.addHandler(_stdout_handler)
     if cfg['output_log']:
         try:
             # appending is always safe / the right thing to do, because
@@ -3323,6 +3340,10 @@ def init_logging_output():
                                       e.strerror))
             sys.exit(exitvals['startup']['num'])
         output_logger.addHandler(output_handler)
+    # every logger must have at least one handler, so we have to account
+    # for the case in which everything is turned off
+    if cfg['quiet'] and not cfg['output_log']:
+        output_logger.addHandler(_null_handler)
 
     # output log file object, for use by (e.g.) run_with_logging()
     try:
@@ -5251,8 +5272,8 @@ script_disabled:
 def render_status(full=False):
     """
     Return the complete status string.
-    Doesn't print surrounding blank lines; add them if necessary in
-    context.
+    Doesn't include surrounding blank lines or trailing newline; add
+    them if necessary in context.
     Parameters:
         full: if true, include less-useful (e.g., debugging) info
     """
@@ -5914,8 +5935,8 @@ def render_config():
     Return a string containing the current config settings.
     Also includes config file names and CWD.
 
-    Doesn't print surrounding blank lines; add them if necessary in
-    context.
+    Doesn't include surrounding blank lines or trailing newline; add
+    them if necessary in context.
 
     Dependencies:
         config settings: (all)
