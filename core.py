@@ -3938,10 +3938,9 @@ def network_error_handler(e, verb, socket_descr, remote_host, remote_port,
                                  warn_only, exit_val)
 
 
-def test_remote_port(descr, remote_end, local_end=('', 0),
-                     s_family=socket.AF_INET, s_type=socket.SOCK_STREAM,
-                     s_proto=0, timeout=5, use_logger=False,
-                     warn_only=False, exit_val=exitvals['startup']['num']):
+def test_remote_port(descr, remote_end, local_end=('', 0), timeout=5,
+                     use_logger=False, warn_only=False,
+                     exit_val=exitvals['startup']['num']):
 
     """
     Test connecting to a remote network port.
@@ -3949,13 +3948,11 @@ def test_remote_port(descr, remote_end, local_end=('', 0),
     Parameters:
         descr: a string describing what we're testing, used in messages
                like ''
-        remote_end: a (host, port) tuple; host can be a hostname
+        remote_end: a (host, port) tuple; host can be a hostname, IPv4
+                    address, or IPv6 address
         local end: a (host, port) tuple; for the defaults, host can be
                    '' and port can be 0 (individually)
                    * only available if using Python 2.7/3.2
-        s_family: socket.AF_INET (IPv4) or socket.AF_INET6 (IPv6)
-        s_type: socket.sock_STREAM (TCP) or socket.SOCK_DGRAM (UDP)
-        s_proto: socket protocol, usually 0 (IP)
         timeout: number of seconds to wait for the connection to be
                  established, or None to wait forever
         see generic_error_handler() for the rest
@@ -3982,15 +3979,12 @@ def test_remote_port(descr, remote_end, local_end=('', 0),
                            'is not 2.7/3.2; exiting.')
         sys.exit(exitvals['internal']['num'])
 
-    # create the socket
-    s = socket.socket(s_family, s_type, s_proto)
-
     # try to connect
     try:
         if local_support:
-            socket.create_connection(remote_end, timeout, local_end)
+            s = socket.create_connection(remote_end, timeout, local_end)
         else:
-            socket.create_connection(remote_end, timeout)
+            s = socket.create_connection(remote_end, timeout)
         connected = True
     except (socket.error, socket.herror, socket.gaierror,
             socket.timeout) as e:
@@ -4000,11 +3994,12 @@ def test_remote_port(descr, remote_end, local_end=('', 0),
         connected = False
 
     # shut down the socket; not sure if this can throw exceptions
-    try:
-        socket.shutdown(socket.SHUT_RDWR)
-    except (socket.error, socket.herror, socket.gaierror,
-            socket.timeout) as e:
-        pass
+    if connected:
+        try:
+            s.shutdown(socket.SHUT_RDWR)
+        except (socket.error, socket.herror, socket.gaierror,
+                socket.timeout) as e:
+            pass
 
     return connected
 
