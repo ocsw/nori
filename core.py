@@ -569,6 +569,7 @@ import logging.handlers
 import copy
 import subprocess
 import select
+import threading
 import re
 import pprint
 import operator
@@ -3479,21 +3480,39 @@ def multi_fan_out(stream_tuples):
                          they must have a readline() method, and for
                          output, they must have write() and flush()
                          methods
+                       * input elements may only appear once, but output
+                         elements may be duplicated
 
     Dependencies:
-        modules: os, select
+        modules: os, select, errno
 
     """
 
+    def fdopen_list(fd, mode='r', bufsize=None):
+        """
+        Wrapper for os.fdopen() that also keeps track of files.
+        If we create file objects from duplicate file descriptors, when
+        they go out of scope and are automatically closed, we'll get
+        errors.  Instead, we'll keep track and close them ourselves.
+        """
+        if bufsize is None:
+            fo = os.fdopen(fd, mode)
+        else:
+            fo = os.fdopen(fd, mode, bufsize)
+        fo_list.append(fo)
+        return fo
+
+    fo_list = []
     stream_dict = {}
     for i, out_list in stream_tuples:
         if isinstance(i, int):
             # have to use {} notation to have expressions as keys
             stream_dict.update({
                 i: dict(
-                    out_list=[os.fdopen(o, 'a') if isinstance(o, int) else o
-                                                for o in out_list],
-                    in_obj=os.fdopen(i, 'r'),
+                    out_list=[fdopen_list(o, 'a')
+                                  if isinstance(o, int) else o
+                                  for o in out_list],
+                    in_obj=fdopen_list(i, 'r'),
                     in_eof=False,
                 )
             })
@@ -3501,8 +3520,9 @@ def multi_fan_out(stream_tuples):
             # have to use {} notation to have expressions as keys
             stream_dict.update({
                 i.fileno(): dict(
-                    out_list=[os.fdopen(o, 'a') if isinstance(o, int) else o
-                                                for o in out_list],
+                    out_list=[fdopen_list(o, 'a')
+                                  if isinstance(o, int) else o
+                                  for o in out_list],
                     in_obj=i,
                     in_eof=False,
                 )
@@ -3518,8 +3538,18 @@ def multi_fan_out(stream_tuples):
             for o in stream_dict[i]['out_list']:
                 o.write(line)
                 o.flush()
-        if True in [i_dict['in_eof'] for i, i_dict in stream_dict.items()]:
+        if False not in [i_dict['in_eof']
+                             for i, i_dict in stream_dict.items()]:
             break
+
+    for fo in fo_list:
+        try:
+            fo.close()
+        except IOError as e:
+            if e.errno == errno.EBADF:
+                pass  # already closed
+            else:
+                raise
 
 
 def render_command_exception(e):
@@ -3593,6 +3623,8 @@ def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
         modules: copy, os, subprocess, threading, sys, atexit
 
     """
+
+    global _devnull_fo, _atexit_kill_bg_commands_registered
 
     # sanity check
     if (stdin == subprocess.PIPE or
@@ -3719,7 +3751,7 @@ def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
     Returns a tuple: (exit value, was_already_dead?).
 
     First tries SIGTERM, then sends SIGKILL if the process is still
-    running.
+    running one second later.
 
     May raise a TimeoutExpired exception (see wait_timeout).
 
@@ -3728,7 +3760,7 @@ def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
     can't be removed).
 
     Parameters:
-        p.obj: the process object for the command
+        p_obj: the process object for the command
         timeout: how long to wait after sending SIGTERM to send SIGKILL
                  (in seconds); if 0, don't send SIGKILL, just wait for
                  the process to die
@@ -3758,41 +3790,42 @@ def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
             _running_bg_commands.remove(p)
 
     # is it already dead?
-    if p.poll() is not None:
-        cleanup(p)
-        return (p.wait(), True)
+    if p_obj.poll() is not None:
+        cleanup(p_obj)
+        return (p_obj.wait(), True)
 
     # SIGTERM
     try:
-        p.terminate()
+        p_obj.terminate()
     except OSError:
-        # apparently happens only if it's dead and p.wait() was already
-        # called
+        # apparently happens only if it's dead and p_obj.wait() was
+        # already called
         pass
-    if p.poll() is not None:
-        cleanup(p)
-        return (p.wait(), False)
+    time.sleep(1)
+    if p_obj.poll() is not None:
+        cleanup(p_obj)
+        return (p_obj.wait(), False)
 
     # SIGKILL
     if kill_timeout != 0:
         for i in range(kill_timeout):
             time.sleep(1)
-            if p.poll() is not none:
-                cleanup(p)
-                return (p.wait(), False)
+            if p_obj.poll() is not None:
+                cleanup(p_obj)
+                return (p_obj.wait(), False)
     try:
-        p.kill()
+        p_obj.kill()
     except OSError:
-        # apparently happens only if it's dead and p.wait() was already
-        # called
+        # apparently happens only if it's dead and p_obj.wait() was
+        # already called
         pass
-    cleanup(p)
+    cleanup(p_obj)
 
     # hopefully it's actually dead by now, otherwise this could hang
     if sys.hexversion >= 0x03030000:
-        return (p.wait(wait_timeout), False)
+        return (p_obj.wait(wait_timeout), False)
     else:
-        return (p.wait(), False)
+        return (p_obj.wait(), False)
 
 
 def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
@@ -3833,12 +3866,12 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
     # print the command
     if cfg['print_cmds']:
         cmd_msg = 'Running command:\n'
-        cmd_msg += ' '.join(map(pps, cmd)) + '\n'
+        cmd_msg += '    ' + ' '.join(map(pps, cmd)) + '\n'
         if env_add is not None:
             cmd_msg += 'with environment additions:\n'
             for k, v in sorted(env_add.items(),
                                key=operator.itemgetter(0)):
-                cmd_msg += k + '=' + pps(v) + '\n'
+                cmd_msg += '    ' + k + '=' + pps(v) + '\n'
         print(cmd_msg.strip(), file=output_log_fo)  # no stdout yet
         status_logger.info(cmd_msg.strip())
 
@@ -3856,7 +3889,7 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
             stderr = [output_log_fo, sys.stdout]
 
     # run the command
-    ret = run_command(cmd, stdout, stderr, bg, atexit_reg, env_add,
+    ret = run_command(cmd, None, stdout, stderr, bg, atexit_reg, env_add,
                       **kwargs)
 
     # backgrounded?  return the Popen object
@@ -3900,7 +3933,7 @@ def network_error_handler(e, verb, socket_descr, remote_host, remote_port,
     """
     msg = ('could not {0} {1}\n'
            '(remote: {2}:{3})' .
-           format(verb, socket_descr, remote_host, remote_socket))
+           format(verb, socket_descr, remote_host, remote_port))
     return generic_error_handler(e, msg, render_io_exception, use_logger,
                                  warn_only, exit_val)
 
