@@ -1686,9 +1686,9 @@ Available options:
     'date': log to date-suffixed files (all suffixed, including the most
             recent; see output_log_date)
 
-For example, if output_log is '{0}.log', output_log_layout is 'number',
-and output_log_sep is '.', the second-most-recent file will be named
-'{0}.log.1'.
+For example, if output_log is '{0}.log', output_log_layout
+is 'number', and output_log_sep is '.', the second-most-recent file will be
+named '{0}.log.1'.
 
 Ignored if output_log is None.
 '''.format(script_name)
@@ -3567,7 +3567,7 @@ def render_command_exception(e):
 
 
 def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
-                atexit_reg=True, env_add=None, **kwargs):
+                atexit_reg=True, daemon=True, env_add=None, **kwargs):
 
     """
     Run an external command, with flexible input/output targeting.
@@ -3605,6 +3605,9 @@ def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
             Popen object for the process
         atexit_reg: if true, and if bg is true, register a callback to
                     kill the command on exit
+        daemon: if true, and if bg is true, make the associated thread a
+                daemon thread (i.e. kill it when everything else is
+                done; otherwise, even sys.exit() won't kill it)
         env_add: if not None, a dictionary of keys and values to add to
                  the environment in which the command will run; this is
                  added to the current environment if there is no env
@@ -3722,6 +3725,7 @@ Exiting.''' .
         else:
             t = threading.Thread(target=multi_fan_out,
                                  args=(stream_tuples, ))
+            t.daemon = daemon
             t.start()
             if atexit_reg:
                 if p not in _running_bg_commands:
@@ -3831,7 +3835,8 @@ def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
 
 
 def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
-                     bg=False, atexit_reg=True, env_add=None, **kwargs):
+                     bg=False, atexit_reg=True, daemon=True, env_add=None,
+                     **kwargs):
 
     """
     Run a command and log its output to the output log and stdout.
@@ -3891,8 +3896,8 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
             stderr = [output_log_fo, sys.stdout]
 
     # run the command
-    ret = run_command(cmd, None, stdout, stderr, bg, atexit_reg, env_add,
-                      **kwargs)
+    ret = run_command(cmd, None, stdout, stderr, bg, atexit_reg, daemon,
+                      env_add, **kwargs)
 
     # backgrounded?  return the Popen object
     if bg:
@@ -5232,7 +5237,8 @@ Status:
                 'be running).\n' .
                 format(tasks_name.capitalize()))
 
-    # hooks for adding more messages
+    # hooks for adding more messages;
+    # should leave a single trailing newline in msg
     for hook in render_status_messages_hooks:
         if callable(hook):
             msg = hook(msg, full)
@@ -5293,7 +5299,8 @@ script_disabled:
                                     '(none)'))
           )
 
-    # hooks for adding more metadata
+    # hooks for adding more metadata;
+    # should not leave a trailing newline in msg
     for hook in render_status_metadata_hooks:
         if callable(hook):
             msg = hook(msg, full)
@@ -6188,10 +6195,14 @@ def create_arg_parser():
     script_modes_list = []
     script_modes_descr = 'available modes:\n'
     for m_name, m_dict in script_modes.items():
+        skip_mode = False
         if 'requires' in m_dict:
             for feature in m_dict['requires']:
                 if feature not in available_features:
-                    continue
+                    skip_mode = True
+        # wouldn't need this if Python had 'continue 2'
+        if skip_mode:
+            continue
         script_modes_list.append(m_name)
         if 'alias_of' not in m_dict:
             script_modes_descr += (re.sub('^', '  ',
@@ -6214,7 +6225,7 @@ def create_arg_parser():
     )
     cfg_arg_group.add_argument(
         '-f', action='append', dest='config_file_paths',
-        help=('config file paths; can be used more than once')
+        help='config file paths; can be used more than once'
     )
     arg_parser.add_argument(
         '-o', nargs=2, metavar=('SETTING', 'VALUE'), action='append',

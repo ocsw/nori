@@ -76,6 +76,7 @@ from pprint import pprint as pp  # for debugging
 import sys
 import atexit
 import shlex
+import time
 
 if sys.hexversion < 0x03000000:
     from types import *  # see constants, below
@@ -150,7 +151,7 @@ class SSH(object):
     # cleanup; see close_tunnels()
     # NOTE: * do not override them in subclasses
     #       * refer to them with SSH.var
-    atexit_close_tunnnels_registered = False
+    atexit_close_tunnels_registered = False
     open_tunnels = []  # actually contains SSH objects with open tunnels
 
 
@@ -179,7 +180,9 @@ class SSH(object):
             class vars: open_tunnels
             instance methods: close_tunnel()
         """
-        for ssh_obj in cls.open_tunnels:
+        import threading
+        # have to copy the array because close_tunnel() changes it
+        for ssh_obj in cls.open_tunnels[:]:
             ssh_obj.close_tunnel()
 
 
@@ -188,9 +191,8 @@ class SSH(object):
     #####################################
 
     def create_settings(self, heading='', extra_text='', ignore=None,
-                            extra_requires=[], tunnel=False,
-                            default_local_port=None,
-                            default_remote_port=None):
+                        extra_requires=[], tunnel=False,
+                        default_local_port=None, default_remote_port=None):
 
         """
         Add a block of SSH config settings to the script.
@@ -284,7 +286,8 @@ The username on the remote SSH host.
             # no default
             default_descr=(
 '''
-the ssh utility's default (generally the username the script is run by)
+the ssh utility's default (generally the username the script is
+run by)
 '''
             ),
             cl_coercer=str,
@@ -485,7 +488,7 @@ Can be None, to wait forever, or a number >= 1.
         if pd + 'ssh_port' in core.cfg:
             cmd += ['-p', str(core.cfg[pd + 'ssh_port'])]
         if pd + 'ssh_key_file' in core.cfg:
-            cmd += ['-i', core.cfg[pd + 'ssh_key_file']]
+            cmd += ['-i', core.fix_path(core.cfg[pd + 'ssh_key_file'])]
         if pd + 'ssh_options' in core.cfg:
             if isinstance(core.cfg[pd + 'ssh_options'], list):
                 cmd += core.cfg[pd + 'ssh_options']
@@ -512,12 +515,14 @@ Can be None, to wait forever, or a number >= 1.
         """
         pd = self._prefix + self._delim
         tunnel_arg = ['-L']
-        tunnel_arg.append(':'.join(core.cfg[pd + 'local_port'],
-                                   core.cfg[pd + 'remote_host'],
-                                   core.cfg[pd + 'remote_port']))
+        tunnel_arg.append(':'.join([
+            str(core.cfg[pd + 'local_port']),
+            core.cfg[pd + 'remote_host'],
+            str(core.cfg[pd + 'remote_port']),
+        ]))
         tunnel_arg.append('-N')
         cmd = self.get_cmd()
-        return cmd[0] + tunnel_arg + cmd[1:]
+        return [cmd[0]] + tunnel_arg + cmd[1:]
 
 
     def open_tunnel(self, descr, atexit_reg=True, use_logger=True,
@@ -545,7 +550,7 @@ Can be None, to wait forever, or a number >= 1.
             config settings: [_prefix+_delim+:] (remote_host),
                              (remote_port), local_host, local_port,
                              tun_timeout
-            modules: (subprocess), atexit, core
+            modules: (subprocess), atexit, time, core
             external commands: (ssh)
 
         """
@@ -570,17 +575,22 @@ Can be None, to wait forever, or a number >= 1.
         # test the tunnel
         waited = 0
         while True:
-            # keep trying with 1-sec timeouts because the tunnel might
-            # take a while to come up; if we try once with a long
-            # timeout, we might catch it while it's still connecting,
-            # even though it's fine
+            # The timeout value here is a bit tricky; in many cases,
+            # the call will return almost instantly because the OS isn't
+            # allowing connections to the port yet.  Even if the call
+            # would hang around waiting, we don't want to use a single
+            # long timeout, because we might catch it while it's still
+            # connecting, even though it's actually fine.  So as a
+            # compromise, we allow it to wait a tiny bit, but do the
+            # real timeout with time.sleep().
             if core.test_remote_port(descr,
                                      (core.cfg[pd + 'local_host'],
                                       core.cfg[pd + 'local_port']),
-                                     timeout=1, use_logger=None,
+                                     timeout=0.1, use_logger=None,
                                      warn_only=True):
                 connected = True
                 break
+            time.sleep(1)
             waited += 1
 
             # not working yet, but is it still running?
@@ -594,6 +604,7 @@ Can be None, to wait forever, or a number >= 1.
                         use_logger, warn_only, exit_val
                     )
                     connected = False
+                    break
             else:  # process is already dead
                 ssh_exit = p.wait()
                 msg = ('could not establish SSH tunnel for {0} '
@@ -603,6 +614,7 @@ Can be None, to wait forever, or a number >= 1.
                     warn_only, exit_val
                 )
                 connected = False
+                break
 
         if connected:
             self.p_obj = p
