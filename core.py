@@ -4035,12 +4035,14 @@ def _config_settings_extra():
                 try:
                     s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
                     s.connect(sock_path)
+                    s.close()
                 except IOError as e:
                     if e.errno == errno.EPROTOTYPE:
                         try:
                             s = socket.socket(socket.AF_UNIX,
                                               socket.SOCK_STREAM)
                             s.connect(sock_path)
+                            s.close()
                         except IOError:
                             continue
                          # looks like this needs to be SOCK_STREAM
@@ -4049,7 +4051,6 @@ def _config_settings_extra():
                             socket.SOCK_STREAM
                         )
                     continue
-                s.close()
                 found_it = True
                 config_settings['syslog_addr']['default'] = sock_path
                 break
@@ -4421,7 +4422,7 @@ def setting_check_len(setting_name, min_len, max_len):
           (max_len is not None and len(obj) > max_len)):
         if t in CONTAINER_TYPES:
             err_exit('Error: {0} contains an invalid number of elements '
-                     '({1}); exiting.'.format(obj_path, pps(len(obj))),
+                     '({1});\nexiting.'.format(obj_path, pps(len(obj))),
                      exitvals['startup']['num'])
         else:
             err_exit('Error: {0} is an invalid length ({1}); '
@@ -4555,8 +4556,8 @@ def setting_check_no_blanks(setting_name, stringish=False,
     t = setting_check_type(setting_name, CONTAINER_TYPES)
 
     # blanks?
-    if t in MAPPING_TYPES and mapping_values:
-        for k, v in enumerate(obj):
+    if (t in MAPPING_TYPES) and mapping_values:
+        for k, v in obj.items():
             if not isinstance(v, STRINGISH_TYPES if stringish
                                                  else STRING_TYPES):
                 err_exit('Error: {0} contains a non-string value; '
@@ -4567,8 +4568,9 @@ def setting_check_no_blanks(setting_name, stringish=False,
                 err_exit('Error: {0} contains a blank value; exiting.' .
                          format(obj_path),
                          exitvals['startup']['num'])
-    elif t in MAPPING_TYPES and not mapping_values:
-        for k, v in enumerate(obj):
+    elif (t in MAPPING_TYPES) and not mapping_values:
+        for k, v in obj.items():
+            print('asdf {0} {1} adfs'.format(k, v))
             if not isinstance(k, STRINGISH_TYPES if stringish
                                                  else STRING_TYPES):
                 err_exit('Error: {0} contains a non-string key; exiting.' .
@@ -4634,7 +4636,7 @@ def setting_check_kwargs(setting_name, stringish=False):
     setting_check_type(setting_name, MAPPING_TYPES)
 
     # non-identifiers?
-    for k, v in enumerate(obj):
+    for k, v in obj.items():
         if not isinstance(k, STRINGISH_TYPES if stringish
                                              else STRING_TYPES):
             err_exit('Error: {0} contains a non-string key; exiting.' .
