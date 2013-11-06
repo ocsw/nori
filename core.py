@@ -387,7 +387,7 @@ DOCSTRING CONTENTS:
     setting_check_no_blanks()
         If a container config setting contains any blanks, error/exit.
 
-    setting_check_kwargs(setting_name, stringish=False):
+    setting_check_kwargs()
         If a mapping config setting has a non-identifier key, error/exit.
 
     setting_check_no_char()
@@ -1788,8 +1788,10 @@ Ignored if output_log is None or output_log_layout is 'append'.
 # they exist for some DBMSes and not others
 #
 # top-level settings are already handled, so this should contain only
-# tuples matching sub-settings (e.g., ('alert_emails_sec', 3));
-# see the note about setting_names in the config functions section
+# tuples matching sub-settings (e.g., ('alert_emails_sec', 3); see the
+# note about setting_names in the config functions section);
+# however, setting lengths should be checked in validate_config(), so
+# I'm not sure when this will actually be useful
 #
 # see also check_bogus_config()
 #
@@ -5775,6 +5777,7 @@ def validate_config():
         setting_check_type('exec_path', STRING_TYPES)
     if 'umask' in cfg:
         setting_check_num('umask', 0, 511)  # 511 = 0o777
+    setting_check_type('print_cmds', bool)
     setting_check_type('debug', bool)
     setting_check_num('run_every', 0)
     setting_check_filedir_create('last_started_file', 'f')
@@ -5855,7 +5858,7 @@ def validate_config():
         setting_check_list('output_log_layout',
                            ['append', 'number', 'date'])
         setting_check_no_char('output_log_sep', PATH_SEP)
-        setting_check_not_blank('output_log_date', PATH_SEP)
+        setting_check_not_blank('output_log_date')
         setting_check_no_char('output_log_date', PATH_SEP)
         if cfg['output_log_layout'] != 'append':
             setting_check_num('output_log_num', 0)
@@ -6043,7 +6046,7 @@ def log_cl_config():
     # log the list of config files
     if config_file_paths is None:
         status_logger.info('Config file: (none)')
-    if len(config_file_paths) == 1:
+    elif len(config_file_paths) == 1:
         status_logger.info('Config file: {0}'.format(config_file_paths[0]))
     else:
         status_logger.info('Config files: {0}'.format(config_file_paths[0]))
