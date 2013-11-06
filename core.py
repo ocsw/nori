@@ -5057,7 +5057,7 @@ def check_status():
                 alert_logger.error(
                     'Could not create the lockfile directory\n'
                     '(previous {0} still running or failed?); exiting.' .
-                    format(task_name.capitalize())
+                    format(task_name)
                 )
             # don't actually exit yet
 
@@ -5083,7 +5083,7 @@ def check_status():
                         'Could not create the lockfile directory\n'
                         '(previous {0} still running or failed?); '
                         'exiting.' .
-                        format(task_name.capitalize())
+                        format(task_name)
                     )
                 logging_email_start_logging()
                 sys.exit(exitvals['lockfile']['num'])
@@ -5141,7 +5141,7 @@ def check_status():
                 email_logger.error(
                     'Could not create the lockfile directory\n'
                     '(previous {0} still running or failed?); exiting.' .
-                    format(task_name.capitalize())
+                    format(task_name)
                 )
             logging_email_start_logging
             sys.exit(exitvals['lockfile']['num'])
@@ -5503,7 +5503,7 @@ def enable_script():
     # print and log status, separately
     print('\n{0} have been re-enabled.\n'
           '\nIf {1} {2} is not currently running, you should now remove the'
-          '\nlockfile with the unlock command.\n' .
+          '\nlockfile with the clearlock command.\n' .
           format(tasks_name.capitalize(), task_article, task_name))
     logging_stop_stdouterr()
     log_cl_config()  # to help interpret the status message
@@ -5610,8 +5610,9 @@ def import_file(file_path):
         module = ModuleType(mod_name)
 
     # note: can't supply a file directly to exec in Python3
-    exec(compile(open(file_path, 'U').read(), file_path, 'exec'),
+    exec(compile(open(file_path, 'U').read(), fix_path(file_path), 'exec'),
          module.__dict__)
+    module.__file__ = fix_path(file_path)
     sys.modules[mod_name] = module
 
     return (mod_name, module)
