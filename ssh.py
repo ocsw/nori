@@ -151,8 +151,8 @@ class SSH(object):
     # cleanup; see close_tunnels()
     # NOTE: * do not override them in subclasses
     #       * refer to them with SSH.var
-    atexit_close_tunnels_registered = False
-    open_tunnels = []  # actually contains SSH objects with open tunnels
+    _atexit_close_tunnels_registered = False
+    _open_tunnels = []  # contains SSH objects with open tunnels
 
 
     ###############
@@ -177,12 +177,12 @@ class SSH(object):
         NOTE: * do not override in subclasses
               * call with SSH.close_tunnels()
         Dependencies:
-            class vars: open_tunnels
+            class vars: _open_tunnels
             instance methods: close_tunnel()
         """
         import threading
         # have to copy the array because close_tunnel() changes it
-        for ssh_obj in cls.open_tunnels[:]:
+        for ssh_obj in cls._open_tunnels[:]:
             ssh_obj.close_tunnel()
 
 
@@ -544,7 +544,7 @@ Can be None, to wait forever, or a number >= 1.
             see core.generic_error_handler() for the rest
 
         Dependencies:
-            class vars: atexit_close_tunnels_registered, open_tunnels
+            class vars: _atexit_close_tunnels_registered, _open_tunnels
             instance vars: _prefix, _delim, descr, p_obj
             methods: get_tunnel_cmd(), close_tunnels()
             config settings: [_prefix+_delim+:] (remote_host),
@@ -620,11 +620,11 @@ Can be None, to wait forever, or a number >= 1.
             self.p_obj = p
             core.status_logger.info('SSH tunnel for {0} established.' .
                                     format(descr))
-            if self not in SSH.open_tunnels:
-                SSH.open_tunnels.append(self)
-            if not SSH.atexit_close_tunnels_registered:
+            if self not in SSH._open_tunnels:
+                SSH._open_tunnels.append(self)
+            if not SSH._atexit_close_tunnels_registered:
                 atexit.register(SSH.close_tunnels)
-                SSH.atexit_close_tunnels_registered = True
+                SSH._atexit_close_tunnels_registered = True
             return p
         else:
             return False
@@ -637,7 +637,7 @@ Can be None, to wait forever, or a number >= 1.
         Can be called even if the tunnel already died / was closed / was
         killed.
         Dependencies:
-            class vars: open_tunnels
+            class vars: _open_tunnels
             instance vars: descr, p_obj
             modules: core
         """
@@ -648,5 +648,5 @@ Can be None, to wait forever, or a number >= 1.
         else:
             core.status_logger.info('SSH tunnel for {0} has been closed.' .
                                     format(self.descr))
-        if self in SSH.open_tunnels:
-            SSH.open_tunnels.remove(self)
+        if self in SSH._open_tunnels:
+            SSH._open_tunnels.remove(self)
