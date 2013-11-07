@@ -3641,13 +3641,16 @@ def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
 '''Internal Error: subprocess.PIPE may not be included in the arguments to
 run_command(); call was (in expanded notation):
 
-run_command(cmd={0}, stdin={1}, stdout={2},
-            stderr={3}, bg={4}, env_add={5},
-            kwargs={6})
+run_command(cmd={0},
+            stdin={1}, stdout={2}, stderr={3},
+            bg={4}, atexit_reg={5}, daemon={6},
+            env_add={7},
+            kwargs={8})
 
 Exiting.''' .
                            format(*map(pps, [cmd, stdin, stdout, stderr,
-                                             bg, env_add, kwargs]))
+                                             bg, atexit_reg, daemon,
+                                             env_add, kwargs]))
         )
         sys.exit(exitvals['internal']['num'])
 
@@ -3745,7 +3748,8 @@ def kill_bg_commands():
         globals: _running_bg_commands
         functions: kill_bg_command()
     """
-    for p_obj in _running_bg_commands:
+    # have to use a copy because kill_bg_command() changes the list
+    for p_obj in _running_bg_commands[:]:
         kill_bg_command(p_obj)
 
 
