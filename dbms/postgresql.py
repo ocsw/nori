@@ -224,7 +224,7 @@ anything other than a port number as the suffix.
 '''
 Port number for the {0} connection.
 
-Used for both TCP and socket connections; see {0}_host.
+Used for both TCP and socket connections; see {1}host.
 '''.format(self.DBMS_NAME, pd) +
 ('\nIgnored if {0}use_ssh_tunnel is True.'.format(pd) if tunnel else '')
         )
@@ -273,6 +273,7 @@ don't use any (such as getting the list of databases).
         pd = self._prefix + self._delim
 
         # pd + 'host': first try to find a socket, then fall back to TCP
+        found_socket = False
         for d in self.SOCKET_SEARCH_PATH:
             f = d + '/.s.PGSQL.' + str(core.cfg[pd + 'port'])
             if (core.check_file_type(f, 'PostgreSQL socket', type_char='s',
@@ -282,8 +283,9 @@ don't use any (such as getting the list of databases).
                                          file_rwx='rw', use_logger=None,
                                          warn_only=True)):
                 core.config_settings[pd + 'host']['default'] = f
+                found_socket = True
                 break
-        if pd + 'host' not in core.config_settings:
+        if not found_socket:
             core.config_settings[pd + 'host']['default'] = '127.0.0.1'
 
         # pd + 'port', pd + 'remote_port': clarify default

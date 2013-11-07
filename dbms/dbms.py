@@ -787,14 +787,18 @@ Options must be supplied as a dict.
         if self._tunnel_config:
             core.setting_check_type(pd + 'use_ssh_tunnel', (bool, ))
         if not self._tunnel_config or not core.cfg[pd + 'use_ssh_tunnel']:
-            if (pd + 'protocol' in core.cfg and
-                   core.cfg[pd + 'protocol'] == 'tcp'):
+            # have to allow for DBMSes that don't have a protocol
+            if (pd + 'protocol' not in core.config_settings or
+                  (pd + 'protocol' in core.cfg and
+                   core.cfg[pd + 'protocol'] == 'tcp')):
                 if pd + 'host' in core.cfg:
                     core.setting_check_not_blank(pd + 'host')
                 if pd + 'port' in core.cfg:
                     core.setting_check_num(pd + 'port', 1, 65535)
-            if (pd + 'protocol' in core.cfg and
-                   core.cfg[pd + 'protocol'] == 'socket'):
+            # have to allow for DBMSes that don't have a protocol
+            if (pd + 'protocol' not in core.config_settings or
+                  (pd + 'protocol' in core.cfg and
+                   core.cfg[pd + 'protocol'] == 'socket')):
                 if pd + 'socket_file' in core.cfg:
                     core.setting_check_file_type(pd + 'socket_file', 's')
                     core.setting_check_file_access(pd + 'socket_file', 'rw')
@@ -830,14 +834,18 @@ Options must be supplied as a dict.
             self._conn_args['host'] = core.cfg[pd + 'local_host']
             self._conn_args['port'] = core.cfg[pd + 'local_port']
         else:
-            if (pd + 'protocol' in core.cfg and
-                   core.cfg[pd + 'protocol'] == 'tcp'):
+            # have to allow for DBMSes that don't have a protocol
+            if (pd + 'protocol' not in core.config_settings or
+                  (pd + 'protocol' in core.cfg and
+                   core.cfg[pd + 'protocol'] == 'tcp')):
                 if pd + 'host' in core.cfg:
                     self._conn_args['host'] = core.cfg[pd + 'host']
                 if pd + 'port' in core.cfg:
                     self._conn_args['port'] = core.cfg[pd + 'port']
-            if (pd + 'protocol' in core.cfg and
-                   core.cfg[pd + 'protocol'] == 'socket'):
+            # have to allow for DBMSes that don't have a protocol
+            if (pd + 'protocol' not in core.config_settings or
+                  (pd + 'protocol' in core.cfg and
+                   core.cfg[pd + 'protocol'] == 'socket')):
                 if pd + 'socket_file' in core.cfg:
                     self._conn_args['unix_socket'] = (
                         core.cfg[pd + 'socket_file']
@@ -993,7 +1001,7 @@ Options must be supplied as a dict.
         """
         if not cls.supports(method_name):
             core.email_logger.error(
-                "Internal Error: {0}() was called on a {1} object,"
+                "Internal Error: {0}() was called on a {1} object,\n"
                 "which doesn't support it; exiting." .
                 format(method_name, cls.DBMS_NAME)
             )
@@ -1720,6 +1728,7 @@ Options must be supplied as a dict.
         Parameters:
             cur: the cursor to use; if None, the main cursor is used
         """
+        self.check_supports_method('get_db_list')
         return (False, None)  # no generic version of this function
 
 
@@ -1736,4 +1745,5 @@ Options must be supplied as a dict.
             cur: the cursor to use; if None, the main cursor is used
             db_name: the database to change to
         """
+        self.check_supports_method('change_db')
         return False  # no generic version of this function
