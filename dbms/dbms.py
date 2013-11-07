@@ -87,6 +87,9 @@ DOCSTRING CONTENTS:
         close_cursors()
             Class method: Close all DBMS cursors.
 
+        close_conn_cursors()
+            Close all cursors for this DBMS connection.
+
 
         Startup and Config File Processing
         ----------------------------------
@@ -241,6 +244,7 @@ from __future__ import print_function
 
 from pprint import pprint as pp  # for debugging
 
+import sys
 import getpass
 import atexit
 
@@ -425,7 +429,8 @@ class DBMS(object):
             class vars: _open_conns
             instance methods: close()
         """
-        for dbms_obj in cls._open_conns:
+        # have to use a copy because close() changes the list
+        for dbms_obj in cls._open_conns[:]:
             dbms_obj.close()
 
 
@@ -439,8 +444,26 @@ class DBMS(object):
             class vars: _open_cursors
             instance methods: close_cursor()
         """
-        for (dbms_obj, cur) in cls._open_cursors:
+        # have to use a copy because close_cursor() changes the list
+        for (dbms_obj, cur) in cls._open_cursors[:]:
             dbms_obj.close_cursor(cur)
+
+
+    def close_conn_cursors(self, force_no_exit=True):
+        """
+        Close all cursors for this DBMS connection.
+        Parameters:
+            force_no_exit: if True, don't exit on errors/warnings,
+                           regardless of the values of err_no_exit and
+                           warn_no_exit
+        Dependencies:
+            class vars: _open_cursors
+            instance methods: close_cursor()
+        """
+        # have to use a copy because close_cursor() changes the list
+        for (dbms_obj, cur) in DBMS._open_cursors[:]:
+            if dbms_obj == self:
+                dbms_obj.close_cursor(cur, force_no_exit)
 
 
     #####################################
@@ -501,10 +524,10 @@ class DBMS(object):
 '''
 Use an SSH tunnel for the {0} connection (True/False)?
 
-If True, specify the host in {0}_ssh_host and the port in
-{0}_remote_port instead of {0}_host and
-{0}_port.
-'''.format(self.DBMS_NAME)
+If True, specify the host in {1}ssh_host and the port in
+{1}remote_port instead of {1}host and
+{1}port.
+'''.format(self.DBMS_NAME, pd)
                 ),
                 default=False,
                 cl_coercer=core.str_to_bool,
@@ -533,9 +556,8 @@ Protocol to use for the {0} connection.
 Can be:
     * 'tcp': use {1}host/port
     * 'socket': use {1}socket_file
-
-Ignored if {1}use_ssh_tunnel is True.
-'''.format(self.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd) +
+('\nIgnored if {0}use_ssh_tunnel is True.'.format(pd) if tunnel else '')
             ),
             default='tcp',
             cl_coercer=str,
@@ -545,10 +567,14 @@ Ignored if {1}use_ssh_tunnel is True.
             descr=(
 '''
 Remote hostname for the {0} connection.
-
-Ignored if {1}use_ssh_tunnel is True or if
-{1}protocol is not 'tcp'.
-'''.format(self.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd) +
+('''
+Ignored if {0}use_ssh_tunnel is True or if
+{0}protocol is not 'tcp'.
+'''.format(pd) if tunnel else
+'''
+Ignored if {0}protocol is not 'tcp'.
+'''.format(pd))
             ),
             default='localhost',
             cl_coercer=str,
@@ -558,10 +584,14 @@ Ignored if {1}use_ssh_tunnel is True or if
             descr=(
 '''
 Remote port number for the {0} connection.
-
-Ignored if {1}use_ssh_tunnel is True or if
-{1}protocol is not 'tcp'.
-'''.format(self.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd) +
+('''
+Ignored if {0}use_ssh_tunnel is True or if
+{0}protocol is not 'tcp'.
+'''.format(pd) if tunnel else
+'''
+Ignored if {0}protocol is not 'tcp'.
+'''.format(pd))
             ),
             # no default here; it should be set by subclasses
             cl_coercer=int,
@@ -571,11 +601,14 @@ Ignored if {1}use_ssh_tunnel is True or if
             descr=(
 '''
 Path to the socket file for the {0} connection.
-
-
-Ignored if {1}use_ssh_tunnel is True or if
-{1}protocol is not 'socket'.
-'''.format(self.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd) +
+('''
+Ignored if {0}use_ssh_tunnel is True or if
+{0}protocol is not 'socket'.
+'''.format(pd) if tunnel else
+'''
+Ignored if {0}protocol is not 'socket'.
+'''.format(pd))
             ),
             # no default here; it should be set by subclasses
             cl_coercer=str,
@@ -695,9 +728,13 @@ Options must be supplied as a dict.
         Dependencies:
             instance vars: _prefix, _delim
             config settings: [_prefix+_delim+:] use_ssh_tunnel
+            instance vars: _ignore
             modules: core
+            Python: 2.0/3.2, for callable()
         """
         pd = self._prefix + self._delim
+        if callable(self._ignore) and self._ignore():
+            return True
         return not core.cfg[pd + 'use_ssh_tunnel']
 
 
@@ -750,22 +787,21 @@ Options must be supplied as a dict.
         if self._tunnel_config:
             core.setting_check_type(pd + 'use_ssh_tunnel', (bool, ))
         if not self._tunnel_config or not core.cfg[pd + 'use_ssh_tunnel']:
-            if (pd + 'protocol' not in core.config_settings or
-                  (pd + 'protocol' in core.cfg and
-                   core.cfg[pd + 'protocol'] == 'tcp')):
+            if (pd + 'protocol' in core.cfg and
+                   core.cfg[pd + 'protocol'] == 'tcp'):
                 if pd + 'host' in core.cfg:
                     core.setting_check_not_blank(pd + 'host')
                 if pd + 'port' in core.cfg:
                     core.setting_check_num(pd + 'port', 1, 65535)
-            elif (pd + 'protocol' not in core.config_settings or
-                  (pd + 'protocol' in core.cfg and
-                   core.cfg[pd + 'protocol'] == 'socket')):
+            if (pd + 'protocol' in core.cfg and
+                   core.cfg[pd + 'protocol'] == 'socket'):
                 if pd + 'socket_file' in core.cfg:
-                    core.setting_check_file_rw(pd + 'socket_file')
+                    core.setting_check_file_type(pd + 'socket_file', 's')
+                    core.setting_check_file_access(pd + 'socket_file', 'rw')
         if pd + 'user' in core.cfg:
             core.setting_check_not_blank(pd + 'user')
         if pd + 'password' in core.cfg:
-            core.setting_check_not_blank(pd + 'password')
+            core.setting_check_type(pd + 'password', core.STRING_TYPES)
         if pd + 'password' not in core.cfg and pd + 'pw_file' in core.cfg:
             core.setting_check_file_read(pd + 'pw_file')
         if pd + 'connect_db' in core.cfg:
@@ -794,16 +830,14 @@ Options must be supplied as a dict.
             self._conn_args['host'] = core.cfg[pd + 'local_host']
             self._conn_args['port'] = core.cfg[pd + 'local_port']
         else:
-            if (pd + 'protocol' not in core.config_settings or
-                  (pd + 'protocol' in core.cfg and
-                   core.cfg[pd + 'protocol'] == 'tcp')):
+            if (pd + 'protocol' in core.cfg and
+                   core.cfg[pd + 'protocol'] == 'tcp'):
                 if pd + 'host' in core.cfg:
                     self._conn_args['host'] = core.cfg[pd + 'host']
                 if pd + 'port' in core.cfg:
                     self._conn_args['port'] = core.cfg[pd + 'port']
-            elif (pd + 'protocol' not in core.config_settings or
-                  (pd + 'protocol' in core.cfg and
-                   core.cfg[pd + 'protocol'] == 'socket')):
+            if (pd + 'protocol' in core.cfg and
+                   core.cfg[pd + 'protocol'] == 'socket'):
                 if pd + 'socket_file' in core.cfg:
                     self._conn_args['unix_socket'] = (
                         core.cfg[pd + 'socket_file']
@@ -1048,7 +1082,8 @@ Options must be supplied as a dict.
                                core.exitvals['dbms_connect']['num'])
             if isinstance(e, self.MODULE.Error):
                 self.conn = None
-                self.ssh.close_tunnel()
+                if self._tunnel_config and core.cfg[pd + 'use_ssh_tunnel']:
+                    self.ssh.close_tunnel()
                 return False
         if self not in DBMS._open_conns:
             DBMS._open_conns.append(self)
@@ -1075,8 +1110,8 @@ Options must be supplied as a dict.
         Dependencies:
             class vars: DBMS_NAME, MODULE, _open_conns
             instance vars: _prefix, _delim, _tunnel_config, ssh, conn,
-                           cur, err_warn_only, err_no_exit, warn_no_exit
-            methods: close_cursor(), save_err_warn(),
+                           err_warn_only, err_no_exit, warn_no_exit
+            methods: close_conn_cursors(), save_err_warn(),
                      restore_err_warn(), error_handler()
             config settings: [_prefix+_delim+:] use_ssh_tunnel
             modules: (contents of MODULE), core, (ssh.SSH)
@@ -1085,41 +1120,42 @@ Options must be supplied as a dict.
 
         pd = self._prefix + self._delim
 
-        # main cursor, if any
-        if self.cur is not None:
-            self.close_cursor(None, force_no_exit)
-
-        # DBMS connection
-        err = False
+        # already closed?
         if self.conn is None:
             core.status_logger.info(
                 '{0} connection (config prefix/delim {1})\n'
                 'was already closed.' .
                 format(self.DBMS_NAME, core.pps(pd))
             )
-        else:
-            try:
-                self.conn.close()
-            except (self.MODULE.Warning, self.MODULE.Error) as e:
-                if force_no_exit:
-                    self.save_err_warn()
-                    self.err_no_exit = True
-                    self.warn_no_exit = True
-                self.error_handler(e, 'close connection to',
-                                   'closing connection to',
-                                   core.exitvals['dbms_connect']['num'])
-                if force_no_exit:
-                    self.restore_err_warn()
-                if (isinstance(e, self.MODULE.Error) and
-                      not self.err_warn_only):
-                    err = True
-            self.conn = None
-            if not err:
-                core.status_logger.info(
-                    '{0} connection (config prefix/delim {1})\n'
-                    'has been closed.' .
-                    format(self.DBMS_NAME, core.pps(pd))
-                )
+            return True
+
+        # cursors
+        self.close_conn_cursors(force_no_exit)
+
+        # DBMS connection
+        err = False
+        try:
+            self.conn.close()
+        except (self.MODULE.Warning, self.MODULE.Error) as e:
+            if force_no_exit:
+                self.save_err_warn()
+                self.err_no_exit = True
+                self.warn_no_exit = True
+            self.error_handler(e, 'close connection to',
+                               'closing connection to',
+                               core.exitvals['dbms_connect']['num'])
+            if force_no_exit:
+                self.restore_err_warn()
+            if (isinstance(e, self.MODULE.Error) and
+                  not self.err_warn_only):
+                err = True
+        self.conn = None
+        if not err:
+            core.status_logger.info(
+                '{0} connection (config prefix/delim {1})\n'
+                'has been closed.' .
+                format(self.DBMS_NAME, core.pps(pd))
+            )
         if self in DBMS._open_conns:
             DBMS._open_conns.remove(self)
 
@@ -1136,6 +1172,8 @@ Options must be supplied as a dict.
         Get a cursor for the DBMS connection.
 
         Returns the cursor object, or None on error.
+
+        Close with close_cursor(), NOT directly.
 
         Parameters:
             main: if True, treat this as the main cursor: store it in
@@ -1209,51 +1247,57 @@ Options must be supplied as a dict.
 
         pd = self._prefix + self._delim
 
-        main_str = 'main ' if cur is None else ''
-
-        err = False
+        # main and already closed?
         if cur is None and self.cur is None:
             core.status_logger.debug(
                 'Main {0} cursor (config prefix/delim {1})\n'
                 'was already closed.' .
                 format(self.DBMS_NAME, core.pps(pd))
             )
-        else:
-            try:
-                if cur is None:
-                    self.cur.close()
-                else:
-                    cur.close()
-            except (self.MODULE.Warning, self.MODULE.Error) as e:
-                if force_no_exit:
-                    self.save_err_warn()
-                    self.err_no_exit = True
-                    self.warn_no_exit = True
-                self.error_handler(
-                    e, 'close {0}cursor for'.format(main_str),
-                    'closing {0}cursor for'.format(main_str),
-                    core.exitvals['dbms_connect']['num']
-                )
-                if force_no_exit:
-                    self.restore_err_warn()
-                if (isinstance(e, self.MODULE.Error) and
-                      not self.err_warn_only):
-                    err = True
+            return True
+
+        main_str = 'main ' if cur is None else ''
+        err = False
+        try:
+            if cur is None:
+                self.cur.close()
+            else:
+                cur.close()
+        except (self.MODULE.Warning, self.MODULE.Error) as e:
+            if force_no_exit:
+                self.save_err_warn()
+                self.err_no_exit = True
+                self.warn_no_exit = True
+            self.error_handler(
+                e, 'close {0}cursor for'.format(main_str),
+                'closing {0}cursor for'.format(main_str),
+                core.exitvals['dbms_connect']['num']
+            )
+            if force_no_exit:
+                self.restore_err_warn()
+            if (isinstance(e, self.MODULE.Error) and
+                  not self.err_warn_only):
+                err = True
 
         if cur is None:
             self.cur = None
-            if (self, None) in DBMS._open_cursors:
-                DBMS._open_cursors.remove((self, None))
-        else:
-            cur = None
-            if (self, cur) in DBMS._open_cursors:
-                DBMS._open_cursors.remove((self, cur))
+        # no else; otherwise, we'd be setting cur = None, and then
+        # calling this function again with the same value of cur would
+        # refer to the main cursor
+
         if not err:
             core.status_logger.debug(
                 '{0}{1} cursor (config prefix/delim {2})\n'
                 'has been closed.' .
                 format(main_str.capitalize(), self.DBMS_NAME, core.pps(pd))
             )
+
+        if cur is None:
+            if (self, None) in DBMS._open_cursors:
+                DBMS._open_cursors.remove((self, None))
+        else:
+            if (self, cur) in DBMS._open_cursors:
+                DBMS._open_cursors.remove((self, cur))
 
         return not err
 
@@ -1554,8 +1598,8 @@ Options must be supplied as a dict.
         """
         self.check_supports_method('setinputsizes')
         cur = cur if cur else self.cur
-        ret = self.wrap_call(cur.setinputsizes, 'set input sizes on',
-                             'setting input sizes on', sizes)[0]
+        return self.wrap_call(cur.setinputsizes, 'set input sizes on',
+                              'setting input sizes on', sizes)[0]
 
 
     def setoutputsize(self, cur, size, column=None):
@@ -1579,11 +1623,11 @@ Options must be supplied as a dict.
         self.check_supports_method('setoutputsize')
         cur = cur if cur else self.cur
         if column is None:
-            ret = self.wrap_call(cur.setoutputsize, 'set output size on',
-                                 'setting output size on', size)[0]
+            return self.wrap_call(cur.setoutputsize, 'set output size on',
+                                  'setting output size on', size)[0]
         else:
-            ret = self.wrap_call(cur.setoutputsize, 'set output size on',
-                                 'setting output size on', size, column)[0]
+            return self.wrap_call(cur.setoutputsize, 'set output size on',
+                                  'setting output size on', size, column)[0]
 
 
     def commit(self):

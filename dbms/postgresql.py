@@ -173,14 +173,15 @@ class PostgreSQL(DBMS):
 
         pd = self._prefix + self._delim
 
-        # add notes about SSL
-        core.config_settings[pd + 'use_ssh_tunnel']['descr'] = (
+        if tunnel:
+            # add notes about SSL
+            core.config_settings[pd + 'use_ssh_tunnel']['descr'] = (
 '''
 Use an SSH tunnel for the {0} connection (True/False)?
 
-If True, specify the host in {0}_ssh_host and the port in
-{0}_remote_port instead of {0}_host and
-{0}_port.
+If True, specify the host in {1}ssh_host and the port in
+{1}remote_port instead of {1}host and
+{1}port.
 
 Note: to use {0}'s SSL support, you will need to add the
 necessary options to {1}connect_options:
@@ -192,7 +193,7 @@ necessary options to {1}connect_options:
     sslcrl
 See the {0} documentation for more information.
 '''.format(self.DBMS_NAME, pd)
-        )
+            )
 
         #
         # PostgreSQL combines tcp and socket into host
@@ -214,9 +215,8 @@ HOST and PORT are the given settings.
 Note: there is apparently no way, with {0}, to specify a
 relative directory or the full name of the socket file, or to use
 anything other than a port number as the suffix.
-
-Ignored if {1}use_ssh_tunnel is True.
-'''.format(self.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd) +
+('\nIgnored if {0}use_ssh_tunnel is True.'.format(pd) if tunnel else '')
         )
         # default is set in apply_config_defaults_extra()
 
@@ -225,9 +225,8 @@ Ignored if {1}use_ssh_tunnel is True.
 Port number for the {0} connection.
 
 Used for both TCP and socket connections; see {0}_host.
-
-Ignored if {1}use_ssh_tunnel is True.
-'''.format(self.DBMS_NAME, pd)
+'''.format(self.DBMS_NAME, pd) +
+('\nIgnored if {0}use_ssh_tunnel is True.'.format(pd) if tunnel else '')
         )
         core.config_settings[pd + 'port']['default'] = (
             self.DEFAULT_REMOTE_PORT
@@ -248,7 +247,9 @@ don't use any (such as getting the list of databases).
 
         # fix up descriptions we replaced
         if extra_text:
-            setting_list = ['use_ssh_tunnel', 'host', 'port', 'connect_db']
+            setting_list = ['host', 'port', 'connect_db']
+            if tunnel:
+                setting_list += ['use_ssh_tunnel']
             self.settings_extra_text(setting_list, extra_text)
 
         core.apply_config_defaults_hooks.append(

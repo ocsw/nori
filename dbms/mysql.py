@@ -168,14 +168,15 @@ class MySQL(DBMS):
 
         pd = self._prefix + self._delim
 
-        # add notes about SSL
-        core.config_settings[pd + 'use_ssh_tunnel']['descr'] = (
+        if tunnel:
+            # add notes about SSL
+            core.config_settings[pd + 'use_ssh_tunnel']['descr'] = (
 '''
 Use an SSH tunnel for the {0} connection (True/False)?
 
-If True, specify the host in {0}_ssh_host and the port in
-{0}_remote_port instead of {0}_host and
-{0}_port.
+If True, specify the host in {1}ssh_host and the port in
+{1}remote_port instead of {1}host and
+{1}port.
 
 Note: to use {0}'s SSL support, you will need to add the
 necessary options to {1}connect_options:
@@ -185,7 +186,7 @@ necessary options to {1}connect_options:
     ssl_verify_cert
 See the {0} documentation for more information.
 '''.format(self.DBMS_NAME, pd)
-        )
+            )
 
         #
         # fix some defaults
@@ -209,7 +210,9 @@ See the {0} documentation for more information.
 
         # fix up descriptions we replaced
         if extra_text:
-            setting_list = ['use_ssh_tunnel']
+            setting_list = []
+            if tunnel:
+                setting_list += ['use_ssh_tunnel']
             self.settings_extra_text(setting_list, extra_text)
 
         core.apply_config_defaults_hooks.append(
@@ -331,8 +334,6 @@ See the {0} documentation for more information.
         """
         if not self.execute(cur, 'SHOW DATABASES;', has_results=True):
             return (False, None)
-        print(self.cur.rowcount)
-        print(self.cur.with_rows)
         return self.fetchall(cur)
 
 
