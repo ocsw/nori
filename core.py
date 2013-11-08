@@ -3898,12 +3898,12 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
     # print the command
     if cfg['print_cmds']:
         cmd_msg = 'Running command:\n'
-        cmd_msg += '    ' + ' '.join(map(pps, cmd)) + '\n'
+        cmd_msg += ' '.join(map(pps, cmd)) + '\n'
         if env_add is not None:
             cmd_msg += 'with environment additions:\n'
             for k, v in sorted(env_add.items(),
                                key=operator.itemgetter(0)):
-                cmd_msg += '    ' + k + '=' + pps(v) + '\n'
+                cmd_msg += k + '=' + pps(v) + '\n'
         print(cmd_msg.strip(), file=output_log_fo)  # no stdout yet
         status_logger.info(cmd_msg.strip())
 
