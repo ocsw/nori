@@ -1274,11 +1274,11 @@ If unset, the system default will be used.
     renderer=oct,
 )
 
-config_settings['print_cmds'] = dict(
+config_settings['log_cmds'] = dict(
     descr=(
 '''
-For important external commands, print the commands themselves?
-Environment variables added to the commands are also printed, one per line.
+For important external commands, print/log the commands themselves?
+Environment variables added to the commands are also included, one per line.
 
 For example:
 
@@ -1288,7 +1288,7 @@ For example:
     A='B'
     PATH='/bin/:/usr/bin/'
 
-Commands printed are script-dependent.
+Which commands this applies to is script-dependent.
 
 Can be True or False.
 '''
@@ -3881,7 +3881,7 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
         see run_command() for the rest
 
     Dependencies:
-        config_settings: print_cmds
+        config_settings: log_cmds
         globals: cfg, output_logger, output_log_fo, status_logger,
                  FULL_DATE_FORMAT
         functions: run_command(), pps()
@@ -3896,7 +3896,7 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
                                             time.localtime())))
 
     # print the command
-    if cfg['print_cmds']:
+    if cfg['log_cmds']:
         cmd_msg = 'Running command:\n'
         cmd_msg += ' '.join(map(pps, cmd)) + '\n'
         if env_add is not None:
@@ -5809,7 +5809,7 @@ def validate_config():
         setting_check_type('exec_path', STRING_TYPES)
     if 'umask' in cfg:
         setting_check_num('umask', 0, 511)  # 511 = 0o777
-    setting_check_type('print_cmds', bool)
+    setting_check_type('log_cmds', bool)
     setting_check_type('debug', bool)
     setting_check_num('run_every', 0)
     setting_check_filedir_create('last_started_file', 'f')

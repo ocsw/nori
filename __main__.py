@@ -79,7 +79,7 @@ DOCSTRING CONTENTS:
         * run config_settings_no_print_output_log(False)
         * set these (in most cases):
           config_settings['exec_path']['no_print'] = False
-          config_settings['print_cmds']['no_print'] = False
+          config_settings['log_cmds']['no_print'] = False
 
     To add command-line modes:
         * add to script_modes

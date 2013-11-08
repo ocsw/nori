@@ -189,7 +189,7 @@ class SSH(object):
             # make output log settings invisible
             core.config_settings_no_print_output_log(True)
             core.config_settings['exec_path']['no_print'] = True
-            core.config_settings['print_cmds']['no_print'] = True
+            core.config_settings['log_cmds']['no_print'] = True
 
         When modifying, remember to keep the setting_list at the bottom
         and validate_config() in sync with the config settings.
@@ -229,7 +229,7 @@ class SSH(object):
         # make output log settings visible
         core.config_settings_no_print_output_log(False)
         core.config_settings['exec_path']['no_print'] = False
-        core.config_settings['print_cmds']['no_print'] = False
+        core.config_settings['log_cmds']['no_print'] = False
 
         pd = self._prefix + self._delim
         self._tunnel_config = tunnel
