@@ -380,7 +380,8 @@ The port number on the remote end of the SSH tunnel.
 '''
 Timeout for establishing the SSH tunnel, in seconds.
 
-Can be None, to wait forever, or a number >= 1.
+Can be None, to wait forever, or a number >= 2 (there is a minimum wait of
+one second).
 '''
                 ),
                 default=15,
@@ -461,7 +462,7 @@ Can be None, to wait forever, or a number >= 1.
             if (core.setting_check_type(pd + 'tun_timeout',
                                         core.NUMBER_TYPES + (NoneType, ))
                   is not NoneType):
-                core.setting_check_num(pd + 'tun_timeout', 0)
+                core.setting_check_num(pd + 'tun_timeout', 2)
 
 
     ##################################
