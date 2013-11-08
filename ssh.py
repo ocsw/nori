@@ -559,7 +559,8 @@ one second).
         # run the command
         p = core.run_with_logging(
             'SSH tunnel for {0}'.format(descr), self.get_tunnel_cmd(),
-            bg=True, atexit_reg=False
+            bg=True, atexit_reg=False, use_logger=use_logger,
+            warn_only=warn_only, exit_val=exit_val
         )
 
         # test the tunnel

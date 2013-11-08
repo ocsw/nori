@@ -313,13 +313,16 @@ DOCSTRING CONTENTS:
     Running External Commands:
     --------------------------
 
-    multi_fan_out()
-        Copy data from multiple streams to multiple streams, line by
-        line.
-
     render_command_exception()
         Return a formatted string for an external-command-related
         exception.
+
+    command_error_handler()
+        Handle external-command-related exceptions with various options.
+
+    multi_fan_out()
+        Copy data from multiple streams to multiple streams, line by
+        line.
 
     run_command()
         Run an external command, with flexible input/output targeting.
@@ -3488,10 +3491,42 @@ def generic_error_handler(e, msg, renderer=render_generic_exception,
 # running external commands
 ############################
 
+def render_command_exception(e):
+    """
+    Return a formatted string for an external-command-related exception.
+    Parameters:
+        e: the exception to render
+    """
+    if isinstance(e, OSError):
+        return 'Details: [Errno {0}] {1}'.format(e.errno, e.strerror)
+    else:
+        return 'Details: {0}'.format(e)
+
+
+def command_error_handler(e, cmd_descr, use_logger=False, warn_only=False,
+                          exit_val=exitvals['startup']['num']):
+    """
+    Handle external-command-related exceptions with various options.
+    If it returns, returns False.
+    Parameters:
+        cmd_descr: a string describing the command, used in messages
+                   like 'starting rsync backup'
+        see generic_error_handler() for the rest
+    Dependencies:
+        globals: exitvals['startup']
+        functions: generic_error_handler()
+    """
+    msg = ('problem running external {0} command'.format(cmd_descr))
+    return generic_error_handler(e, msg, render_command_exception,
+                                 use_logger, warn_only, exit_val)
+
+
 def multi_fan_out(stream_tuples):
 
     """
     Copy data from multiple streams to multiple streams, line by line.
+
+    May raise IOError exceptions.
 
     Parameters:
         stream_tuples: a list of tuples, each of which must have two
@@ -3575,31 +3610,22 @@ def multi_fan_out(stream_tuples):
                 raise
 
 
-def render_command_exception(e):
-    """
-    Return a formatted string for an external-command-related exception.
-    Parameters:
-        e: the exception to render
-    """
-    if isinstance(e, OSError):
-        return 'Details: [Errno {0}] {1}'.format(e.errno, e.strerror)
-    else:
-        return 'Details: {0}'.format(e)
-
-
-def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
-                atexit_reg=True, daemon=True, env_add=None, **kwargs):
+def run_command(cmd_descr, cmd, stdin=None, stdout=None, stderr=None,
+                bg=False, atexit_reg=True, daemon=True, use_logger=False,
+                warn_only=False, exit_val=exitvals['startup']['num'],
+                env_add=None, **kwargs):
 
     """
     Run an external command, with flexible input/output targeting.
 
-    Returns the command's exit value if bg is false.  If bg is true,
-    returns the Popen object for the process; the caller must ensure
-    that its wait() method is eventually called.
-
-    May raise exceptions: OSError or ValueError.
+    If the command fails, returns None.  Otherwise, if bg is false,
+    returns the command's exit value.  If bg is true, returns the Popen
+    object for the process; the caller must ensure that its wait()
+    method is eventually called.
 
     Parameters:
+        cmd_descr: a string describing the command, used in messages
+                   like 'starting rsync backup'
         cmd: a list containing the command and its arguments
         stdin: what to attach to the process' stdin stream; can be
                a file descriptor, a file object, None,
@@ -3638,10 +3664,11 @@ def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
                    will be overridden
                  * values must be strings, or a TypeError will be raised
         kwargs: passed to subprocess.Popen(); but see env_add
+        see command_error_handler() for the rest
 
     Dependencies:
-        globals: exitvals['internal'], exitvals['external'],
-                 email_logger, _devnull_fo,
+        globals: exitvals['startup'], exitvals['internal'],
+                 exitvals['external'], email_logger, _devnull_fo,
                  _atexit_kill_bg_commands_registered,
                  _running_bg_commands
         functions: scalar_to_list(), multi_fan_out(), pps(),
@@ -3662,16 +3689,19 @@ def run_command(cmd, stdin=None, stdout=None, stderr=None, bg=False,
 '''Internal Error: subprocess.PIPE may not be included in the arguments to
 run_command(); call was (in expanded notation):
 
-run_command(cmd={0},
-            stdin={1}, stdout={2}, stderr={3},
-            bg={4}, atexit_reg={5}, daemon={6},
-            env_add={7},
-            kwargs={8})
+run_command(cmd_descr={0},
+            cmd={1},
+            stdin={2}, stdout={3}, stderr={4},
+            bg={5}, atexit_reg={6}, daemon={7},
+            use_logger={8}, warn_only={9}, exit_val={10},
+            env_add={11},
+            kwargs={12})
 
 Exiting.''' .
-                           format(*map(pps, [cmd, stdin, stdout, stderr,
-                                             bg, atexit_reg, daemon,
-                                             env_add, kwargs]))
+                           format(*map(pps, [cmd_descr, cmd, stdin, stdout,
+                                             stderr, bg, atexit_reg, daemon,
+                                             use_logger, warn_only,
+                                             exit_val, env_add, kwargs]))
         )
         sys.exit(exitvals['internal']['num'])
 
@@ -3734,8 +3764,12 @@ Exiting.''' .
             kwargs['env'].update(env_add)
 
     # run the command
-    p = subprocess.Popen(cmd, stdin=stdin, stdout=real_stdout,
-                         stderr=real_stderr, **kwargs)
+    try:
+        p = subprocess.Popen(cmd, stdin=stdin, stdout=real_stdout,
+                             stderr=real_stderr, **kwargs)
+    except (OSError, ValueError) as e:
+        command_error_handler(e, cmd_descr, use_logger, warn_only, exit_val)
+        return None
 
     # deal with the output
     stream_tuples = []
@@ -3860,17 +3894,18 @@ def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
 
 
 def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
-                     bg=False, atexit_reg=True, daemon=True, env_add=None,
+                     bg=False, atexit_reg=True, daemon=True,
+                     use_logger=False, warn_only=False,
+                     exit_val=exitvals['startup']['num'], env_add=None,
                      **kwargs):
 
     """
     Run a command and log its output to the output log and stdout.
 
-    Returns the command's exit value if bg is false.  If bg is true,
-    returns the Popen object for the process; the caller must ensure
-    that its wait() method is eventually called.
-
-    May raise exceptions: OSError or ValueError.
+    If the command fails, returns None.  Otherwise, if bg is false,
+    returns the command's exit value.  If bg is true, returns the Popen
+    object for the process; the caller must ensure that its wait()
+    method is eventually called.
 
     Parameters:
         cmd_descr: a string describing the command, used in messages
@@ -3878,12 +3913,12 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
         log_stdout, log_stderr: if true, log the respective stream;
                                 if both are true, the streams will be
                                 combined
-        see run_command() for the rest
+        see run_command() and command_error_handler() for the rest
 
     Dependencies:
         config_settings: log_cmds
         globals: cfg, output_logger, output_log_fo, status_logger,
-                 FULL_DATE_FORMAT
+                 FULL_DATE_FORMAT, exitvals['startup']
         functions: run_command(), pps()
         modules: time, operator, subprocess, sys
 
@@ -3921,8 +3956,13 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
             stderr = [output_log_fo, sys.stdout]
 
     # run the command
-    ret = run_command(cmd, None, stdout, stderr, bg, atexit_reg, daemon,
-                      env_add, **kwargs)
+    ret = run_command(cmd_descr, cmd, None, stdout, stderr, bg, atexit_reg,
+                      daemon, use_logger, warn_only, exit_val, env_add,
+                      **kwargs)
+
+    # failure?
+    if ret is None:
+        return ret
 
     # backgrounded?  return the Popen object
     if bg:
