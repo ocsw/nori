@@ -1252,6 +1252,9 @@ Search path for executables.
 Typical safe value:
 '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
 
+Note: does not apply to running the script itself, or to anything that
+happens before the config file is processed.
+
 If unset, the system default will be used.
 '''
     ),
@@ -1268,6 +1271,9 @@ File-creation umask value.
 Generally 077 (more secure, but less accessible), or 022 (more
 accessible, but less secure; not necessarily a good idea); 077 is
 strongly recommended.
+
+Note: does not apply to anything that happens before the config file is
+processed.
 
 If unset, the system default will be used.
 '''
