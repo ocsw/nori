@@ -2261,7 +2261,7 @@ def check_filedir_create(file_path, file_label, create_type='f',
         see file_error_handler() for the rest
 
     Dependencies:
-        globals: exitvals['startup'], exitvals['internal']
+        globals: PATH_SEP, exitvals['startup'], exitvals['internal']
         functions: fix_path(), check_file_type(), check_file_access(),
                    parentdir(), pps()
         modules: os
@@ -2286,6 +2286,13 @@ Exiting.''' .
         )
 
     # file/directory type and access
+    if create_type == 'f' and (fix_path(file_path)[-1] in PATH_SEP):
+        generic_error_handler(
+            None,
+            '{0} ({1}) may not end with a {2} character' .
+                format(file_label, pps(file_path), fix_path(file_path)[-1]),
+            use_logger=use_logger, warn_only=warn_only, exit_val=exit_val
+        )
     if os.path.exists(fix_path(file_path)):
         t = check_file_type(file_path, file_label, create_type,
                             follow_links=True, must_exist=False,
@@ -2301,6 +2308,13 @@ Exiting.''' .
 
     # parent directory type and access
     p_dir = parentdir(fix_path(file_path))
+    if p_dir == fix_path(file_path):
+        generic_error_handler(
+            None,
+            '{0} ({1}) is its own parent directory' .
+                format(file_label, pps(file_path)),
+            use_logger=use_logger, warn_only=warn_only, exit_val=exit_val
+        )
     t = check_file_type(p_dir, file_label + "'s parent directory", 'd',
                         follow_links=True, must_exist=True,
                         use_logger=use_logger, warn_only=warn_only,
