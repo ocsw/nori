@@ -819,7 +819,7 @@ LF_ALERTS_SILENCED = 'lf_alerts_silenced'
 SCRIPT_DISABLED = 'script_disabled'
 
 # all path-separator characters, to account for, e.g., Windows accepting
-# both '/' and '\'; see validate_config()
+# both '/' and '\'; see, e.g., validate_config()
 PATH_SEP = os.sep + ('/' if os.name == 'nt' else '')
 
 
@@ -2497,6 +2497,8 @@ def parentdir(file_path):
     Get the parent directory of a file or directory.
 
     Goes by the path alone, so it doesn't follow symlinks.
+
+    On Windows, paths must be converted to use / before passing.
 
     This function is not the same as os.path.dirname(); for example,
     dirname will not give us the correct answer for any of:

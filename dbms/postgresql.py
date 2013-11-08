@@ -66,6 +66,7 @@ from __future__ import print_function
 from pprint import pprint as pp  # for debugging
 
 import sys
+import os
 import copy
 
 
@@ -163,7 +164,7 @@ class PostgreSQL(DBMS):
             config settings: [_prefix+_delim+:] use_ssh_tunnel,
                              protocol, host, port, socket_file,
                              connect_db
-            modules: core, dbms.DBMS
+            modules: os, core, dbms.DBMS
 
         """
 
@@ -202,7 +203,7 @@ See the {0} documentation for more information.
         del(core.config_settings[pd + 'protocol'])
 
         core.config_settings[pd + 'host']['descr'] = (
-'''
+('''
 Hostname or socket directory for the {0} connection.
 
 If this doesn't start with '/', it will be treated as a remote hostname
@@ -215,7 +216,10 @@ HOST and PORT are the given settings.
 Note: there is apparently no way, with {0}, to specify a
 relative directory or the full name of the socket file, or to use
 anything other than a port number as the suffix.
-'''.format(self.DBMS_NAME, pd) +
+'''.format(self.DBMS_NAME, pd) if os.name == 'posix' else
+'''
+Hostname for the {0} connection.
+'''.format(self.DBMS_NAME, pd)) +
 ('\nIgnored if {0}use_ssh_tunnel is True.'.format(pd) if tunnel else '')
         )
         # default is set in apply_config_defaults_extra()
@@ -266,7 +270,7 @@ don't use any (such as getting the list of databases).
             class vars: SOCKET_SEARCH_PATH
             instance vars: _prefix, _delim
             config settings: [_prefix+_delim+:] host, port, remote_port
-            modules: core
+            modules: os, core
 
         """
 
@@ -274,17 +278,19 @@ don't use any (such as getting the list of databases).
 
         # pd + 'host': first try to find a socket, then fall back to TCP
         found_socket = False
-        for d in self.SOCKET_SEARCH_PATH:
-            f = d + '/.s.PGSQL.' + str(core.cfg[pd + 'port'])
-            if (core.check_file_type(f, 'PostgreSQL socket', type_char='s',
-                                follow_links=True, must_exist=True,
-                                use_logger=None, warn_only=True) and
-                  core.check_file_access(f, 'PostgreSQL socket',
-                                         file_rwx='rw', use_logger=None,
-                                         warn_only=True)):
-                core.config_settings[pd + 'host']['default'] = f
-                found_socket = True
-                break
+        if os.name == 'posix':
+            for d in self.SOCKET_SEARCH_PATH:
+                f = d + '/.s.PGSQL.' + str(core.cfg[pd + 'port'])
+                if (core.check_file_type(f, 'PostgreSQL socket',
+                                         type_char='s', follow_links=True,
+                                         must_exist=True, use_logger=None,
+                                         warn_only=True) and
+                      core.check_file_access(f, 'PostgreSQL socket',
+                                             file_rwx='rw', use_logger=None,
+                                             warn_only=True)):
+                    core.config_settings[pd + 'host']['default'] = f
+                    found_socket = True
+                    break
         if not found_socket:
             core.config_settings[pd + 'host']['default'] = '127.0.0.1'
 
