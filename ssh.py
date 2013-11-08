@@ -78,9 +78,6 @@ import atexit
 import shlex
 import time
 
-if sys.hexversion < 0x03000000:
-    from types import *  # see constants, below
-
 
 ###############
 # this package
@@ -93,15 +90,6 @@ from . import which
 ########################################################################
 #                              VARIABLES
 ########################################################################
-
-############
-# constants
-############
-
-# NoneType isn't in the types module anymore, but it's more readable
-if sys.hexversion >= 0x03000000:
-    NoneType = type(None)
-
 
 ##################
 # status and meta
@@ -430,8 +418,8 @@ one second).
                              ssh_port, ssh_user, ssh_key_file,
                              ssh_options, local_host, local_port,
                              remote_host, remote_port, tun_timeout
-            globals: NoneType [if using Python 3], _config_blocks
-            modules: types.NoneType [if using Python 2], core
+            globals: _config_blocks
+            modules: core
             Python: 2.0/3.2, for callable()
         """
         pd = self._prefix + self._delim
@@ -460,8 +448,9 @@ one second).
             core.setting_check_not_blank(pd + 'remote_host')
             core.setting_check_num(pd + 'remote_port', 1, 65535)
             if (core.setting_check_type(pd + 'tun_timeout',
-                                        core.NUMBER_TYPES + (NoneType, ))
-                  is not NoneType):
+                                        core.NUMBER_TYPES +
+                                            (core.NONE_TYPE, ))
+                  is not core.NONE_TYPE):
                 core.setting_check_num(pd + 'tun_timeout', 2)
 
 

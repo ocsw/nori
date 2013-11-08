@@ -574,12 +574,11 @@ import re
 import pprint
 import operator
 
-if sys.hexversion < 0x03000000 or sys.hexversion >= 0x03040000:
-    # see constants section and import_file(), below
-    from types import *
-
+# see import_file()
 if sys.hexversion < 0x03040000:
-    import imp  # see import_file()
+    import imp
+else:
+    import types
 
 try:
     from StringIO import StringIO  # Python 2.x
@@ -761,10 +760,6 @@ import importlib  # requires 2.7/3.1
 # constants
 ############
 
-# NoneType isn't in the types module anymore, but it's more readable
-if sys.hexversion >= 0x03000000:
-    NoneType = type(None)
-
 # internal, see file/path functions
 # set third tuple value to False for lookup-only
 # (i.e., use for going from character to tuple, but not the reverse)
@@ -817,6 +812,7 @@ else:
                        collections.abc.ItemsView, collections.abc.KeysView,
                        collections.abc.ValuesView)
 MAPPING_TYPES = (dict, )  # tuple so we can add to it
+NONE_TYPE = type(None)  # NoneType removed from the types module in 3.0
 
 # names of tempfiles stored in the lockfile directory
 LF_ALERTS_SILENCED = 'lf_alerts_silenced'
@@ -5611,7 +5607,7 @@ def import_file(file_path):
     Dependencies:
         functions: fix_path()
         modules: re, os, sys, imp [if using Python <3.4],
-                 types.ModuleType [if using Python 3.4+]
+                 types [if using Python 3.4+]
         Python: 2.7/3.2 [depending on the contents of the file; see
                 above]
 
@@ -5625,7 +5621,7 @@ def import_file(file_path):
     if sys.hexversion < 0x03040000:
         module = imp.new_module(mod_name)
     else:
-        module = ModuleType(mod_name)
+        module = types.ModuleType(mod_name)
 
     # note: can't supply a file directly to exec in Python3
     exec(compile(open(file_path, 'U').read(), fix_path(file_path), 'exec'),
@@ -5774,8 +5770,8 @@ def validate_config():
 
     Dependencies:
         config settings: (all of them)
-        globals: cfg, validate_config_hooks, NoneType [if using
-                 Python 3], STRING_TYPES, PATH_SEP
+        globals: cfg, validate_config_hooks, NONE_TYPE, STRING_TYPES,
+                 PATH_SEP
         functions: setting_check_type(), setting_check_num(),
                    setting_check_filedir_create(),
                    setting_check_not_blank(), setting_check_no_blanks(),
@@ -5783,7 +5779,7 @@ def validate_config():
                    setting_check_file_type(),
                    setting_check_file_access(), setting_check_list(),
                    setting_check_no_char()
-        modules: types.NoneType [if using Python 2], socket
+        modules: socket
         Python: 2.0/3.2, for callable()
 
     """
@@ -5813,12 +5809,12 @@ def validate_config():
             setting_check_num(('alert_emails_host', 1), 1, 65535)
         else:
             setting_check_not_blank('alert_emails_host')
-        if (setting_check_type('alert_emails_cred', (NoneType, tuple))
-              is not NoneType):
+        if (setting_check_type('alert_emails_cred', (NONE_TYPE, tuple))
+              is not NONE_TYPE):
             setting_check_len('alert_emails_cred', 2, 2)
             setting_check_no_blanks('alert_emails_cred')
-        if (setting_check_type('alert_emails_sec', (NoneType, tuple))
-              is not NoneType):
+        if (setting_check_type('alert_emails_sec', (NONE_TYPE, tuple))
+              is not NONE_TYPE):
             setting_check_len('alert_emails_sec', 0, 2)
             for i, f in enumerate(cfg['alert_emails_sec']):
                 setting_check_file_read(('alert_emails_sec', i))
@@ -5865,10 +5861,10 @@ def validate_config():
             ]
         )
         setting_check_type('syslog_tag', STRING_TYPES)
-    setting_check_type('status_log', STRING_TYPES + (NoneType, ))
+    setting_check_type('status_log', STRING_TYPES + (NONE_TYPE, ))
     if cfg['status_log']:
         setting_check_filedir_create('status_log', 'f')
-    setting_check_type('output_log', STRING_TYPES + (NoneType, ))
+    setting_check_type('output_log', STRING_TYPES + (NONE_TYPE, ))
     if cfg['output_log']:
         setting_check_filedir_create('output_log', 'f', need_rotation=True)
         setting_check_list('output_log_layout',
