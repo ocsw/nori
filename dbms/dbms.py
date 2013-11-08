@@ -848,7 +848,7 @@ Options must be supplied as a dict.
                    core.cfg[pd + 'protocol'] == 'socket')):
                 if pd + 'socket_file' in core.cfg:
                     self._conn_args['unix_socket'] = (
-                        core.cfg[pd + 'socket_file']
+                        core.fix_path(core.cfg[pd + 'socket_file'])
                     )
         if pd + 'user' in core.cfg:
             self._conn_args['user'] = core.cfg[pd + 'user']

@@ -2594,7 +2594,7 @@ def touch_file(file_path, file_label, times=None, use_logger=False,
                 os.utime(f.fileno() if os.utime in os.supports_fd
                                     else fix_path(file_path),
                          times)
-        elif os.path.isdir(file_path):
+        elif os.path.isdir(fix_path(file_path)):
             # minor race condition here
             os.utime(fix_path(file_path), times)
         else:
@@ -3054,21 +3054,26 @@ def init_syslog():
         config settings: syslog_addr, syslog_sock_type, syslog_fac,
                          syslog_tag
         globals: cfg
+        functions: fix_path()
         modules: sys, logging, logging.handlers
         Python: 2.7/3.2, for SysLogHandler(socktype)
 
     """
 
+    addr = cfg['syslog_addr']
+    if '/' in addr:
+        addr = fix_path(addr)
+
     if sys.hexversion >= 0x03040000 and cfg['syslog_tag'] != '':
         slh = logging.handlers.SysLogHandler(
-                  address=cfg['syslog_addr'],
+                  address=addr,
                   socktype=cfg['syslog_sock_type'],
                   facility=cfg['syslog_fac'],
                   ident=cfg['syslog_tag']
               )
     else:
         slh = logging.handlers.SysLogHandler(
-                  address=cfg['syslog_addr'],
+                  address=addr,
                   socktype=cfg['syslog_sock_type'],
                   facility=cfg['syslog_fac']
               )
@@ -5044,7 +5049,7 @@ def check_status():
     # EAFP is Pythonic to begin with, but it's essential here, because
     # we need to use a single call to check and create the lock
     try:
-        os.mkdir(cfg['lockfile'])
+        os.mkdir(fix_path(cfg['lockfile']))
     except OSError as e:
         if e.errno != errno.EEXIST:
             email_logger.error(
