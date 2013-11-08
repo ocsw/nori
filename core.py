@@ -2500,7 +2500,7 @@ def parentdir(file_path):
     parentdir = re.sub('/*$', '', file_path)
 
     # are there no /'s left?
-    if parentdir.find('/') == -1:
+    if '/' not in parentdir:
         if parentdir == '':
             return '/'  # it was /, and / is its own parent
         if parentdir == '.':
