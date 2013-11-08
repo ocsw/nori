@@ -2692,7 +2692,7 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
                            'Details: [Errno {1}] {2}' .
                            format(pps(dir_path), e.errno, e.strerror))
         sys.exit(exit_val)
-    f_list.sort(None, operator.itemgetter(1), True)
+    f_list.sort(key=operator.itemgetter(1), reverse=True)
 
     # move to the new numbers
     for ft in f_list:
@@ -2900,7 +2900,7 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
 
     # delete by number
     if num_f:
-        f_remain.sort(None, operator.itemgetter(1), True)
+        f_remain.sort(key=operator.itemgetter(1), reverse=True)
         for i, ft in enumerate(f_remain):
             if i >= num_f:
                 rm_rf(os.path.join(dir_path, ft[0]), 'file/directory',
