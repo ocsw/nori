@@ -1472,6 +1472,7 @@ the script (i.e., [user]@[hostname], where [user] is the current user
 and [hostname] is the local hostname)
 '''
     ),
+    cl_coercer=lambda x: x.split(','),
 )
 
 config_settings['alert_emails_subject'] = dict(
