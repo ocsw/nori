@@ -210,6 +210,9 @@ DOCSTRING CONTENTS:
         change_db()
             Change the current database used by a cursor.
 
+        fetchone_generator()
+            Wrapper: fetchone() as a generator.
+
 
 3) USAGE IN SCRIPTS:
 --------------------
@@ -1747,3 +1750,18 @@ Options must be supplied as a dict.
         """
         self.check_supports_method('change_db')
         return False  # no generic version of this function
+
+
+    def fetchone_generator(self, cur):
+        """
+        Wrapper: fetchone() as a generator.
+        Parameters:
+            cur: the cursor to use; if None, the main cursor is used
+        Dependencies:
+            instance methods: fetchone()
+        """
+        while True:
+            f_ret = self.fetchone(cur)
+            if not f_ret[0] or (f_ret[1] is None):
+                break  # remember, fetchone() includes error handling
+            yield f_ret[1]
