@@ -809,6 +809,9 @@ def run_mode_hook():
     #for i in range(1, 10):
     #    print(m.fetchmany(None, 2))
     #print(m.fetchall(None))
+    #f = lambda: m.fetchone_generator(None)
+    #for row in f():
+    #    print(row)
 
     #print(m.execute(None, 'select * from user where user=%s', ['root'],
     #                has_results=True))
@@ -1052,6 +1055,7 @@ nori.run_mode_hooks.append(run_mode_hook)
 #s2.create_settings(heading='bar ssh', tunnel=True)
 
 #m = nori.MySQL('mysqlstuff')
+#m = nori.MySQL('otherdb_mysql')
 #m.create_settings()
 #m.create_settings(heading='mysql stuff', extra_text='asdf')
 #m.create_settings(heading='mysql stuff', extra_text='asdf',
