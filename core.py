@@ -1321,7 +1321,7 @@ if False, only INFO or above.
 )
 
 config_settings['status_heading'] = dict(
-    heading='Status checks',
+    heading='Status Checks',
 )
 
 config_settings['run_every'] = dict(
@@ -1422,7 +1422,7 @@ will default to '/var/run/{0}.lock.alert'
 )
 
 config_settings['logging_heading'] = dict(
-    heading='Alerts and logging',
+    heading='Alerts and Logging',
 )
 
 config_settings['send_alert_emails'] = dict(
