@@ -3947,6 +3947,7 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
                                key=operator.itemgetter(0)):
                 cmd_msg += k + '=' + pps(v) + '\n'
         print(cmd_msg.strip(), file=output_log_fo)  # no stdout yet
+        output_log_fo.flush()
         status_logger.info(cmd_msg.strip())
 
     # get the streams sorted out
