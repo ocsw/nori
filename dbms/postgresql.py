@@ -373,10 +373,32 @@ don't use any (such as getting the list of databases).
             methods: execute(), fetchall()
         """
         if not self.execute(cur,
-                            'SELECT datname FROM pg_catalog.pg_database;'):
+                            'SELECT datname FROM pg_catalog.pg_database;',
+                            has_results=True):
             return (False, None)
         return self.fetchall(cur)
 
 
     # can't do this in PostgreSQL without re-opening the connection
     _SUPPORTED.remove('change_db')
+
+
+    def get_table_list(self, cur):
+        """
+        Get the list of tables in the current database.
+        Returns a tuple: (success?, fetched_rows)
+        Parameters:
+            cur: the cursor to use; if None, the main cursor is used
+        Dependencies:
+            methods: execute(), fetchall()
+        """
+        if not self.execute(cur,
+'''
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema='public'
+AND table_type='BASE TABLE';
+''',
+              has_results=True):
+            return (False, None)
+        return self.fetchall(cur)

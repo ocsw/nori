@@ -351,3 +351,17 @@ See the {0} documentation for more information.
         # substitution only works for data, not db/table/column names
         # (it forces '' around the string)
         return self.execute(cur, 'USE `{0}`;'.format(db_name))
+
+
+    def get_table_list(self, cur):
+        """
+        Get the list of tables in the current database.
+        Returns a tuple: (success?, fetched_rows)
+        Parameters:
+            cur: the cursor to use; if None, the main cursor is used
+        Dependencies:
+            methods: execute(), fetchall()
+        """
+        if not self.execute(cur, 'SHOW TABLES;', has_results=True):
+            return (False, None)
+        return self.fetchall(cur)

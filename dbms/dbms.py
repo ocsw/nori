@@ -210,6 +210,9 @@ DOCSTRING CONTENTS:
         change_db()
             Change the current database used by a cursor.
 
+        get_table_list()
+            Get the list of tables in the current database.
+
         fetchone_generator()
             Wrapper: fetchone() as a generator.
 
@@ -343,7 +346,8 @@ class DBMS(object):
     _SUPPORTED = [
         'callproc', 'execute', 'executemany', 'fetchone', 'fetchmany',
         'fetchall', 'nextset', 'setinputsizes', 'setoutputsize', 'commit',
-        'rollback', 'get_db_list', 'change_db', 'autocommit',
+        'rollback', 'get_db_list', 'change_db', 'get_table_list',
+        'autocommit',
     ]
 
 
@@ -1750,6 +1754,22 @@ Options must be supplied as a dict.
         """
         self.check_supports_method('change_db')
         return False  # no generic version of this function
+
+
+    def get_table_list(self, cur):
+        """
+        Get the list of tables in the current database.
+        Returns a tuple: (success?, fetched_rows)
+        May not be possible or even coherent for all DBMSes; subclasses
+        should override or delete this method.
+        Warning: test for its existence in your DBMS first with:
+            if dbms_obj.supports('get_table_list'):
+                ...
+        Parameters:
+            cur: the cursor to use; if None, the main cursor is used
+        """
+        self.check_supports_method('get_table_list')
+        return (False, None)  # no generic version of this function
 
 
     def fetchone_generator(self, cur):
