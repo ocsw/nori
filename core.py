@@ -404,6 +404,9 @@ DOCSTRING CONTENTS:
     setting_check_num()
         If a number-typed config setting is invalid, exit with an error.
 
+    setting_check_callable()
+        If a config setting is not callable, exit with an error.
+
     setting_check_file_type()
         If a file setting does not have the correct file type,
         error/exit.
@@ -4853,6 +4856,41 @@ def setting_check_num(setting_name, min_val=None, max_val=None):
                  exitvals['startup']['num'])
 
     return (obj, obj_path)
+
+
+def setting_check_callable(setting_name, may_be_none=False):
+
+    """
+    If a config setting is not callable, exit with an error.
+
+    Otherwise, returns a tuple containing the setting object and the
+    full path to the object (see setting_walk()).
+
+    The existence and type of the setting are checked.
+
+    Parameters:
+        setting_name: see note, above
+        may_be_none: if true, the setting may be None instead of a
+                     callable
+
+    Dependencies:
+        config settings: (contents of setting_name)
+        globals: cfg, exitvals['startup']
+        functions: setting_check_is_set()
+        Python: 2.0/3.2, for callable()
+
+    """
+
+    # walk the tree and make sure it's set
+    obj, obj_path = setting_check_is_set(setting_name)
+
+    # callable / None?
+    if ((obj and callable(obj)) or (obj is None and may_be_none)):
+        return (obj, obj_path)
+
+    err_exit('Error: invalid setting for {0} ({1}); exiting.' .
+             format(obj_path, pps(obj)),
+             exitvals['startup']['num'])
 
 
 def setting_check_file_type(setting_name, type_char='f', follow_links=True):
