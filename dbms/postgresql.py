@@ -402,3 +402,18 @@ AND table_type='BASE TABLE';
               has_results=True):
             return (False, None)
         return self.fetchall(cur)
+
+
+    def get_last_id(self, cur):
+        """
+        Get the last auto-increment ID inserted into the database.
+        Returns a tuple: (success?, last_id)
+        Parameters:
+            cur: the cursor to use; if None, the main cursor is used
+        Dependencies:
+            methods: execute(), fetchall()
+        """
+        if not self.execute(cur, 'SELECT lastval();', has_results=True):
+            return (False, None)
+        ret = self.fetchall(cur)
+        return (ret[0], ret[1][0][0] if ret[0] else None)

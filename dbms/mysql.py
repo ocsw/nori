@@ -365,3 +365,15 @@ See the {0} documentation for more information.
         if not self.execute(cur, 'SHOW TABLES;', has_results=True):
             return (False, None)
         return self.fetchall(cur)
+
+
+    def get_last_id(self, cur):
+        """
+        Get the last auto-increment ID inserted into the database.
+        Returns a tuple: (success?, last_id)
+        Parameters:
+            cur: the cursor to use; if None, the main cursor is used
+        """
+        cur = cur if cur else self.cur
+        # could use 'SELECT LAST_INSERT_ID();' instead
+        return (True, cur.lastrowid)

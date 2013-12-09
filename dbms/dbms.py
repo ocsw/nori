@@ -216,6 +216,9 @@ DOCSTRING CONTENTS:
         fetchone_generator()
             Wrapper: fetchone() as a generator.
 
+        get_last_id()
+            Get the last auto-increment ID inserted into the database.
+
 
 3) USAGE IN SCRIPTS:
 --------------------
@@ -347,7 +350,7 @@ class DBMS(object):
         'callproc', 'execute', 'executemany', 'fetchone', 'fetchmany',
         'fetchall', 'nextset', 'setinputsizes', 'setoutputsize', 'commit',
         'rollback', 'get_db_list', 'change_db', 'get_table_list',
-        'autocommit',
+        'autocommit', 'get_last_id',
     ]
 
 
@@ -1785,3 +1788,19 @@ Options must be supplied as a dict.
             if not f_ret[0] or (f_ret[1] is None):
                 break  # remember, fetchone() includes error handling
             yield f_ret[1]
+
+
+    def get_last_id(self, cur):
+        """
+        Get the last auto-increment ID inserted into the database.
+        Returns a tuple: (success?, last_id)
+        May not be possible or even coherent for all DBMSes; subclasses
+        should override or delete this method.
+        Warning: test for its existence in your DBMS first with:
+            if dbms_obj.supports('get_last_id'):
+                ...
+        Parameters:
+            cur: the cursor to use; if None, the main cursor is used
+        """
+        self.check_supports_method('get_last_id')
+        return (False, None)  # no generic version of this function
