@@ -14,7 +14,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
-    # required info
+    # required and packaging/installation info
     name='nori',
     version='1.0',
     packages=['nori', 'nori.dbms'],
@@ -25,6 +25,13 @@ setup(
         'MySQL': 'mysql-connector-python',
         'PostgreSQL': 'psycopg2',
     },
+    #entry_points = {
+    #    'console_scripts': [
+    #        'foo = my_package.some_module:main_func',
+    #    ],
+    #    'gui_scripts': [
+    #    ]
+    #},
 
     # PyPI metadata
     description=(
