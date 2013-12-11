@@ -375,5 +375,10 @@ See the {0} documentation for more information.
             cur: the cursor to use; if None, the main cursor is used
         """
         cur = cur if cur else self.cur
-        # could use 'SELECT LAST_INSERT_ID();' instead
-        return (True, cur.lastrowid)
+        # we could use cur.lastrowid instead, but then we couldn't use
+        # automatic cursors; this is by connection, not cursor
+        if not self.execute(cur, 'SELECT LAST_INSERT_ID();',
+              has_results=True):
+            return (False, None)
+        ret = self.fetchall(cur)
+        return (ret[0], ret[1][0][0] if ret[0] else None)
