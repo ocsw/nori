@@ -9,7 +9,7 @@ import subprocess
 import time
 import socket
 
-sys.path.insert(0, os.path.dirname(__file__) + os.path.sep + '..')
+#sys.path.insert(0, os.path.dirname(__file__) + os.path.sep + '..')
 import nori
 
 
