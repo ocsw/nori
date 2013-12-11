@@ -6,11 +6,13 @@ USAGE
 
 ---
 
-repo
+repo, homepage, PyPI
 
 installation/packaging
 
 rsync/rdb
+    Topic :: System :: Archiving :: Backup
+    Topic :: System :: Archiving :: Mirroring
 
 testing with python 3
 
