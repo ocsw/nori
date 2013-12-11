@@ -1381,8 +1381,9 @@ Options must be supplied as a dict.
             modules: (cur's module)
         """
         self.check_supports_method('callproc')
-        self.auto_cursor()
-        cur = cur if cur else self.cur
+        if cur is None:
+            self.auto_cursor()
+            cur = self.cur
         if param is None:
             ret = self.wrap_call(cur.callproc, 'call stored procedure on',
                                  'calling stored procedure on',
@@ -1422,8 +1423,9 @@ Options must be supplied as a dict.
             modules: (cur's module)
         """
         self.check_supports_method('execute')
-        self.auto_cursor()
-        cur = cur if cur else self.cur
+        if cur is None:
+            self.auto_cursor()
+            cur = self.cur
         if param is None:
             ret = self.wrap_call(cur.execute, 'execute query on',
                                  'executing query on', query)[0]
@@ -1464,8 +1466,9 @@ Options must be supplied as a dict.
             modules: (cur's module)
         """
         self.check_supports_method('executemany')
-        self.auto_cursor()
-        cur = cur if cur else self.cur
+        if cur is None:
+            self.auto_cursor()
+            cur = self.cur
         ret = self.wrap_call(cur.executemany, 'execute queries on',
                              'executing queries on', query, param_seq)[0]
         if not has_results:
