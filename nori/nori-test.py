@@ -987,6 +987,11 @@ def run_mode_hook():
     #print(p.setinputsizes(None, [4, 5]))
     #print(p.setoutputsize(None, 400))
 
+    #print(p.execute(None, 'insert into foo (a) values (%s)', ['aaaaa']))
+    #print(p.get_last_id(None))
+
+    #print(p.get_table_list(None))
+
     #print('#' * 76)
 
     #p.close_cursor(c)
