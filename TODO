@@ -1,5 +1,7 @@
 TODO:
 
+db/ssh conn msgs: identifiers
+
 can't access variables directly, need .core. etc., (import * = by value)
 
 USAGE
