@@ -3942,7 +3942,7 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
 
     # print the command
     if cfg['log_cmds']:
-        cmd_msg = 'Running command:\n'
+        cmd_msg = 'Comand is:\n'
         cmd_msg += ' '.join(map(pps, cmd)) + '\n'
         if env_add is not None:
             cmd_msg += 'with environment additions:\n'

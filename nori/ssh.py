@@ -609,7 +609,11 @@ one second).
 
         if connected:
             self.p_obj = p
+            core.logging_stop_stdouterr()
             core.status_logger.info('SSH tunnel for {0} established.' .
+                                    format(descr))
+            core.logging_start_stdouterr()
+            core.output_logger.info('SSH tunnel for {0} established.' .
                                     format(descr))
             if self not in SSH._open_tunnels:
                 SSH._open_tunnels.append(self)
