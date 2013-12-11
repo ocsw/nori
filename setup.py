@@ -18,7 +18,7 @@ setup(
     name='nori',
     version='1.0',
     packages=['nori', 'nori.dbms'],
-    package_dir={'nori': ''},
+    #package_dir={},
     #py_modules=[],
     #install_requires=[],
     extras_require={
