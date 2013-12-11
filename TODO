@@ -4,11 +4,7 @@ can't access variables directly, need .core. etc., (import * = by value)
 
 USAGE
 
----
-
 repo, homepage, PyPI
-
-installation/packaging
 
 rsync/rdb
     Topic :: System :: Archiving :: Backup
