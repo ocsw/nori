@@ -340,7 +340,7 @@ See the {0} documentation for more information.
                                 has_results=True):
                 return None
             ret = self.fetchall(cur)
-            return ((ret[1][0][1] =='ON') if ret[0] else None)
+            return ((ret[1][0][1] == 'ON') if ret[0] else None)
         return self.execute(cur, "SET SESSION sql_log_bin = '{0}';" .
                                  format('ON' if what else 'OFF'),
                             has_results=False)
