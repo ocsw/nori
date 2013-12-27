@@ -323,6 +323,29 @@ See the {0} documentation for more information.
     # nori extensions
     ##################
 
+    def replication(self, cur, what=None):
+
+        """
+        Get or set the replication status of a DBMS connection.
+        If what is True or False, returns True on success, False on
+        error.  If what is None, returns True/False, or None on error.
+        Parameters:
+            cur: the cursor to use; if None, the main cursor is used
+            what: if True, turn session replication on; if False, turn
+                  it off; if None, return the current status
+        """
+        if what is None:
+            if not self.execute(cur, "SHOW SESSION VARIABLES WHERE "
+                                     "variable_name = 'sql_log_bin';",
+                                has_results=True):
+                return None
+            ret = self.fetchall(cur)
+            return ((ret[1][0][1] =='ON') if ret[0] else None)
+        return self.execute(cur, "SET SESSION sql_log_bin = '{0}';" .
+                                 format('ON' if what else 'OFF'),
+                            has_results=False)
+
+
     def get_db_list(self, cur):
         """
         Get the list of databases from a DBMS.

@@ -363,6 +363,9 @@ don't use any (such as getting the list of databases).
     # nori extensions
     ##################
 
+    _SUPPORTED.remove('replication')
+
+
     def get_db_list(self, cur):
         """
         Get the list of databases from a DBMS.

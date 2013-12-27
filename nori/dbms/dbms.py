@@ -204,6 +204,9 @@ DOCSTRING CONTENTS:
         Nori Extensions
         ---------------
 
+        replication()
+            Get or set the replication status of a DBMS connection.
+
         get_db_list()
             Get the list of databases from the DBMS.
 
@@ -350,7 +353,7 @@ class DBMS(object):
         'callproc', 'execute', 'executemany', 'fetchone', 'fetchmany',
         'fetchall', 'nextset', 'setinputsizes', 'setoutputsize', 'commit',
         'rollback', 'get_db_list', 'change_db', 'get_table_list',
-        'autocommit', 'get_last_id',
+        'autocommit', 'get_last_id', 'replication',
     ]
 
 
@@ -1728,6 +1731,26 @@ Options must be supplied as a dict.
     ##################
     # nori extensions
     ##################
+
+    def replication(self, cur, what=None):
+
+        """
+        Get or set the replication status of a DBMS connection.
+        If what is True or False, returns True on success, False on
+        error.  If what is None, returns True/False, or None on error.
+        May not be possible or even coherent for all DBMSes; subclasses
+        should override or delete this method.
+        Warning: test for its existence in your DBMS first with:
+            if dbms_obj.supports('replication'):
+                ...
+        Parameters:
+            cur: the cursor to use; if None, the main cursor is used
+            what: if True, turn session replication on; if False, turn
+                  it off; if None, return the current status
+        """
+        self.check_supports_method('replication')
+        return None if what is None else False  # no generic version
+
 
     def get_db_list(self, cur):
         """
