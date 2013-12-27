@@ -799,6 +799,12 @@ def run_mode_hook():
     #print(m.autocommit(None))
     #return
 
+    #print(m.replication(None, None))
+    #print(m.replication(None, False))
+    #print(m.replication(None, None))
+    #print(m.replication(None, True))
+    #print(m.replication(None, None))
+
     #print('FA:' + str(m._fake_autocommit))
 
     #print(m.execute(None, 'show dastabases', has_results=True))
@@ -940,6 +946,12 @@ def run_mode_hook():
     #print(p.autocommit(False))
     #print(p.autocommit(None))
     #return
+
+    #print(p.replication(None, None))
+    #print(p.replication(None, False))
+    #print(p.replication(None, None))
+    #print(p.replication(None, True))
+    #print(p.replication(None, None))
 
     #print('FA:' + str(p._fake_autocommit))
 
