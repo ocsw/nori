@@ -427,7 +427,7 @@ one second).
             return
         core.setting_check_not_blank(pd + 'ssh_host')
         if core.setting_is_set(pd + 'ssh_port'):
-            core.setting_check_num(pd + 'ssh_port', 1, 65535)
+            core.setting_check_integer(pd + 'ssh_port', 1, 65535)
         if core.setting_is_set(pd + 'ssh_user'):
             core.setting_check_not_blank(pd + 'ssh_user')
         if core.setting_is_set(pd + 'ssh_key_file'):
@@ -444,14 +444,14 @@ one second).
                 core.setting_check_not_blank(pd + 'ssh_options')
         if self._tunnel_config:
             core.setting_check_not_blank(pd + 'local_host')
-            core.setting_check_num(pd + 'local_port', 1, 65535)
+            core.setting_check_integer(pd + 'local_port', 1, 65535)
             core.setting_check_not_blank(pd + 'remote_host')
-            core.setting_check_num(pd + 'remote_port', 1, 65535)
+            core.setting_check_integer(pd + 'remote_port', 1, 65535)
             if (core.setting_check_type(pd + 'tun_timeout',
                                         core.NUMBER_TYPES +
                                             (core.NONE_TYPE, ))
                   is not core.NONE_TYPE):
-                core.setting_check_num(pd + 'tun_timeout', 2)
+                core.setting_check_integer(pd + 'tun_timeout', 2)
 
 
     ##################################

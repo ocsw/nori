@@ -676,6 +676,8 @@ def run_mode_hook():
     #print(nori.setting_check_num('foo_ssh_port', 1, 22))
     #print(nori.setting_check_num('foo_ssh_port', 1, 20))
 
+    #print(nori.setting_check_integer('foo_ssh_port', 1, 20))
+
     #print(nori.setting_check_file_type('output_logasdf', 'f'))
     #print(nori.setting_check_file_type('output_log', 'f'))
     #print(nori.setting_check_file_type('output_log', 'd'))

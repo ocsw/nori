@@ -807,7 +807,7 @@ Options must be supplied as a dict.
                 if pd + 'host' in core.cfg:
                     core.setting_check_not_blank(pd + 'host')
                 if pd + 'port' in core.cfg:
-                    core.setting_check_num(pd + 'port', 1, 65535)
+                    core.setting_check_integer(pd + 'port', 1, 65535)
             # have to allow for DBMSes that don't have a protocol
             if (pd + 'protocol' not in core.config_settings or
                   (pd + 'protocol' in core.cfg and

@@ -33,6 +33,7 @@ DOCSTRING CONTENTS:
         Format for printing certain timestamps.
 
     NUMBER_TYPES
+    INTEGER_TYPES
     STRING_TYPES
     STRINGISH_TYPES
     CONTAINER_TYPES
@@ -403,6 +404,10 @@ DOCSTRING CONTENTS:
 
     setting_check_num()
         If a number-typed config setting is invalid, exit with an error.
+
+    setting_check_int()
+        If an integer-typed config setting is invalid, exit with an
+        error.
 
     setting_check_callable()
         If a config setting is not callable, exit with an error.
@@ -802,6 +807,7 @@ FULL_DATE_FORMAT = '%a %b %d %H:%M:%S %Z %Y'
 # see config setting functions and type_list_string()
 if sys.hexversion < 0x03000000:
     NUMBER_TYPES = (int, float, long)  # not complex
+    INTEGER_TYPES = (int, long)
     STRING_TYPES = (basestring, )  # tuple so we can add to it
     if sys.hexversion < 0x02070000:
         STRINGISH_TYPES = (basestring, bytearray, buffer)
@@ -812,6 +818,7 @@ if sys.hexversion < 0x03000000:
                        collections.ValuesView)
 else:
     NUMBER_TYPES = (int, float)  # not complex
+    INTEGER_TYPES = (int, )  # tuple so we can add to it
     STRING_TYPES = (str, )  # tuple so we can add to it
     STRINGISH_TYPES = (str, bytes, bytearray, memoryview)
     CONTAINER_TYPES = (list, tuple, range, set, frozenset, dict,
@@ -4818,7 +4825,8 @@ def setting_check_list(setting_name, list_vals):
     return (obj, obj_path)
 
 
-def setting_check_num(setting_name, min_val=None, max_val=None):
+def setting_check_num(setting_name, min_val=None, max_val=None,
+                      integer=False):
 
     """
     If a number-typed config setting is invalid, exit with an error.
@@ -4828,16 +4836,17 @@ def setting_check_num(setting_name, min_val=None, max_val=None):
 
     The existence and type of the setting are checked.
 
-    See NUMBER_TYPES, under constants.
+    See NUMBER_TYPES and INTEGER_TYPES, under constants.
 
     Parameters:
         setting_name: see note, above
         min_val: None, or a minimum allowed value (inclusive)
         max_val: None, or a maximum allowed value (inclusive)
+        integer: if true, the setting must be an integer
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, exitvals['startup'], NUMBER_TYPES
+        globals: cfg, exitvals['startup'], NUMBER_TYPES, INTEGER_TYPES
         functions: setting_check_is_set(), setting_check_type()
 
     """
@@ -4846,7 +4855,8 @@ def setting_check_num(setting_name, min_val=None, max_val=None):
     obj, obj_path = setting_check_is_set(setting_name)
 
     # check the type
-    setting_check_type(setting_name, NUMBER_TYPES)
+    setting_check_type(setting_name, INTEGER_TYPES if integer
+                                                   else NUMBER_TYPES)
 
     # obj < min_val?  obj > max_val?
     if ((min_val is not None and obj < min_val) or
@@ -4856,6 +4866,17 @@ def setting_check_num(setting_name, min_val=None, max_val=None):
                  exitvals['startup']['num'])
 
     return (obj, obj_path)
+
+
+def setting_check_integer(setting_name, min_val=None, max_val=None):
+    """
+    A wrapper around setting_check_num() for integers, for readability.
+    Parameters:
+        see setting_check_num()
+    Dependencies:
+        functions: setting_check_num()
+    """
+    return setting_check_num(setting_name, min_val, max_val, integer=True)
 
 
 def setting_check_callable(setting_name, may_be_none=False):
@@ -5878,8 +5899,8 @@ def validate_config():
         config settings: (all of them)
         globals: cfg, validate_config_hooks, NONE_TYPE, STRING_TYPES,
                  PATH_SEP
-        functions: setting_check_type(), setting_check_num(),
-                   setting_check_filedir_create(),
+        functions: setting_check_type(), setting_check_integer(),
+                   setting_check_num(), setting_check_filedir_create(),
                    setting_check_not_blank(), setting_check_no_blanks(),
                    setting_check_len(), setting_check_file_read(),
                    setting_check_file_type(),
@@ -5894,7 +5915,7 @@ def validate_config():
     if 'exec_path' in cfg:
         setting_check_type('exec_path', STRING_TYPES)
     if 'umask' in cfg:
-        setting_check_num('umask', 0, 511)  # 511 = 0o777
+        setting_check_integer('umask', 0, 511)  # 511 = 0o777
     setting_check_type('log_cmds', bool)
     setting_check_type('debug', bool)
     setting_check_num('run_every', 0)
@@ -5906,13 +5927,14 @@ def validate_config():
     if cfg['send_alert_emails']:
         setting_check_not_blank('alert_emails_from')
         setting_check_type('alert_emails_to', list)
+        setting_check_not_empty('alert_emails_to')
         setting_check_no_blanks('alert_emails_to')
         setting_check_type('alert_emails_subject', STRING_TYPES)
         if setting_check_type('alert_emails_host',
                               STRING_TYPES + (tuple, )) == tuple:
             setting_check_len('alert_emails_host', 2, 2)
             setting_check_not_blank(('alert_emails_host', 0))
-            setting_check_num(('alert_emails_host', 1), 1, 65535)
+            setting_check_integer(('alert_emails_host', 1), 1, 65535)
         else:
             setting_check_not_blank('alert_emails_host')
         if (setting_check_type('alert_emails_cred', (NONE_TYPE, tuple))
@@ -5931,7 +5953,7 @@ def validate_config():
                               STRING_TYPES + (tuple, )) == tuple:
             setting_check_len('syslog_addr', 2, 2)
             setting_check_not_blank(('syslog_addr', 0))
-            setting_check_num(('syslog_addr', 1), 1, 65535)
+            setting_check_integer(('syslog_addr', 1), 1, 65535)
         else:
             setting_check_file_type('syslog_addr', 's')
             setting_check_file_access('syslog_addr', 'w')
@@ -5979,7 +6001,7 @@ def validate_config():
         setting_check_not_blank('output_log_date')
         setting_check_no_char('output_log_date', PATH_SEP)
         if cfg['output_log_layout'] != 'append':
-            setting_check_num('output_log_num', 0)
+            setting_check_integer('output_log_num', 0)
             setting_check_num('output_log_days', 0)
 
     # hooks for adding more validations

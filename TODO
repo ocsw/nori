@@ -2,6 +2,8 @@ TODO:
 
 db/ssh conn msgs: identifiers
 
+run_every, if_running, output_log_days: integers?
+
 can't access variables directly, need .core. etc., (import * = by value)
 
 USAGE
