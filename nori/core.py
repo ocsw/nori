@@ -412,6 +412,15 @@ DOCSTRING CONTENTS:
     setting_check_callable()
         If a config setting is not callable, exit with an error.
 
+    setting_check_arg_tuple()
+        If an args/kwargs-tuple setting is invalid, exit with an error.
+
+    setting_check_callback()
+        If a callback-tuple setting is invalid, exit with an error.
+
+    setting_check_callbacks()
+        If a callback-tuples-sequence setting is invalid, error/exit.
+
     setting_check_file_type()
         If a file setting does not have the correct file type,
         error/exit.
@@ -4912,6 +4921,67 @@ def setting_check_callable(setting_name, may_be_none=False):
     err_exit('Error: invalid setting for {0} ({1}); exiting.' .
              format(obj_path, pps(obj)),
              exitvals['startup']['num'])
+
+
+def setting_check_arg_tuple(setting_name):
+    """
+    If an args/kwargs-tuple setting is invalid, exit with an error.
+    The tuple must be in the format: (sequence, mapping)
+    Parameters:
+        setting_name: see note, above
+    Dependencies:
+        globals: CONTAINER_TYPES, MAPPING_TYPES
+        functions: scalar_to_tuple(), setting_check_type(),
+                   setting_check_len()
+    """
+    setting_name = scalar_to_tuple(setting_name)
+    setting_check_type(setting_name, tuple)
+    setting_check_len(setting_name, 2, 2)
+    setting_check_type(setting_name + (0, ), CONTAINER_TYPES)
+    setting_check_type(setting_name + (1, ), MAPPING_TYPES)
+
+
+def setting_check_callback(setting_name, min_extra=0, max_extra=0):
+    """
+    If a callback-tuple setting is invalid, exit with an error.
+    The tuple must be in the format: (callable, sequence, mapping), but
+    see min_extra/max_extra.
+    Parameters:
+        setting_name: see note, above
+        min_extra: minimum number of additional elements in the tuple
+        max_extra: maximum number of additional elements in the tuple
+    Dependencies:
+        globals: CONTAINER_TYPES, MAPPING_TYPES
+        functions: scalar_to_tuple(), setting_check_type(),
+                   setting_check_len(), setting_check_callable()
+    """
+    setting_name = scalar_to_tuple(setting_name)
+    setting_check_type(setting_name, tuple)
+    setting_check_len(setting_name, (3 + min_extra), (3 + max_extra))
+    setting_check_callable(setting_name + (0, ), may_be_none=False)
+    setting_check_type(setting_name + (1, ), CONTAINER_TYPES)
+    setting_check_type(setting_name + (2, ), MAPPING_TYPES)
+
+
+def setting_check_callbacks(setting_name, min_extra=0, max_extra=0):
+    """
+    If a callback-tuples-sequence setting is invalid, error/exit.
+    The tuples must be in the format: (callable, sequence, mapping), but
+    see min_extra/max_extra.  The sequence may be empty.
+    Parameters:
+        setting_name: see note, above
+        min_extra: minimum number of additional elements in the tuples
+        max_extra: maximum number of additional elements in the tuples
+    Dependencies:
+        globals: CONTAINER_TYPES
+        functions: scalar_to_tuple(_, setting_check_type(),
+                   setting_walk(), setting_check_callback()
+    """
+    setting_name = scalar_to_tuple(setting_name)
+    setting_check_type(setting_name, CONTAINER_TYPES)
+    ret, obj, full_path, real_path = setting_walk(setting_name)
+    for i, cb_t in enumerate(obj):
+        setting_check_callback(setting_name + (i, ), min_extra, max_extra)
 
 
 def setting_check_file_type(setting_name, type_char='f', follow_links=True):
