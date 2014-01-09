@@ -36,9 +36,13 @@ DOCSTRING CONTENTS:
     INTEGER_TYPES
     STRING_TYPES
     STRINGISH_TYPES
-    CONTAINER_TYPES
+    SEQUENCE_TYPES
     MAPPING_TYPES
+    CONTAINER_TYPES
         Type tuples.
+
+    NONE_TYPE
+        A type value.
 
     LF_ALERTS_SILENCED
     SCRIPT_DISABLED
@@ -822,18 +826,19 @@ if sys.hexversion < 0x03000000:
         STRINGISH_TYPES = (basestring, bytearray, buffer)
     else:
         STRINGISH_TYPES = (basestring, bytearray, buffer, memoryview)
-    CONTAINER_TYPES = (list, tuple, xrange, set, frozenset, dict,
-                       collections.ItemsView, collections.KeysView,
-                       collections.ValuesView)
+    SEQUENCE_TYPES = (list, tuple, xrange, set, frozenset,
+                      collections.ItemsView, collections.KeysView,
+                      collections.ValuesView)
 else:
     NUMBER_TYPES = (int, float)  # not complex
     INTEGER_TYPES = (int, )  # tuple so we can add to it
     STRING_TYPES = (str, )  # tuple so we can add to it
     STRINGISH_TYPES = (str, bytes, bytearray, memoryview)
-    CONTAINER_TYPES = (list, tuple, range, set, frozenset, dict,
-                       collections.abc.ItemsView, collections.abc.KeysView,
-                       collections.abc.ValuesView)
+    SEQUENCE_TYPES = (list, tuple, range, set, frozenset,
+                      collections.abc.ItemsView, collections.abc.KeysView,
+                      collections.abc.ValuesView)
 MAPPING_TYPES = (dict, )  # tuple so we can add to it
+CONTAINER_TYPES = SEQUENCE_TYPES + MAPPING_TYPES
 NONE_TYPE = type(None)  # NoneType removed from the types module in 3.0
 
 # names of tempfiles stored in the lockfile directory
