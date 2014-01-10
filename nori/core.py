@@ -1498,7 +1498,7 @@ config_settings['alert_emails_to'] = dict(
 '''
 Where to send email alerts/errors.
 
-This must be a sequence of strings (even if there is only one address).
+This must be a list of strings (even if there is only one address).
 
 Ignored if send_alert_emails is False.
 '''
@@ -6024,7 +6024,7 @@ def validate_config():
     setting_check_type('send_alert_emails', bool)
     if cfg['send_alert_emails']:
         setting_check_not_blank('alert_emails_from')
-        setting_check_not_empty('alert_emails_to')
+        setting_check_not_empty('alert_emails_to', types=list)
         setting_check_no_blanks('alert_emails_to')
         setting_check_type('alert_emails_subject', STRING_TYPES)
         if setting_check_type('alert_emails_host',
