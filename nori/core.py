@@ -386,7 +386,7 @@ DOCSTRING CONTENTS:
         At least one of a group of settings must be non-empty, else
         error/exit.
 
-    setting_check_len()
+    setting_check_length()
         If a config setting has an invalid length, exit with an error.
 
     setting_check_not_blank()
@@ -4507,8 +4507,8 @@ def setting_check_not_all_empty(setting_name_list, types=CONTAINER_TYPES):
                  exitvals['startup']['num'])
 
 
-def setting_check_len(setting_name, min_len, max_len,
-                      types=ALL_CONTAINER_TYPES):
+def setting_check_length(setting_name, min_len, max_len,
+                         types=ALL_CONTAINER_TYPES):
 
     """
     If a config setting has an invalid length, exit with an error.
@@ -4959,11 +4959,11 @@ def setting_check_arg_tuple(setting_name):
     Dependencies:
         globals: MAIN_SEQUENCE_TYPES, MAPPING_TYPES
         functions: scalar_to_tuple(), setting_check_type(),
-                   setting_check_len()
+                   setting_check_length()
     """
     setting_name = scalar_to_tuple(setting_name)
     setting_check_type(setting_name, tuple)
-    setting_check_len(setting_name, 2, 2)
+    setting_check_length(setting_name, 2, 2)
     setting_check_type(setting_name + (0, ), MAIN_SEQUENCE_TYPES)
     setting_check_type(setting_name + (1, ), MAPPING_TYPES)
 
@@ -4980,11 +4980,11 @@ def setting_check_callback(setting_name, min_extra=0, max_extra=0):
     Dependencies:
         globals: MAIN_SEQUENCE_TYPES, MAPPING_TYPES
         functions: scalar_to_tuple(), setting_check_type(),
-                   setting_check_len(), setting_check_callable()
+                   setting_check_length(), setting_check_callable()
     """
     setting_name = scalar_to_tuple(setting_name)
     setting_check_type(setting_name, tuple)
-    setting_check_len(setting_name, (3 + min_extra), (3 + max_extra))
+    setting_check_length(setting_name, (3 + min_extra), (3 + max_extra))
     setting_check_callable(setting_name + (0, ), may_be_none=False)
     setting_check_type(setting_name + (1, ), MAIN_SEQUENCE_TYPES)
     setting_check_type(setting_name + (2, ), MAPPING_TYPES)
@@ -6000,7 +6000,7 @@ def validate_config():
                    setting_check_number(),
                    setting_check_filedir_create(),
                    setting_check_not_blank(), setting_check_no_blanks(),
-                   setting_check_len(), setting_check_file_read(),
+                   setting_check_length(), setting_check_file_read(),
                    setting_check_file_type(),
                    setting_check_file_access(), setting_check_list(),
                    setting_check_no_char()
@@ -6029,18 +6029,18 @@ def validate_config():
         setting_check_type('alert_emails_subject', STRING_TYPES)
         if setting_check_type('alert_emails_host',
                               STRING_TYPES + (tuple, )) == tuple:
-            setting_check_len('alert_emails_host', 2, 2)
+            setting_check_length('alert_emails_host', 2, 2)
             setting_check_not_blank(('alert_emails_host', 0))
             setting_check_integer(('alert_emails_host', 1), 1, 65535)
         else:
             setting_check_not_blank('alert_emails_host')
         if (setting_check_type('alert_emails_cred', (NONE_TYPE, tuple))
               is not NONE_TYPE):
-            setting_check_len('alert_emails_cred', 2, 2)
+            setting_check_length('alert_emails_cred', 2, 2)
             setting_check_no_blanks('alert_emails_cred')
         if (setting_check_type('alert_emails_sec', (NONE_TYPE, tuple))
               is not NONE_TYPE):
-            setting_check_len('alert_emails_sec', 0, 2)
+            setting_check_length('alert_emails_sec', 0, 2)
             for i, f in enumerate(cfg['alert_emails_sec']):
                 setting_check_file_read(('alert_emails_sec', i))
     setting_check_type('quiet', bool)
@@ -6048,7 +6048,7 @@ def validate_config():
     if cfg['use_syslog']:
         if setting_check_type('syslog_addr',
                               STRING_TYPES + (tuple, )) == tuple:
-            setting_check_len('syslog_addr', 2, 2)
+            setting_check_length('syslog_addr', 2, 2)
             setting_check_not_blank(('syslog_addr', 0))
             setting_check_integer(('syslog_addr', 1), 1, 65535)
         else:
