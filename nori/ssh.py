@@ -301,13 +301,13 @@ the ssh utility's default (generally ~/.ssh/id_*)
 '''
 The options to pass to the ssh utility.
 
-This can be a string or a list of strings.  A string can be passed on the
-command line, but this isn't recommended unless it is very simple, due to
-quoting issues.
+This can be a string or a sequence of strings.  A string can be passed on
+the command line, but this isn't recommended unless it is very simple, due
+to quoting issues.
 '''
             ),
             # no default
-            cl_coercer=str,  # can also be a list, but not from the cli
+            cl_coercer=str,  # or a sequence, but not from the cli
         )
 
         if tunnel:
@@ -368,7 +368,7 @@ The port number on the remote end of the SSH tunnel.
 '''
 Timeout for establishing the SSH tunnel, in seconds.
 
-Can be None, to wait forever, or a number >= 2 (there is a minimum wait of
+Can be None, to wait forever, or an integer >= 2 (there is a minimum wait of
 one second).
 '''
                 ),
@@ -433,9 +433,10 @@ one second).
         if core.setting_is_set(pd + 'ssh_key_file'):
             core.setting_check_file_read(pd + 'ssh_key_file')
         if core.setting_is_set(pd + 'ssh_options'):
-            if (core.setting_check_type(pd + 'ssh_options',
-                                        core.STRING_TYPES + (list, ))
-                  is list):
+            if (core.setting_check_type(
+                    pd + 'ssh_options',
+                    core.STRING_TYPES + core.MAIN_SEQUENCE_TYPES
+                  ) in core.MAIN_SEQUENCE_TYPES):
                 core.setting_check_not_empty(pd + 'ssh_options')
                 for i, o in enumerate(core.cfg[pd + 'ssh_options']):
                     core.setting_check_type((pd + 'ssh_options', i),
