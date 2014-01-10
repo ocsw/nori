@@ -36,9 +36,13 @@ DOCSTRING CONTENTS:
     NUMBER_TYPES
     STRING_TYPES
     STRINGISH_TYPES
+    MAIN_SEQUENCE_TYPES
     SEQUENCE_TYPES
+    ALL_SEQUENCE_TYPES
     MAPPING_TYPES
+    MAIN_CONTAINER_TYPES
     CONTAINER_TYPES
+    ALL_CONTAINER_TYPES
         Type tuples.
 
     NONE_TYPE
@@ -817,7 +821,11 @@ PPS_DEPTH = None
 # output logs
 FULL_DATE_FORMAT = '%a %b %d %H:%M:%S %Z %Y'
 
+#
 # see config setting functions and type_list_string()
+#
+# what we mean by things like 'this parameter is a sequence'
+MAIN_SEQUENCE_TYPES = (list, tuple)
 if sys.hexversion < 0x03000000:
     INTEGER_TYPES = (int, long)
     STRING_TYPES = (basestring, )  # tuple so we can add to it
@@ -825,23 +833,27 @@ if sys.hexversion < 0x03000000:
         STRINGISH_TYPES = STRING_TYPES + (bytearray, buffer)
     else:
         STRINGISH_TYPES =  STRING_TYPES + (bytearray, buffer, memoryview)
-    # strictly speaking, the STRING/STRINGISH_TYPES are sequences, too,
-    # but you wouldn't really use them that way in general
-    SEQUENCE_TYPES = (list, tuple, xrange, set, frozenset,
-                      collections.ItemsView, collections.KeysView,
-                      collections.ValuesView)
+
+    # a more complete list of sequences
+    SEQUENCE_TYPES = MAIN_SEQUENCE_TYPES + (xrange, set, frozenset,
+                     collections.ItemsView, collections.KeysView,
+                     collections.ValuesView)
 else:
     INTEGER_TYPES = (int, )  # tuple so we can add to it
     STRING_TYPES = (str, )  # tuple so we can add to it
     STRINGISH_TYPES =  STRING_TYPES + (bytes, bytearray, memoryview)
-    # strictly speaking, the STRING/STRINGISH_TYPES are sequences, too,
-    # but you wouldn't really use them that way in general
-    SEQUENCE_TYPES = (list, tuple, range, set, frozenset,
-                      collections.abc.ItemsView, collections.abc.KeysView,
-                      collections.abc.ValuesView)
+    # a more complete list of sequences
+    SEQUENCE_TYPES = MAIN_SEQUENCE_TYPES + (range, set, frozenset,
+                     collections.abc.ItemsView, collections.abc.KeysView,
+                     collections.abc.ValuesView)
 NUMBER_TYPES = INTEGER_TYPES + (float, )  # not complex
+# strictly speaking, the STRING/STRINGISH_TYPES are sequences, too,
+# but you wouldn't really use them that way in general
+ALL_SEQUENCE_TYPES = SEQUENCE_TYPES + STRINGISH_TYPES
 MAPPING_TYPES = (dict, )  # tuple so we can add to it
+MAIN_CONTAINER_TYPES = MAIN_SEQUENCE_TYPES + MAPPING_TYPES
 CONTAINER_TYPES = SEQUENCE_TYPES + MAPPING_TYPES
+ALL_CONTAINER_TYPES = ALL_SEQUENCE_TYPES + MAPPING_TYPES
 NONE_TYPE = type(None)  # NoneType removed from the types module in 3.0
 
 # names of tempfiles stored in the lockfile directory
