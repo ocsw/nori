@@ -181,7 +181,7 @@ DOCSTRING CONTENTS:
     char_name()
         Return the name of a character.
 
-    type_list_string()
+    type_tuple_string()
         Return a string containing the types listed in a tuple.
 
     scalar_to_tuple()
@@ -410,12 +410,12 @@ DOCSTRING CONTENTS:
         If a config setting's value is not in a list, exit with an
         error.
 
-    setting_check_num()
+    setting_check_number()
         If a number-typed config setting is invalid, exit with an error.
 
-    setting_check_int()
-        If an integer-typed config setting is invalid, exit with an
-        error.
+    setting_check_integer()
+        A readability wrapper around setting_check_number() for
+        integers.
 
     setting_check_callable()
         If a config setting is not callable, exit with an error.
@@ -822,7 +822,7 @@ PPS_DEPTH = None
 FULL_DATE_FORMAT = '%a %b %d %H:%M:%S %Z %Y'
 
 #
-# see config setting functions and type_list_string()
+# see config setting functions and type_tuple_string()
 #
 # what we mean by things like 'this parameter is a sequence'
 MAIN_SEQUENCE_TYPES = (list, tuple)
@@ -1498,7 +1498,7 @@ config_settings['alert_emails_to'] = dict(
 '''
 Where to send email alerts/errors.
 
-This must be a list of strings (even if there is only one address).
+This must be a sequence of strings (even if there is only one address).
 
 Ignored if send_alert_emails is False.
 '''
@@ -1931,7 +1931,7 @@ def char_name(c):
     return cnames[c[0]] if c[0] in cnames else c[0]
 
 
-def type_list_string(tt):
+def type_tuple_string(tt):
     """
     Return a string containing the types listed in a tuple.
     See *_TYPES, under constants.
@@ -4227,7 +4227,7 @@ def config_settings_no_print_output_log(no_print):
 #       setting_check_not_blank('s_name')
 #   else:
 #       setting_check_not_blank(('s_name', 0))
-#       setting_check_int(('s_name', 0), 1, 65535)
+#       setting_check_integer(('s_name', 0), 1, 65535)
 #
 
 
@@ -4376,14 +4376,14 @@ def setting_check_type(setting_name, type_tuple):
                     the types module, or class objects (built-in or
                     user-defined); in both cases, instances of
                     subclasses will also be allowed
-                    illegal values in this list will cause the script to
-                    exit with an internal error
+                    illegal values in this tuple will cause the script
+                    to exit with an internal error
 
     Dependencies:
         config settings: (contents of setting_name)
         globals: cfg, exitvals['startup'], exitvals['internal']
         functions: setting_check_is_set(), pps(), scalar_to_tuple(),
-                   type_list_string(), err_exit()
+                   type_tuple_string(), err_exit()
 
     """
 
@@ -4416,11 +4416,11 @@ def setting_check_type(setting_name, type_tuple):
     else:
         err_exit('Error: {0} must have one of the following types:\n{1}\n'
                  'Exiting.' .
-                 format(obj_path, type_list_string(type_tuple)),
+                 format(obj_path, type_tuple_string(type_tuple)),
                  exitvals['startup']['num'])
 
 
-def setting_check_not_empty(setting_name):
+def setting_check_not_empty(setting_name, types=CONTAINER_TYPES):
 
     """
     If a container-typed config setting is empty, exit with an error.
@@ -4430,10 +4430,12 @@ def setting_check_not_empty(setting_name):
 
     The existence and type of the setting are checked.
 
-    See CONTAINER_TYPES, under constants.
+    See *_TYPES, under constants.
 
     Parameters:
         setting_name: see note, above
+        types: which types the setting may have; set this to, e.g,
+               MAIN_SEQUENCE_TYPES to be more restrictive
 
     Dependencies:
         config settings: (contents of setting_name)
@@ -4447,7 +4449,7 @@ def setting_check_not_empty(setting_name):
     obj, obj_path = setting_check_is_set(setting_name)
 
     # check the type
-    setting_check_type(setting_name, CONTAINER_TYPES)
+    setting_check_type(setting_name, types)
 
     # empty?
     if not obj:
@@ -4457,7 +4459,7 @@ def setting_check_not_empty(setting_name):
     return (obj, obj_path)
 
 
-def setting_check_not_all_empty(setting_name_list):
+def setting_check_not_all_empty(setting_name_list, types=CONTAINER_TYPES):
 
     """
     At least one of a group of settings must be non-empty, else e/e.
@@ -4469,11 +4471,13 @@ def setting_check_not_all_empty(setting_name_list):
     Non-existent settings do not cause an error, but non-container-typed
     settings do.
 
-    See CONTAINER_TYPES, under constants.
+    See *_TYPES, under constants.
 
     Parameters:
         setting_name_list: a list or tuple of setting_names; see note,
                            above
+        types: which types the settings may have; set this to, e.g,
+               MAIN_SEQUENCE_TYPES to be more restrictive
 
     Dependencies:
         config settings: (contents of setting_name)
@@ -4489,7 +4493,7 @@ def setting_check_not_all_empty(setting_name_list):
         ret, obj, full_path, real_path = setting_walk(setting_name)
         setting_paths.append(full_path)
         if ret:
-            setting_check_type(setting_name, CONTAINER_TYPES)
+            setting_check_type(setting_name, types)
             if (not found_one) and obj:
                 to_return = (obj, full_path)
                 found_one = True
@@ -4503,7 +4507,8 @@ def setting_check_not_all_empty(setting_name_list):
                  exitvals['startup']['num'])
 
 
-def setting_check_len(setting_name, min_len, max_len):
+def setting_check_len(setting_name, min_len, max_len,
+                      types=ALL_CONTAINER_TYPES):
 
     """
     If a config setting has an invalid length, exit with an error.
@@ -4511,19 +4516,22 @@ def setting_check_len(setting_name, min_len, max_len):
     Otherwise, returns a tuple containing the setting object and the
     full path to the object (see setting_walk()).
 
-    Works on container- or stringish-typed settings.  The existence and
-    type of the setting are checked.
+    Works on container- or stringish-typed settings (by default; see the
+    types parameter).  The existence and type of the setting are
+    checked.
 
-    See CONTAINER_TYPES and STRINGISH_TYPES, under constants.
+    See *_TYPES, under constants.
 
     Parameters:
         setting_name: see note, above
         min_len: None, or a minimum allowed length (inclusive)
         max_len: None, or a maximum allowed length (inclusive)
+        types: which types the setting may have; set this to, e.g,
+               MAIN_SEQUENCE_TYPES to be more restrictive
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, CONTAINER_TYPES, STRINGISH_TYPES,
+        globals: cfg, ALL_CONTAINER_TYPES, STRINGISH_TYPES,
                  exitvals['startup']
         functions: setting_check_is_set(), setting_check_type(), pps(),
                    err_exit()
@@ -4534,24 +4542,24 @@ def setting_check_len(setting_name, min_len, max_len):
     obj, obj_path = setting_check_is_set(setting_name)
 
     # check the type
-    t = setting_check_type(setting_name, CONTAINER_TYPES + STRINGISH_TYPES)
+    t = setting_check_type(setting_name, types)
 
     # len(obj) < min_len?  len(obj) > max_len?
     if ((min_len is not None and len(obj) < min_len) or
           (max_len is not None and len(obj) > max_len)):
-        if t in CONTAINER_TYPES:
-            err_exit('Error: {0} contains an invalid number of elements '
-                     '({1});\nexiting.'.format(obj_path, pps(len(obj))),
-                     exitvals['startup']['num'])
-        else:
+        if t in STRINGISH_TYPES:
             err_exit('Error: {0} is an invalid length ({1}); '
                      'exiting.'.format(obj_path, pps(len(obj))),
+                     exitvals['startup']['num'])
+        else:
+            err_exit('Error: {0} contains an invalid number of elements '
+                     '({1});\nexiting.'.format(obj_path, pps(len(obj))),
                      exitvals['startup']['num'])
 
     return (obj, obj_path)
 
 
-def setting_check_not_blank(setting_name, ish=False):
+def setting_check_not_blank(setting_name, types=STRING_TYPES):
 
     """
     If a string-typed config setting is empty, exit with an error.
@@ -4563,12 +4571,13 @@ def setting_check_not_blank(setting_name, ish=False):
 
     Parameters:
         setting_name: see note, above
-        ish: if true, string-like but non-string types are allowed
-             (see STRINGISH_TYPES, under constants)
+        types: which types the setting may have; set this to, e.g,
+               STRINGISH_TYPES to be more permissive (see *_TYPES, under
+               constants)
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, STRING_TYPES, STRINGISH_TYPES, exitvals['startup']
+        globals: cfg, STRING_TYPES, exitvals['startup']
         functions: setting_check_is_set(), setting_check_type(),
                    err_exit()
 
@@ -4578,8 +4587,7 @@ def setting_check_not_blank(setting_name, ish=False):
     obj, obj_path = setting_check_is_set(setting_name)
 
     # check the type
-    setting_check_type(setting_name,
-                       STRINGISH_TYPES if ish else STRING_TYPES)
+    setting_check_type(setting_name, types)
 
     # blank?
     if not obj:
@@ -4589,7 +4597,7 @@ def setting_check_not_blank(setting_name, ish=False):
     return (obj, obj_path)
 
 
-def setting_check_not_all_blank(setting_name_list, ish=False):
+def setting_check_not_all_blank(setting_name_list, types=STRING_TYPES):
 
     """
     At least one of a group of settings must be non-blank, else e/e.
@@ -4604,12 +4612,13 @@ def setting_check_not_all_blank(setting_name_list, ish=False):
     Parameters:
         setting_name_list: a list or tuple of setting_names; see note,
                            above
-        ish: if true, string-like but non-string types are allowed
-             (see STRINGISH_TYPES, under constants)
+        types: which types the settings may have; set this to, e.g,
+               STRINGISH_TYPES to be more permissive (see *_TYPES, under
+               constants)
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, STRING_TYPES, STRINGISH_TYPES, exitvals['startup']
+        globals: cfg, STRING_TYPES, exitvals['startup']
         functions: setting_walk(), setting_check_type(), err_exit()
 
     """
@@ -4621,8 +4630,7 @@ def setting_check_not_all_blank(setting_name_list, ish=False):
         ret, obj, full_path, real_path = setting_walk(setting_name)
         setting_paths.append(full_path)
         if ret:
-            setting_check_type(setting_name,
-                               STRINGISH_TYPES if ish else STRING_TYPES)
+            setting_check_type(setting_name, types)
             if (not found_one) and obj:
                 to_return = (obj, full_path)
                 found_one = True
@@ -4636,8 +4644,8 @@ def setting_check_not_all_blank(setting_name_list, ish=False):
                  exitvals['startup']['num'])
 
 
-def setting_check_no_blanks(setting_name, stringish=False,
-                            mapping_values=True):
+def setting_check_no_blanks(setting_name, c_types=CONTAINER_TYPES,
+                            s_types=STRING_TYPES, mapping_values=True):
 
     """
     If a container config setting contains any blanks, error/exit.
@@ -4649,20 +4657,21 @@ def setting_check_no_blanks(setting_name, stringish=False,
     types of the container's contents are checked.  If the container
     can't be empty, see setting_check_not_empty().
 
-    See CONTAINER_TYPES, under constants.
+    See *_TYPES, under constants.
 
     Parameters:
         setting_name: see note, above
-        stringish: if true, string-like but non-string types are allowed
-                   (see STRINGISH_TYPES, under constants)
+        c_types: which types the container may have; set this to, e.g,
+                 MAIN_SEQUENCE_TYPES to be more restrictive
+        s_types: which types the strings may have; set this to, e.g,
+                 STRINGISH_TYPES to be more permissive
         mapping_values: if true, mapping types are checked based on
-                        their values; if false, their keys (see
-                        MAPPING_TYPES, under constants)
+                        their values; if false, their keys
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, CONTAINER_TYPES, MAPPING_TYPES, STRING_TYPES,
-                 STRINGISH_TYPES, exitvals['startup']
+        globals: cfg, CONTAINER_TYPES, STRING_TYPES, MAPPING_TYPES,
+                 exitvals['startup']
         functions: setting_check_is_set(), setting_check_type(),
                    err_exit()
 
@@ -4672,13 +4681,12 @@ def setting_check_no_blanks(setting_name, stringish=False,
     obj, obj_path = setting_check_is_set(setting_name)
 
     # check the container type
-    t = setting_check_type(setting_name, CONTAINER_TYPES)
+    t = setting_check_type(setting_name, c_types)
 
     # blanks?
     if (t in MAPPING_TYPES) and mapping_values:
         for k, v in obj.items():
-            if not isinstance(v, STRINGISH_TYPES if stringish
-                                                 else STRING_TYPES):
+            if not isinstance(v, s_types):
                 err_exit('Error: {0} contains a non-string value; '
                          'exiting.' .
                          format(obj_path),
@@ -4689,9 +4697,7 @@ def setting_check_no_blanks(setting_name, stringish=False,
                          exitvals['startup']['num'])
     elif (t in MAPPING_TYPES) and not mapping_values:
         for k, v in obj.items():
-            print('asdf {0} {1} adfs'.format(k, v))
-            if not isinstance(k, STRINGISH_TYPES if stringish
-                                                 else STRING_TYPES):
+            if not isinstance(k, s_types):
                 err_exit('Error: {0} contains a non-string key; exiting.' .
                          format(obj_path),
                          exitvals['startup']['num'])
@@ -4701,8 +4707,7 @@ def setting_check_no_blanks(setting_name, stringish=False,
                          exitvals['startup']['num'])
     else:
         for subobj in obj:
-            if not isinstance(subobj, STRINGISH_TYPES if stringish
-                                                      else STRING_TYPES):
+            if not isinstance(subobj, s_types):
                 err_exit('Error: {0} contains a non-string; exiting.' .
                          format(obj_path),
                          exitvals['startup']['num'])
@@ -4714,7 +4719,8 @@ def setting_check_no_blanks(setting_name, stringish=False,
     return (obj, obj_path)
 
 
-def setting_check_kwargs(setting_name, stringish=False):
+def setting_check_kwargs(setting_name, m_types=MAPPING_TYPES,
+                         s_types=STRING_TYPES):
 
     """
     If a mapping config setting has a non-identifier key, error/exit.
@@ -4731,17 +4737,17 @@ def setting_check_kwargs(setting_name, stringish=False):
     types of the mapping's keys are checked.  If the container can't be
     empty, see setting_check_not_empty().
 
-    See MAPPING_TYPES, under constants.
+    See *_TYPES, under constants.
 
     Parameters:
         setting_name: see note, above
-        stringish: if true, string-like but non-string types are allowed
-                   for the keys (see STRINGISH_TYPES, under constants)
+        m_types: which types the mapping may have
+        s_types: which types the keys (strings) may have; set this to,
+                 e.g, STRINGISH_TYPES to be more permissive
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, MAPPING_TYPES, STRING_TYPES, STRINGISH_TYPES,
-                 exitvals['startup']
+        globals: cfg, MAPPING_TYPES, STRING_TYPES, exitvals['startup']
         functions: setting_check_is_set(), setting_check_type(),
                    err_exit()
         modules: re
@@ -4752,12 +4758,11 @@ def setting_check_kwargs(setting_name, stringish=False):
     obj, obj_path = setting_check_is_set(setting_name)
 
     # check the container type
-    setting_check_type(setting_name, MAPPING_TYPES)
+    setting_check_type(setting_name, m_types)
 
     # non-identifiers?
     for k, v in obj.items():
-        if not isinstance(k, STRINGISH_TYPES if stringish
-                                             else STRING_TYPES):
+        if not isinstance(k, s_types):
             err_exit('Error: {0} contains a non-string key; exiting.' .
                      format(obj_path),
                      exitvals['startup']['num'])
@@ -4774,7 +4779,7 @@ def setting_check_kwargs(setting_name, stringish=False):
     return (obj, obj_path)
 
 
-def setting_check_no_char(setting_name, char, ish=False):
+def setting_check_no_char(setting_name, char, types=STRING_TYPES):
 
     """
     If a config setting contains particular character(s), error/exit.
@@ -4789,12 +4794,13 @@ def setting_check_no_char(setting_name, char, ish=False):
         setting_name: see note, above
         char: a string containing the illegal character, or a tuple of
               such strings
-        ish: if true, string-like but non-string types are allowed
-             (see STRINGISH_TYPES, under constants)
+        types: which types the setting may have; set this to, e.g,
+               STRINGISH_TYPES to be more permissive (see *_TYPES, under
+               constants)
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, STRING_TYPES, STRINGISH_TYPES, exitvals['startup']
+        globals: cfg, STRING_TYPES, exitvals['startup']
         functions: setting_check_is_set(), setting_check_type(),
                    scalar_to_tuple(), char_name(), err_exit()
 
@@ -4804,8 +4810,7 @@ def setting_check_no_char(setting_name, char, ish=False):
     obj, obj_path = setting_check_is_set(setting_name)
 
     # check the type
-    setting_check_type(setting_name,
-                       STRINGISH_TYPES if ish else STRING_TYPES)
+    setting_check_type(setting_name, types)
 
     # if char isn't a tuple, make it one
     char = scalar_to_tuple(char)
@@ -4854,8 +4859,8 @@ def setting_check_list(setting_name, list_vals):
     return (obj, obj_path)
 
 
-def setting_check_num(setting_name, min_val=None, max_val=None,
-                      integer=False):
+def setting_check_number(setting_name, min_val=None, max_val=None,
+                         types=NUMBER_TYPES):
 
     """
     If a number-typed config setting is invalid, exit with an error.
@@ -4871,11 +4876,12 @@ def setting_check_num(setting_name, min_val=None, max_val=None,
         setting_name: see note, above
         min_val: None, or a minimum allowed value (inclusive)
         max_val: None, or a maximum allowed value (inclusive)
-        integer: if true, the setting must be an integer
+        types: which types the setting may have; set this to, e.g,
+               INTEGER_TYPES to be more restrictive
 
     Dependencies:
         config settings: (contents of setting_name)
-        globals: cfg, exitvals['startup'], NUMBER_TYPES, INTEGER_TYPES
+        globals: cfg, exitvals['startup'], NUMBER_TYPES
         functions: setting_check_is_set(), setting_check_type()
 
     """
@@ -4884,8 +4890,7 @@ def setting_check_num(setting_name, min_val=None, max_val=None,
     obj, obj_path = setting_check_is_set(setting_name)
 
     # check the type
-    setting_check_type(setting_name, INTEGER_TYPES if integer
-                                                   else NUMBER_TYPES)
+    setting_check_type(setting_name, types)
 
     # obj < min_val?  obj > max_val?
     if ((min_val is not None and obj < min_val) or
@@ -4899,13 +4904,15 @@ def setting_check_num(setting_name, min_val=None, max_val=None,
 
 def setting_check_integer(setting_name, min_val=None, max_val=None):
     """
-    A wrapper around setting_check_num() for integers, for readability.
+    A readability wrapper around setting_check_number() for integers.
     Parameters:
-        see setting_check_num()
+        see setting_check_number()
     Dependencies:
-        functions: setting_check_num()
+        globals: INTEGER_TYPES
+        functions: setting_check_number()
     """
-    return setting_check_num(setting_name, min_val, max_val, integer=True)
+    return setting_check_number(setting_name, min_val, max_val,
+                                types=INTEGER_TYPES)
 
 
 def setting_check_callable(setting_name, may_be_none=False):
@@ -4950,14 +4957,14 @@ def setting_check_arg_tuple(setting_name):
     Parameters:
         setting_name: see note, above
     Dependencies:
-        globals: CONTAINER_TYPES, MAPPING_TYPES
+        globals: MAIN_SEQUENCE_TYPES, MAPPING_TYPES
         functions: scalar_to_tuple(), setting_check_type(),
                    setting_check_len()
     """
     setting_name = scalar_to_tuple(setting_name)
     setting_check_type(setting_name, tuple)
     setting_check_len(setting_name, 2, 2)
-    setting_check_type(setting_name + (0, ), CONTAINER_TYPES)
+    setting_check_type(setting_name + (0, ), MAIN_SEQUENCE_TYPES)
     setting_check_type(setting_name + (1, ), MAPPING_TYPES)
 
 
@@ -4971,7 +4978,7 @@ def setting_check_callback(setting_name, min_extra=0, max_extra=0):
         min_extra: minimum number of additional elements in the tuple
         max_extra: maximum number of additional elements in the tuple
     Dependencies:
-        globals: CONTAINER_TYPES, MAPPING_TYPES
+        globals: MAIN_SEQUENCE_TYPES, MAPPING_TYPES
         functions: scalar_to_tuple(), setting_check_type(),
                    setting_check_len(), setting_check_callable()
     """
@@ -4979,7 +4986,7 @@ def setting_check_callback(setting_name, min_extra=0, max_extra=0):
     setting_check_type(setting_name, tuple)
     setting_check_len(setting_name, (3 + min_extra), (3 + max_extra))
     setting_check_callable(setting_name + (0, ), may_be_none=False)
-    setting_check_type(setting_name + (1, ), CONTAINER_TYPES)
+    setting_check_type(setting_name + (1, ), MAIN_SEQUENCE_TYPES)
     setting_check_type(setting_name + (2, ), MAPPING_TYPES)
 
 
@@ -4993,12 +5000,12 @@ def setting_check_callbacks(setting_name, min_extra=0, max_extra=0):
         min_extra: minimum number of additional elements in the tuples
         max_extra: maximum number of additional elements in the tuples
     Dependencies:
-        globals: CONTAINER_TYPES
+        globals: MAIN_SEQUENCE_TYPES
         functions: scalar_to_tuple(_, setting_check_type(),
                    setting_walk(), setting_check_callback()
     """
     setting_name = scalar_to_tuple(setting_name)
-    setting_check_type(setting_name, CONTAINER_TYPES)
+    setting_check_type(setting_name, MAIN_SEQUENCE_TYPES)
     ret, obj, full_path, real_path = setting_walk(setting_name)
     for i, cb_t in enumerate(obj):
         setting_check_callback(setting_name + (i, ), min_extra, max_extra)
@@ -5990,7 +5997,8 @@ def validate_config():
         globals: cfg, validate_config_hooks, NONE_TYPE, STRING_TYPES,
                  PATH_SEP
         functions: setting_check_type(), setting_check_integer(),
-                   setting_check_num(), setting_check_filedir_create(),
+                   setting_check_number(),
+                   setting_check_filedir_create(),
                    setting_check_not_blank(), setting_check_no_blanks(),
                    setting_check_len(), setting_check_file_read(),
                    setting_check_file_type(),
@@ -6008,15 +6016,14 @@ def validate_config():
         setting_check_integer('umask', 0, 511)  # 511 = 0o777
     setting_check_type('log_cmds', bool)
     setting_check_type('debug', bool)
-    setting_check_num('run_every', 0)
+    setting_check_number('run_every', 0)
     setting_check_filedir_create('last_started_file', 'f')
     setting_check_filedir_create('lockfile', 'd')
-    setting_check_num('if_running', 0)
+    setting_check_number('if_running', 0)
     setting_check_filedir_create('lockfile_alert_file', 'f')
     setting_check_type('send_alert_emails', bool)
     if cfg['send_alert_emails']:
         setting_check_not_blank('alert_emails_from')
-        setting_check_type('alert_emails_to', list)
         setting_check_not_empty('alert_emails_to')
         setting_check_no_blanks('alert_emails_to')
         setting_check_type('alert_emails_subject', STRING_TYPES)
@@ -6092,7 +6099,7 @@ def validate_config():
         setting_check_no_char('output_log_date', PATH_SEP)
         if cfg['output_log_layout'] != 'append':
             setting_check_integer('output_log_num', 0)
-            setting_check_num('output_log_days', 0)
+            setting_check_number('output_log_days', 0)
 
     # hooks for adding more validations
     for hook in validate_config_hooks:

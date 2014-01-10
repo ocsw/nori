@@ -37,10 +37,10 @@ import nori
 #print(nori.char_name('\a'))
 #print(nori.char_name('x'))
 
-#print(nori.type_list_string(nori.STRING_TYPES))
-#print(nori.type_list_string(nori.STRINGISH_TYPES))
-#print(nori.type_list_string())
-#print(nori.type_list_string(5))
+#print(nori.type_tuple_string(nori.STRING_TYPES))
+#print(nori.type_tuple_string(nori.STRINGISH_TYPES))
+#print(nori.type_tuple_string())
+#print(nori.type_tuple_string(5))
 
 #print(nori.scalar_to_tuple(5))
 #print(nori.scalar_to_tuple('adsf'))
@@ -606,12 +606,15 @@ def run_mode_hook():
     #print(nori.setting_check_not_empty(('alert_emails_host', 0)))
     #print(nori.setting_check_not_empty('alert_emails_hostasdf'))
     #print(nori.setting_check_not_empty('alert_emails_host'))
+    #print(nori.setting_check_not_empty('alert_emails_host', types=list))
 
     #print(nori.setting_check_not_all_empty(['alert_emails_hostasdf']))
     #print(nori.setting_check_not_all_empty(['send_alert_emails']))
     #print(nori.setting_check_not_all_empty(['alert_emails_host',
     #                                        'alert_emails_to']))
     #print(nori.setting_check_not_all_empty(['alert_emails_host']))
+    #print(nori.setting_check_not_all_empty(['alert_emails_host'],
+    #                                       types=list))
 
     #print(nori.setting_check_len(['alert_emails_hostasdf'],
     #                                       1, 2))
@@ -628,12 +631,13 @@ def run_mode_hook():
     #print(nori.setting_check_len('alert_emails_from', 21, 25))
     #print(nori.setting_check_len('alert_emails_from', None, None))
     #print(nori.setting_check_len('alert_emails_from', 1, 1))
+    #print(nori.setting_check_len('alert_emails_from', 1, 1, types=bool))
 
     #print(nori.setting_check_not_blank(('alert_emails_host', 0)))
     #print(nori.setting_check_not_blank('alert_emails_hostasdf'))
     #print(nori.setting_check_not_blank('send_alert_emails'))
     #print(nori.setting_check_not_blank('alert_emails_from'))
-    #print(nori.setting_check_not_blank('alert_emails_from', True))
+    #print(nori.setting_check_not_blank('alert_emails_from', types=bool))
 
     #print(nori.setting_check_not_all_blank([('alert_emails_host', 0)]))
     #print(nori.setting_check_not_all_blank(['alert_emails_hostasdf']))
@@ -641,24 +645,29 @@ def run_mode_hook():
     #print(nori.setting_check_not_all_blank([('alert_emails_host', 0),
     #                                        'alert_emails_from']))
     #print(nori.setting_check_not_all_blank(['alert_emails_from']))
-    #print(nori.setting_check_not_all_blank(['alert_emails_from'], True))
+    #print(nori.setting_check_not_all_blank(['alert_emails_from'],
+    #                                       types=bool))
 
     #print(nori.setting_check_no_blanks(('alert_emails_host', 0)))
     #print(nori.setting_check_no_blanks('alert_emails_hostasdf'))
     #print(nori.setting_check_no_blanks('alert_emails_host'))
     #print(nori.setting_check_no_blanks('alert_emails_to'))
-    #print(nori.setting_check_no_blanks('alert_emails_to', True))
-    #print(nori.setting_check_no_blanks('alert_emails_to', False, False))
-    #print(nori.setting_check_no_blanks('alert_emails_to', True, False))
+    #print(nori.setting_check_no_blanks('alert_emails_to', c_types=bool))
+    #print(nori.setting_check_no_blanks('alert_emails_to', s_types=bool))
+    #print(nori.setting_check_no_blanks('alert_emails_to',
+    #                                   mapping_values=False))
+    #print(nori.setting_check_no_blanks('alert_emails_to', s_types=bool,
+    #                                   mapping_values=False))
 
     #print(nori.setting_check_kwargs('alert_emails_to'))
-    #print(nori.setting_check_kwargs('alert_emails_to', True))
+    #print(nori.setting_check_kwargs('alert_emails_to', m_types=bool))
+    #print(nori.setting_check_kwargs('alert_emails_to', s_types=bool))
 
     #print(nori.setting_check_no_char('alert_emails_hostasdf', '#'))
     #print(nori.setting_check_no_char('alert_emails_host', '#'))
     #print(nori.setting_check_no_char('alert_emails_from', '@'))
-    #print(nori.setting_check_no_char('alert_emails_from', '@', True))
     #print(nori.setting_check_no_char('alert_emails_from', '9'))
+    #print(nori.setting_check_no_char('alert_emails_from', '9', types=bool))
 
     #print(nori.setting_check_list('mysqlstuff_protocoladsf',
     #      ['tcp', 'socket']))
@@ -667,16 +676,18 @@ def run_mode_hook():
     #print(nori.setting_check_list('mysqlstuff_protocol',
     #                              ['tcp', 'socket']))
 
-    #print(nori.setting_check_num('mysqlstuff_protocoladsf', 0, 5))
-    #print(nori.setting_check_num('mysqlstuff_use_ssh_tunnel', 0, 5))
-    #print(nori.setting_check_num('foo_ssh_port', 1, 5555))
-    #print(nori.setting_check_num('foo_ssh_port', 22, 5555))
-    #print(nori.setting_check_num('foo_ssh_port', 25, 5555))
-    #print(nori.setting_check_num('foo_ssh_port', 1, 5555))
-    #print(nori.setting_check_num('foo_ssh_port', 1, 22))
-    #print(nori.setting_check_num('foo_ssh_port', 1, 20))
-
+    #print(nori.setting_check_number('mysqlstuff_protocoladsf', 0, 5))
+    #print(nori.setting_check_number('mysqlstuff_use_ssh_tunnel', 0, 5))
+    #print(nori.setting_check_number('foo_ssh_port', 1, 5555))
+    #print(nori.setting_check_number('foo_ssh_port', 22, 5555))
+    #print(nori.setting_check_number('foo_ssh_port', 25, 5555))
+    #print(nori.setting_check_number('foo_ssh_port', 1, 5555))
+    #print(nori.setting_check_number('foo_ssh_port', 1, 22))
+    #print(nori.setting_check_number('foo_ssh_port', 1, 22, types=int))
     #print(nori.setting_check_integer('foo_ssh_port', 1, 20))
+    #print(nori.setting_check_integer('foo_ssh_port', 1, 22))
+
+    # (arg_tuple, callback, callbacks)
 
     #print(nori.setting_check_file_type('output_logasdf', 'f'))
     #print(nori.setting_check_file_type('output_log', 'f'))
