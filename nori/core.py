@@ -32,8 +32,8 @@ DOCSTRING CONTENTS:
     FULL_DATE_FORMAT
         Format for printing certain timestamps.
 
-    NUMBER_TYPES
     INTEGER_TYPES
+    NUMBER_TYPES
     STRING_TYPES
     STRINGISH_TYPES
     SEQUENCE_TYPES
@@ -819,24 +819,27 @@ FULL_DATE_FORMAT = '%a %b %d %H:%M:%S %Z %Y'
 
 # see config setting functions and type_list_string()
 if sys.hexversion < 0x03000000:
-    NUMBER_TYPES = (int, float, long)  # not complex
     INTEGER_TYPES = (int, long)
     STRING_TYPES = (basestring, )  # tuple so we can add to it
     if sys.hexversion < 0x02070000:
-        STRINGISH_TYPES = (basestring, bytearray, buffer)
+        STRINGISH_TYPES = STRING_TYPES + (bytearray, buffer)
     else:
-        STRINGISH_TYPES = (basestring, bytearray, buffer, memoryview)
+        STRINGISH_TYPES =  STRING_TYPES + (bytearray, buffer, memoryview)
+    # strictly speaking, the STRING/STRINGISH_TYPES are sequences, too,
+    # but you wouldn't really use them that way in general
     SEQUENCE_TYPES = (list, tuple, xrange, set, frozenset,
                       collections.ItemsView, collections.KeysView,
                       collections.ValuesView)
 else:
-    NUMBER_TYPES = (int, float)  # not complex
     INTEGER_TYPES = (int, )  # tuple so we can add to it
     STRING_TYPES = (str, )  # tuple so we can add to it
-    STRINGISH_TYPES = (str, bytes, bytearray, memoryview)
+    STRINGISH_TYPES =  STRING_TYPES + (bytes, bytearray, memoryview)
+    # strictly speaking, the STRING/STRINGISH_TYPES are sequences, too,
+    # but you wouldn't really use them that way in general
     SEQUENCE_TYPES = (list, tuple, range, set, frozenset,
                       collections.abc.ItemsView, collections.abc.KeysView,
                       collections.abc.ValuesView)
+NUMBER_TYPES = INTEGER_TYPES + (float, )  # not complex
 MAPPING_TYPES = (dict, )  # tuple so we can add to it
 CONTAINER_TYPES = SEQUENCE_TYPES + MAPPING_TYPES
 NONE_TYPE = type(None)  # NoneType removed from the types module in 3.0
