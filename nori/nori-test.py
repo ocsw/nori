@@ -632,6 +632,7 @@ def run_mode_hook():
     #print(nori.setting_check_length('alert_emails_from', None, None))
     #print(nori.setting_check_length('alert_emails_from', 1, 1))
     #print(nori.setting_check_length('alert_emails_from', 1, 1, types=bool))
+    #print(nori.setting_check_length('alert_emails_to', 1, 1))
 
     #print(nori.setting_check_not_blank(('alert_emails_host', 0)))
     #print(nori.setting_check_not_blank('alert_emails_hostasdf'))
