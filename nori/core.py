@@ -3016,7 +3016,7 @@ def rotate_prune_output_logs():
                            'file; not rotating logs.')
         return
 
-    status_logger.info('Rotating logs...')
+    status_logger.info('Rotating logs.')
 
     # rotate
     if cfg['output_log_layout'] == 'number':
