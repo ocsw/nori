@@ -601,6 +601,7 @@ import threading
 import re
 import pprint
 import operator
+import collections
 
 # see import_file()
 if sys.hexversion < 0x03040000:
@@ -622,6 +623,14 @@ try:
     import grp  # Unix; see get_file_metadata()
 except ImportError:
     pass
+
+
+###############
+# this package
+###############
+
+from .collections import OrderedDict  # regular import would conflict
+
 
 ### see also deferred imports, after the version check ###
 
@@ -775,7 +784,6 @@ pyversion_check(7, 2)
 #                           DEFERRED IMPORTS
 ########################################################################
 
-import collections  # OrderedDict requires 2.7/3.1; also used for types
 import argparse  # requires 2.7/3.2
 import importlib  # requires 2.7/3.1
 
@@ -895,7 +903,7 @@ except ImportError:
 # format: 'feature_name': 'feature_description'
 # see also available_features, below, and the section on submodules in
 # the module docstring, above
-supported_features = collections.OrderedDict()
+supported_features = OrderedDict()
 
 # list of available features
 # if a feature name is in the list, it is actually available on the
@@ -950,7 +958,7 @@ tasks_name = 'script invocations'
 #               another one; this element must be set to the name of the
 #               other mode, and the other elements will be ignored
 #
-script_modes = collections.OrderedDict()
+script_modes = OrderedDict()
 # if we put the values in the constructor, they are added to kwargs and
 # lose their order, so we have to be more verbose
 
@@ -1275,7 +1283,7 @@ config_defaults_multiple = dict(
 #     bogus_config, apply_config_defaults_hooks, and
 #     validate_config_hooks
 #
-config_settings = collections.OrderedDict()
+config_settings = OrderedDict()
 # if we put the values in the constructor, they are added to kwargs and
 # lose their order, so we have to be more verbose
 
