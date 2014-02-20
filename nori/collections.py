@@ -23,8 +23,14 @@ DOCSTRING CONTENTS:
 2) API CLASSES:
 ---------------
 
-    
+    OrderedDict(collections.OrderedDict)
+        Adds more insertion functionality to OrderedDict.
 
+        insert_before()
+            Insert before a given key.
+
+        insert_after()
+            Insert after a given key.
 
 """
 
@@ -63,16 +69,16 @@ core.pyversion_check(7, 1)
 #                           DEFERRED IMPORTS
 ########################################################################
 
-import collections  # OrderedDict requires 2.7/3.1
+import collections as _collections  # OrderedDict requires 2.7/3.1
 
 
 ########################################################################
 #                               CLASSES
 ########################################################################
 
-class OrderedDict(collections.OrderedDict):
+class OrderedDict(_collections.OrderedDict):
 
-    """Add more insertion functionality to OrderedDict."""
+    """Adds more insertion functionality to OrderedDict."""
 
     def insert_before(self, existing_key, new_key, new_value):
         """
@@ -116,7 +122,3 @@ class OrderedDict(collections.OrderedDict):
                 new_items.append((new_key, new_value))
         self.clear()
         self.update(new_items)
-
-
-    #@def insert_at_num(self, pos, new_key, new_value):
-
