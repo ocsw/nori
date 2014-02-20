@@ -18,6 +18,7 @@ DOCSTRING CONTENTS:
 
     This submodule provides wrappers for Python's collections classes,
     with expanded functionality.  So far, only OrderedDict is included.
+    It requires Python 2.7 / 3.1.
 
 
 2) API CLASSES:
@@ -54,7 +55,8 @@ from pprint import pprint as pp  # for debugging
 # this package
 ###############
 
-from . import core
+# this would be for the version check, but it produces a circular import
+#from . import core
 
 
 ########################################################################
@@ -62,7 +64,7 @@ from . import core
 ########################################################################
 
 # minimum versions for the imports and code below
-core.pyversion_check(7, 1)
+#core.pyversion_check(7, 1)  # see imports, above
 
 
 ########################################################################

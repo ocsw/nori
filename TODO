@@ -18,6 +18,8 @@ testing with python 3
 
 ---
 
+circular import problem with collections
+
 broken pipe issue
 fanout error handling
 
