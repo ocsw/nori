@@ -356,6 +356,15 @@ DOCSTRING CONTENTS:
     Config-setting Checks and Manipulations:
     ----------------------------------------
 
+    create_email_settings()
+        Create a block of email-related settings.
+
+    settings_extra_text()
+        Add extra text to config setting descriptions.
+
+    settings_extra_requires()
+        Add extra feature requirements to config settings.
+
     config_settings_no_print_output_log()
         Turn self-documentation of the output log feature on or off.
 
@@ -507,6 +516,9 @@ DOCSTRING CONTENTS:
 
     validate_config()
         Validate the configuration settings.
+
+    validate_email_config()
+        Validate email configuration settings.
 
     process_config()
         Process the config file and the settings supplied on the
@@ -1167,6 +1179,9 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # starting timestamp (see run_mode(); listed here for centralization)
 start_time = None
 
+# internal; see create_email_settings() and validate_email_config()
+_ignore_email_config = {}
+
 # internal; see command-running functions
 _atexit_kill_bg_commands_registered = False
 _running_bg_commands = []  # contains process objects
@@ -1279,8 +1294,9 @@ config_defaults_multiple = dict(
 # any change to the values below (additions, deletions, name changes,
 # type changes, etc.) must be reflected in the following, as
 # appropriate:
-#     _config_settings_extra(), bogus_config,
-#     apply_config_defaults_extra(), and validate_config()
+#     _create_config_settings(), create_email_settings(), bogus_config,
+#     apply_config_defaults_extra(), validate_config(), and
+#     validate_email_config()
 #
 # changes made by other submodules, or scripts that use this library,
 # must be reflected in (as appropriate):
@@ -1288,15 +1304,220 @@ config_defaults_multiple = dict(
 #     validate_config_hooks
 #
 config_settings = collectionsplus.OrderedDict()
-# if we put the values in the constructor, they are added to kwargs and
-# lose their order, so we have to be more verbose
 
-config_settings['housekeeping_heading'] = dict(
-    heading='Housekeeping',
-)
+#
+# If we put the values in the constructor, they are added to kwargs and
+# lose their order, so we'll have to be more verbose.
+#
+# Also, now that some of this stuff has been abstracted into functions,
+# the rest needs to be encapsulated so that it can a) be in a clear
+# order, b) be up here with the rest of the variables, and c) refer to
+# functions defined later.
+#
 
-config_settings['exec_path'] = dict(
-    descr=(
+
+def create_email_settings(name_str, descr_str, heading=None,
+                          extra_text=None, ignore=None, extra_requires=[]):
+
+    """
+    Create a block of email-related settings.
+
+    You may want to manually adjust a few details, particularly:
+        * config_settings['send_' + name_str + '_emails']['descr']
+        * config_settings[name_str + '_emails_subject']['default']
+        * config_settings[name_str + '_emails_subject']['default_descr']
+
+    When modifying, remember to keep the setting_list at the bottom
+    and validate_email_config() in sync with the config settings.
+
+    Parameters:
+        name_str: a string to use in setting names, e.g. 'alert'
+        descr_str: a string to use in setting descriptions, e.g.
+                   'alert/error', for use in phrases like 'alert/error
+                   emails'
+        heading: if not None, a heading entry with this value will be
+                 added to the config settings
+        extra_text: if not None, this value is added to each setting
+                    description (prepended with a blank line; does not
+                    include the heading)
+                    this is mainly intended to be used for things like
+                    'Ignored if [some setting] is not True.'
+        ignore: if not None, a function; when this function is true,
+                don't bother validating the settings
+        extra_requires: a list of features to be added to the settings'
+                        requires attributes
+
+    Dependencies:
+        globals: running_as_email, script_shortname,
+                 _ignore_email_config, validate_config_hooks
+        functions: str_to_bool(), settings_extra_text(),
+                   settings_extra_requires(), validate_email_config()
+        modules: socket
+
+    """
+
+    global validate_config_hooks
+
+    _ignore_email_config[name_str] = ignore
+
+    if heading is not None:
+        config_settings[name_str + '_emails_heading'] = dict(
+            heading=heading,
+        )
+
+    config_settings['send_' + name_str + '_emails'] = dict(
+        descr=(
+'''
+Send {0} emails?  (True/False)
+''' .
+            format(descr_str)
+        ),
+        default=True,
+        cl_coercer=str_to_bool,
+    )
+
+    config_settings[name_str + '_emails_from'] = dict(
+        descr=(
+'''
+Address to send {0} emails from.
+
+Ignored if send_{1}_emails is False.
+''' .
+            format(descr_str, name_str)
+        ),
+        default=running_as_email,
+        default_descr=(
+'''
+the local email address of the user running the script
+(i.e., [user]@[hostname], where [user] is the current user and [hostname]
+is the local hostname)
+'''
+        ),
+        cl_coercer=str,
+    )
+
+    config_settings[name_str + '_emails_to'] = dict(
+        descr=(
+'''
+Where to send {0} emails.
+
+This must be a list of strings (even if there is only one address).
+
+Ignored if send_{1}_emails is False.
+''' .
+            format(descr_str, name_str)
+        ),
+        default=[running_as_email],
+        default_descr=(
+'''
+a list containing the local email address of the user running
+the script (i.e., [user]@[hostname], where [user] is the current user
+and [hostname] is the local hostname)
+'''
+        ),
+        cl_coercer=lambda x: x.split(','),
+    )
+
+    config_settings[name_str + '_emails_subject'] = dict(
+        descr=(
+'''
+The subject line of {0} emails.
+
+Ignored if send_{1}_emails is False.
+''' .
+            format(descr_str, name_str)
+        ),
+        default=(
+            script_shortname + ' ' + descr_str + ' on ' + socket.getfqdn()
+        ),
+        default_descr=(
+'''
+'{0} {1} on [hostname]', where [hostname] is the local
+hostname
+''' .
+            format(script_shortname, descr_str)
+        ),
+        cl_coercer=str,
+    )
+
+    config_settings[name_str + '_emails_host'] = dict(
+        descr=(
+'''
+The SMTP server via which {0} emails will be sent.
+
+This can be a string containing the hostname, or a tuple of the
+hostname and the port number.
+
+Ignored if send_{1}_emails is False.
+''' .
+            format(descr_str, name_str)
+        ),
+        default='localhost',
+    )
+
+    config_settings[name_str + '_emails_cred'] = dict(
+        descr=(
+'''
+The credentials to be used with the {0}_emails_host.
+
+This can be None or a tuple containing the username and password.
+
+Ignored if send_{0}_emails is False.
+''' .
+            format(name_str)
+        ),
+        default=None,
+    )
+
+    config_settings[name_str + '_emails_sec'] = dict(
+        descr=(
+'''
+The SSL/TLS options to be used with the {0}_emails_host.
+
+This can be None, () for plain SSL/TLS, a tuple containing only
+the path to a key file, or a tuple containing the paths to the key
+and certificate files.
+
+Ignored if send_{0}_emails is False.
+''' .
+            format(name_str)
+        ),
+        default=None,
+    )
+
+    setting_list = [
+        'send_' + name_str + '_emails', name_str + '_emails_from',
+        name_str + '_emails_to', name_str + '_emails_subject',
+        name_str + '_emails_host', name_str + '_emails_cred',
+        name_str + '_emails_sec',
+    ]
+    settings_extra_text(setting_list, extra_text)
+    settings_extra_requires(setting_list, extra_requires)
+
+    validate_config_hooks.append(lambda: validate_email_config(name_str))
+
+
+def _create_config_settings():
+
+    """
+    Create the main configuration settings.
+
+    In a function for reasons described in a note, above.
+
+    Dependencies:
+        globals: config_settings, task_article, task_name, tasks_name,
+                 script_shortname, script_name, ZIP_SUFFIXES, PATH_SEP
+        functions: str_to_bool(), create_email_settings()
+        modules: os, stat, socket, errno, logging.handlers
+
+    """
+
+    config_settings['housekeeping_heading'] = dict(
+        heading='Housekeeping',
+    )
+
+    config_settings['exec_path'] = dict(
+        descr=(
 '''
 Search path for executables.
 
@@ -1308,14 +1529,14 @@ happens before the config file is processed.
 
 If unset, the system default will be used.
 '''
-    ),
-    # no default
-    cl_coercer=str,
-    no_print=True,  # only needed w/ext cmds
-)
+        ),
+        # no default
+        cl_coercer=str,
+        no_print=True,  # only needed w/ext cmds
+    )
 
-config_settings['umask'] = dict(
-    descr=(
+    config_settings['umask'] = dict(
+        descr=(
 '''
 File-creation umask value.
 
@@ -1328,14 +1549,14 @@ processed.
 
 If unset, the system default will be used.
 '''
-    ),
-    # no default
-    cl_coercer=lambda x: int(x, base=8),
-    renderer=oct,
-)
+        ),
+        # no default
+        cl_coercer=lambda x: int(x, base=8),
+        renderer=oct,
+    )
 
-config_settings['log_cmds'] = dict(
-    descr=(
+    config_settings['log_cmds'] = dict(
+        descr=(
 '''
 For important external commands, print/log the commands themselves?
 Environment variables added to the commands are also included, one per line.
@@ -1352,31 +1573,31 @@ Which commands this applies to is script-dependent.
 
 Can be True or False.
 '''
-    ),
-    default=False,
-    cl_coercer=lambda x: str_to_bool(x),
-    no_print=True,
-)
+        ),
+        default=False,
+        cl_coercer=str_to_bool,
+        no_print=True,
+    )
 
-config_settings['debug'] = dict(
-    descr=(
+    config_settings['debug'] = dict(
+        descr=(
 '''
 Debug the script?
 
 If True, messages of DEBUG priority and above are processed;
 if False, only INFO or above.
 '''
-    ),
-    default=False,
-    cl_coercer=lambda x: str_to_bool(x),
-)
+        ),
+        default=False,
+        cl_coercer=str_to_bool,
+    )
 
-config_settings['status_heading'] = dict(
-    heading='Status Checks',
-)
+    config_settings['status_heading'] = dict(
+        heading='Status Checks',
+    )
 
-config_settings['run_every'] = dict(
-    descr=(
+    config_settings['run_every'] = dict(
+        descr=(
 '''
 How often to allow the script to run {0} {1}, in minutes.
 
@@ -1390,14 +1611,15 @@ Alternatively, if this is set to 0, no check will be performed, and
 Otherwise, {0} {1} will only be attempted if this amount
 of time has passed since the last {1} was started
 (see last_started_file, below).
-'''.format(task_article, task_name, tasks_name)
-    ),
-    default=0,
-    cl_coercer=int,
-)
+''' .
+            format(task_article, task_name, tasks_name)
+        ),
+        default=0,
+        cl_coercer=int,
+    )
 
-config_settings['last_started_file'] = dict(
-    descr=(
+    config_settings['last_started_file'] = dict(
+        descr=(
 '''
 Path to the last-started timestamp file.
 
@@ -1408,27 +1630,28 @@ by other scripts (e.g., to check if {2} haven't been run
 for a while)
 
 _Not_ ignored, even if run_every is 0.
-'''.format(task_article, task_name, tasks_name)
-    ),
-    default=('/var/log/' + script_shortname + '.started'),
-    cl_coercer=str,
-)
+''' .
+            format(task_article, task_name, tasks_name)
+        ),
+        default=('/var/log/' + script_shortname + '.started'),
+        cl_coercer=str,
+    )
 
-config_settings['lockfile'] = dict(
-    descr=(
+    config_settings['lockfile'] = dict(
+        descr=(
 '''
 Path to the lockfile.
 
 (Actually a directory for technical reasons, and since we have it,
 we can put temp files in it.)
 '''
-    ),
-    default=('/var/run/' + script_shortname + '.lock'),
-    cl_coercer=str,
-)
+        ),
+        default=('/var/run/' + script_shortname + '.lock'),
+        cl_coercer=str,
+    )
 
-config_settings['if_running'] = dict(
-    descr=(
+    config_settings['if_running'] = dict(
+        descr=(
 '''
 If the script has passed the run_every check, but the previous
 {0} is still running or was interrupted
@@ -1441,153 +1664,58 @@ If the script has passed the run_every check, but the previous
 * Either way, it will send an alert when it next successfully starts,
   so you know that the previous {0} finally finished, and the
   next one has begun.
-'''.format(task_name, script_name)
-    ),
-    default=120,
-    default_descr=(
-'''
-120 (2 hours)
-'''
-    ),
-    cl_coercer=int,
-)
+''' .
+            format(task_name, script_name)
+        ),
+        default=120,
+        default_descr='120 (2 hours)',
+        cl_coercer=int,
+    )
 
-config_settings['lockfile_alert_file'] = dict(
-    descr=(
+    config_settings['lockfile_alert_file'] = dict(
+        descr=(
 '''
 Path to the alert-timestamp file (used to track if_running).
 
 _Not_ ignored, even if if_running is 0.
 '''
-    ),
-    # default is cfg['lockfile'] + '.alert', applied at the last minute;
-    # see apply_config_defaults_extra()
-    default_descr=(
+        ),
+        # default is cfg['lockfile'] + '.alert', applied at the last
+        # minute; see apply_config_defaults_extra()
+        default_descr=(
 '''
 cfg['lockfile'] + '.alert'
 (e.g., if lockfile is set to '/var/run/{0}.lock', lockfile_alert_file
 will default to '/var/run/{0}.lock.alert'
-'''.format(script_shortname)
-    ),
-    cl_coercer=str,
-)
+''' .
+            format(script_shortname)
+        ),
+        cl_coercer=str,
+    )
 
-config_settings['logging_heading'] = dict(
-    heading='Alerts and Logging',
-)
+    config_settings['logging_heading'] = dict(
+        heading='Alerts and Logging',
+    )
 
-config_settings['send_alert_emails'] = dict(
-    descr=(
+    create_email_settings('alert', 'alert/error', extra_requires=['asdf'])
+    config_settings['send_alert_emails']['descr'] = (
 '''
 Send email for alerts/errors?  (True/False)
 '''
-    ),
-    default=True,
-    cl_coercer=lambda x: str_to_bool(x),
-)
-
-config_settings['alert_emails_from'] = dict(
-    descr=(
-'''
-Address to send email alerts/errors from.
-
-Ignored if send_alert_emails is False.
-'''
-    ),
-    default=running_as_email,
-    default_descr=(
-'''
-the local email address of the user running the script
-(i.e., [user]@[hostname], where [user] is the current user and [hostname]
-is the local hostname)
-'''
-    ),
-    cl_coercer=str,
-)
-
-config_settings['alert_emails_to'] = dict(
-    descr=(
-'''
-Where to send email alerts/errors.
-
-This must be a list of strings (even if there is only one address).
-
-Ignored if send_alert_emails is False.
-'''
-    ),
-    default=[running_as_email],
-    default_descr=(
-'''
-a list containing the local email address of the user running
-the script (i.e., [user]@[hostname], where [user] is the current user
-and [hostname] is the local hostname)
-'''
-    ),
-    cl_coercer=lambda x: x.split(','),
-)
-
-config_settings['alert_emails_subject'] = dict(
-    descr=(
-'''
-The subject line of alert/error emails.
-
-Ignored if send_alert_emails is False.
-'''
-    ),
-    default=(script_shortname + ' alert on ' + socket.getfqdn()),
-    default_descr=(
+    )
+    config_settings['alert_emails_subject']['default'] = (
+        script_shortname + ' alert on ' + socket.getfqdn()
+    )
+    config_settings['alert_emails_subject']['default_descr'] = (
 '''
 '{0} alert on [hostname]', where [hostname] is the local
 hostname
-'''.format(script_shortname)
-    ),
-    cl_coercer=str,
-)
+''' .
+        format(script_shortname)
+    )
 
-config_settings['alert_emails_host'] = dict(
-    descr=(
-'''
-The SMTP server via which email alerts will be sent.
-
-This can be a string containing the hostname, or a tuple of the
-hostname and the port number.
-
-Ignored if send_alert_emails is False.
-'''
-    ),
-    default='localhost',
-)
-
-config_settings['alert_emails_cred'] = dict(
-    descr=(
-'''
-The credentials to be used with the alert_emails_host.
-
-This can be None or a tuple containing the username and password.
-
-Ignored if send_alert_emails is False.
-'''
-    ),
-    default=None,
-)
-
-config_settings['alert_emails_sec'] = dict(
-    descr=(
-'''
-The SSL/TLS options to be used with the alert_emails_host.
-
-This can be None, () for plain SSL/TLS, a tuple containing only
-the path to a key file, or a tuple containing the paths to the key
-and certificate files.
-
-Ignored if send_alert_emails is False.
-'''
-    ),
-    default=None,
-)
-
-config_settings['quiet'] = dict(
-    descr=(
+    config_settings['quiet'] = dict(
+        descr=(
 '''
 Suppress most printed output?
 
@@ -1599,25 +1727,25 @@ the script.
 
 Can be True or False.
 '''
-    ),
-    default=False,
-    cl_coercer=lambda x: str_to_bool(x),
-)
+        ),
+        default=False,
+        cl_coercer=str_to_bool,
+    )
 
-config_settings['use_syslog'] = dict(
-    descr=(
+    config_settings['use_syslog'] = dict(
+        descr=(
 '''
 Log messages to syslog?
 
 Can be True or False.
 '''
-    ),
-    default=True,
-    cl_coercer=lambda x: str_to_bool(x),
-)
+        ),
+        default=True,
+        cl_coercer=str_to_bool,
+    )
 
-config_settings['syslog_addr'] = dict(
-    descr=(
+    config_settings['syslog_addr'] = dict(
+        descr=(
 '''
 Where to send syslog messages.
 
@@ -1627,18 +1755,18 @@ logging.handlers.SYSLOG_UDP_PORT).
 
 Ignored if use_syslog is False.
 '''
-    ),
-    # see _config_settings_extra()
-    default_descr=(
+        ),
+        # see the 'extra stuff' section, below
+        default_descr=(
 '''
 if either '/dev/log' or '/var/run/syslog' works, it is used;
 otherwise, ('localhost', logging.handlers.SYSLOG_UDP_PORT)
 '''
-    ),
-)
+        ),
+    )
 
-config_settings['syslog_sock_type'] = dict(
-    descr=(
+    config_settings['syslog_sock_type'] = dict(
+        descr=(
 '''
 What kind of socket to use for syslog.
 
@@ -1647,19 +1775,19 @@ socket.SOCK_STREAM for TCP.  (Remember to 'import socket'.)
 
 Ignored if use_syslog is False.
 '''
-    ),
-    default=socket.SOCK_DGRAM,
-    # see also _config_settings_extra()
-    default_descr=(
+        ),
+        default=socket.SOCK_DGRAM,
+        # see also the 'extra stuff' section, below
+        default_descr=(
 '''
 socket.SOCK_DGRAM, unless '/dev/log' or '/var/run/syslog' is
 found, and is found to require socket.SOCK_STREAM
 '''
-    ),
-)
+        ),
+    )
 
-config_settings['syslog_fac'] = dict(
-    descr=(
+    config_settings['syslog_fac'] = dict(
+        descr=(
 '''
 The syslog facility to use.
 
@@ -1674,13 +1802,13 @@ information.
 
 Ignored if use_syslog is False.
 '''
-    ),
-    default='daemon',
-    cl_coercer=str,
-)
+        ),
+        default='daemon',
+        cl_coercer=str,
+    )
 
-config_settings['syslog_tag'] = dict(
-    descr=(
+    config_settings['syslog_tag'] = dict(
+        descr=(
 '''
 An identifier to add to each message logged to syslog.
 
@@ -1688,13 +1816,13 @@ This is typically the name of the script.
 
 Ignored if use_syslog is False.
 '''
-    ),
-    default=script_shortname,
-    cl_coercer=str,
-)
+        ),
+        default=script_shortname,
+        cl_coercer=str,
+    )
 
-config_settings['status_log'] = dict(
-    descr=(
+    config_settings['status_log'] = dict(
+        descr=(
 '''
 The path to the status log.
 
@@ -1703,13 +1831,13 @@ the output log.  Messages are appended; this file is not rotated.
 
 If set to None, no status log will be used.
 '''
-    ),
-    default=('/var/log/' + script_shortname + '.log'),
-    cl_coercer=str,
-)
+        ),
+        default=('/var/log/' + script_shortname + '.log'),
+        cl_coercer=str,
+    )
 
-config_settings['output_log'] = dict(
-    descr=(
+    config_settings['output_log'] = dict(
+        descr=(
 '''
 The path to the output log.
 
@@ -1724,15 +1852,16 @@ the following suffixes, without disrupting the script:
 {0}
 
 If set to None, no output log will be used.
-'''.format(ZIP_SUFFIXES)
-    ),
-    default=('/var/log/' + script_shortname + '-output.log'),
-    cl_coercer=str,
-    no_print=True,
-)
+''' .
+            format(ZIP_SUFFIXES)
+        ),
+        default=('/var/log/' + script_shortname + '-output.log'),
+        cl_coercer=str,
+        no_print=True,
+    )
 
-config_settings['output_log_layout'] = dict(
-    descr=(
+    config_settings['output_log_layout'] = dict(
+        descr=(
 '''
 The file layout to use for the output logs.
 
@@ -1748,15 +1877,16 @@ is 'number', and output_log_sep is '.', the second-most-recent file will be
 named '{0}.log.1'.
 
 Ignored if output_log is None.
-'''.format(script_name)
-    ),
-    default='number',
-    cl_coercer=str,
-    no_print=True,
-)
+''' .
+            format(script_name)
+        ),
+        default='number',
+        cl_coercer=str,
+        no_print=True,
+    )
 
-config_settings['output_log_sep'] = dict(
-    descr=(
+    config_settings['output_log_sep'] = dict(
+        descr=(
 '''
 The separator to use before number/date suffixes in output log names.
 
@@ -1765,15 +1895,16 @@ in the path must be in the output_log setting).  However, it may be more
 than one character, or blank.
 
 Ignored if output_log is None or output_log_layout is 'append'.
-'''.format(PATH_SEP)
-    ),
-    default='.',
-    cl_coercer=str,
-    no_print=True,
-)
+''' .
+            format(PATH_SEP)
+        ),
+        default='.',
+        cl_coercer=str,
+        no_print=True,
+    )
 
-config_settings['output_log_date'] = dict(
-    descr=(
+    config_settings['output_log_date'] = dict(
+        descr=(
 '''
 The date format string for output log names.
 
@@ -1790,15 +1921,16 @@ This may not include path-separator characters ('{1}'; all directories
 in the path must be in the output_log setting).  However, it may be blank.
 
 Ignored if output_log is None or output_log_layout is not 'date'.
-'''.format(tasks_name, PATH_SEP)
-    ),
-    default='%Y%m%d',
-    cl_coercer=str,
-    no_print=True,
-)
+''' .
+            format(tasks_name, PATH_SEP)
+        ),
+        default='%Y%m%d',
+        cl_coercer=str,
+        no_print=True,
+    )
 
-config_settings['output_log_num'] = dict(
-    descr=(
+    config_settings['output_log_num'] = dict(
+        descr=(
 '''
 Number of output logs to keep, including the current one.
 
@@ -1809,14 +1941,14 @@ Note: this applies to both 'number' and 'date' values of output_log_layout.
 
 Ignored if output_log is None or output_log_layout is 'append'.
 '''
-    ),
-    default=0,
-    cl_coercer=int,
-    no_print=True,
-)
+        ),
+        default=0,
+        cl_coercer=int,
+        no_print=True,
+    )
 
-config_settings['output_log_days'] = dict(
-    descr=(
+    config_settings['output_log_days'] = dict(
+        descr=(
 '''
 Days worth of output logs to keep.
 
@@ -1833,11 +1965,56 @@ Note: this applies to both 'number' and 'date' values of output_log_layout.
 
 Ignored if output_log is None or output_log_layout is 'append'.
 '''
-    ),
-    default=14,
-    cl_coercer=int,
-    no_print=True,
-)
+        ),
+        default=14,
+        cl_coercer=int,
+        no_print=True,
+    )
+
+    #
+    # extra stuff:
+    # fix up config settings that are platform-dependent or complicated
+    #
+
+    ### syslog_addr, syslog_sock_type ###
+
+    found_it = False
+
+    if hasattr(socket, 'AF_UNIX'):
+        for sock_path in ['/dev/log', '/var/run/syslog']:
+            try:
+                st_mode = os.stat(sock_path)[0]
+            except OSError:
+                continue
+            if stat.S_ISSOCK(st_mode):
+                try:
+                    s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+                    s.connect(sock_path)
+                    s.close()
+                except IOError as e:
+                    if e.errno == errno.EPROTOTYPE:
+                        try:
+                            s = socket.socket(socket.AF_UNIX,
+                                              socket.SOCK_STREAM)
+                            s.connect(sock_path)
+                            s.close()
+                        except IOError:
+                            continue
+                         # looks like this needs to be SOCK_STREAM
+                         # instead
+                        config_settings['syslog_sock_type']['default'] = (
+                            socket.SOCK_STREAM
+                        )
+                    continue
+                found_it = True
+                config_settings['syslog_addr']['default'] = sock_path
+                break
+
+    if not found_it:
+        config_settings['syslog_addr']['default'] = (
+            ('localhost', logging.handlers.SYSLOG_UDP_PORT)
+        )
+
 
 #
 # non-existent settings that the end-user might set by accident,
@@ -1915,7 +2092,7 @@ _devnull_fo = None
 ########################################################################
 
 
-### see also the version check section, above ###
+### see also the version check and config settings sections, above ###
 
 
 ###################################
@@ -4139,59 +4316,52 @@ def test_remote_port(descr, remote_end, local_end=('', 0), timeout=5,
 # config-setting checks and manipulations
 ##########################################
 
-def _config_settings_extra():
+#
+# see also create_email_settings() and _create_config_settings(), above
+#
 
+
+def settings_extra_text(setting_list=[], extra_text=None):
     """
-    Fix up config settings that are platform-dependent or complicated.
-
-    In a function for namespace cleanliness; called immediately.
-
+    Add extra text to config setting descriptions.
+    For use after replacing descriptions.
+    Parameters:
+        setting_list: a list of settings to modify
+        extra_text: if not None or blank, added to the descriptions of
+                    the settings in setting_list (preceded by a blank
+                    line)
+                    this is mainly intended to be used for things
+                    like 'Ignored if [some setting] is False.'
     Dependencies:
         globals: config_settings
-        modules: os, stat, socket, errno, logging.handlers
-
     """
+    if extra_text:
+        for s_name in setting_list:
+            if 'descr' in config_settings[s_name]:
+                config_settings[s_name]['descr'] += '\n' + extra_text
+            else:
+                config_settings[s_name]['descr'] = extra_text
 
-    ### syslog_addr, syslog_sock_type ###
 
-    found_it = False
-
-    if hasattr(socket, 'AF_UNIX'):
-        for sock_path in ['/dev/log', '/var/run/syslog']:
-            try:
-                st_mode = os.stat(sock_path)[0]
-            except OSError:
-                continue
-            if stat.S_ISSOCK(st_mode):
-                try:
-                    s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-                    s.connect(sock_path)
-                    s.close()
-                except IOError as e:
-                    if e.errno == errno.EPROTOTYPE:
-                        try:
-                            s = socket.socket(socket.AF_UNIX,
-                                              socket.SOCK_STREAM)
-                            s.connect(sock_path)
-                            s.close()
-                        except IOError:
-                            continue
-                         # looks like this needs to be SOCK_STREAM
-                         # instead
-                        config_settings['syslog_sock_type']['default'] = (
-                            socket.SOCK_STREAM
-                        )
-                    continue
-                found_it = True
-                config_settings['syslog_addr']['default'] = sock_path
-                break
-
-    if not found_it:
-        config_settings['syslog_addr']['default'] = (
-            ('localhost', logging.handlers.SYSLOG_UDP_PORT)
-        )
-
-_config_settings_extra()
+def settings_extra_requires(setting_list=[], extra_requires=None):
+    """
+    Add extra feature requirements to config settings.
+    Parameters:
+        setting_list: a list of settings to modify
+        extra_requires: if not None or empty, a list of features to be
+                        added to the settings' 'requires' attributes
+    Dependencies:
+        globals: config_settings
+    """
+    global config_settings
+    if extra_requires:
+        for s_name in setting_list:
+            # note: initializing with '= extra_requires' doesn't work
+            # because it's a reference and they all point to the same
+            # object, which gets bigger and bigger...
+            if 'requires' not in config_settings[s_name]:
+                config_settings[s_name]['requires'] = []
+            config_settings[s_name]['requires'] += extra_requires
 
 
 def config_settings_no_print_output_log(no_print):
@@ -6005,14 +6175,13 @@ def validate_config():
     The function must take no arguments.
 
     Dependencies:
-        config settings: (all of them)
+        config settings: (all except *_emails_*)
         globals: cfg, validate_config_hooks, NONE_TYPE, STRING_TYPES,
                  PATH_SEP
         functions: setting_check_type(), setting_check_integer(),
                    setting_check_number(),
                    setting_check_filedir_create(),
-                   setting_check_not_blank(), setting_check_no_blanks(),
-                   setting_check_length(), setting_check_file_read(),
+                   setting_check_not_blank(), setting_check_length(),
                    setting_check_file_type(),
                    setting_check_file_access(), setting_check_list(),
                    setting_check_no_char()
@@ -6033,28 +6202,6 @@ def validate_config():
     setting_check_filedir_create('lockfile', 'd')
     setting_check_number('if_running', 0)
     setting_check_filedir_create('lockfile_alert_file', 'f')
-    setting_check_type('send_alert_emails', bool)
-    if cfg['send_alert_emails']:
-        setting_check_not_blank('alert_emails_from')
-        setting_check_not_empty('alert_emails_to', types=list)
-        setting_check_no_blanks('alert_emails_to')
-        setting_check_type('alert_emails_subject', STRING_TYPES)
-        if setting_check_type('alert_emails_host',
-                              STRING_TYPES + (tuple, )) == tuple:
-            setting_check_length('alert_emails_host', 2, 2)
-            setting_check_not_blank(('alert_emails_host', 0))
-            setting_check_integer(('alert_emails_host', 1), 1, 65535)
-        else:
-            setting_check_not_blank('alert_emails_host')
-        if (setting_check_type('alert_emails_cred', (NONE_TYPE, tuple))
-              is not NONE_TYPE):
-            setting_check_length('alert_emails_cred', 2, 2)
-            setting_check_no_blanks('alert_emails_cred')
-        if (setting_check_type('alert_emails_sec', (NONE_TYPE, tuple))
-              is not NONE_TYPE):
-            setting_check_length('alert_emails_sec', 0, 2)
-            for i, f in enumerate(cfg['alert_emails_sec']):
-                setting_check_file_read(('alert_emails_sec', i))
     setting_check_type('quiet', bool)
     setting_check_type('use_syslog', bool)
     if cfg['use_syslog']:
@@ -6117,6 +6264,52 @@ def validate_config():
     for hook in validate_config_hooks:
         if callable(hook):
             hook()
+
+
+def validate_email_config(name_str):
+    """
+    Validate email configuration settings.
+    Add to validate_config_hooks with a lamba, e.g.:
+        validate_config_hooks.append(
+            lambda: validate_email_config('THE_NAME')
+        )
+    Parameters:
+        name_str: a string to use in setting names, e.g. 'alert'
+    Dependencies:
+        config settings: *_emails_*
+        globals: cfg, NONE_TYPE, STRING_TYPES, _ignore_email_config
+        functions: setting_check_type(), setting_check_not_blank(),
+                   setting_check_not_empty(), setting_check_no_blanks(),
+                   setting_check_length(), setting_check_integer(),
+                   setting_check_file_read()
+        Python: 2.0/3.2, for callable()
+    """
+    if (name_str in _ignore_email_config and
+          callable(_ignore_email_config[name_str]) and
+          _ignore_email_config[name_str]()):
+        return
+    setting_check_type('send_' + name_str + '_emails', bool)
+    if cfg['send_' + name_str + '_emails']:
+        setting_check_not_blank(name_str + '_emails_from')
+        setting_check_not_empty(name_str + '_emails_to', types=list)
+        setting_check_no_blanks(name_str + '_emails_to')
+        setting_check_type(name_str + '_emails_subject', STRING_TYPES)
+        if setting_check_type(name_str + '_emails_host',
+                              STRING_TYPES + (tuple, )) == tuple:
+            setting_check_length(name_str + '_emails_host', 2, 2)
+            setting_check_not_blank((name_str + '_emails_host', 0))
+            setting_check_integer((name_str + '_emails_host', 1), 1, 65535)
+        else:
+            setting_check_not_blank(name_str + '_emails_host')
+        if (setting_check_type(name_str + '_emails_cred',
+                               (NONE_TYPE, tuple)) is not NONE_TYPE):
+            setting_check_length(name_str + '_emails_cred', 2, 2)
+            setting_check_no_blanks(name_str + '_emails_cred')
+        if (setting_check_type(name_str + '_emails_sec', (NONE_TYPE, tuple))
+              is not NONE_TYPE):
+            setting_check_length(name_str + '_emails_sec', 0, 2)
+            for i, f in enumerate(cfg[name_str + '_emails_sec']):
+                setting_check_file_read((name_str + '_emails_sec', i))
 
 
 def process_config(arg_ns):
@@ -6682,3 +6875,10 @@ def process_command_line():
     # deal with the rest of the modes
     mode_dict['callback']()
     sys.exit(exitvals['no_error']['num'])
+
+
+########################################################################
+#                            FUNCTION CALLS
+########################################################################
+
+_create_config_settings()
