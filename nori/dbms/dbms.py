@@ -483,7 +483,7 @@ class DBMS(object):
     # startup and config file processing
     #####################################
 
-    def create_settings(self, heading='', extra_text='', ignore=None,
+    def create_settings(self, heading=None, extra_text=None, ignore=None,
                         extra_requires=[],
                         tunnel=True if 'ssh' in core.available_features
                                     else False):
@@ -495,9 +495,9 @@ class DBMS(object):
         and validate_config() in sync with the config settings.
 
         Parameters:
-            heading: if not blank, a heading entry with this value will
+            heading: if not None, a heading entry with this value will
                      be added to the config settings
-            extra_text: if not blank, this value is added to each
+            extra_text: if not None, this value is added to each
                         setting description (prepended with a blank
                         line; does not include the heading)
                         this is mainly intended to be used for things
@@ -526,7 +526,7 @@ class DBMS(object):
         self._tunnel_config = tunnel
         self._ignore = ignore
 
-        if heading:
+        if heading is not None:
             core.config_settings[pd + 'heading'] = dict(
                 heading=heading,
             )
@@ -719,7 +719,7 @@ Options must be supplied as a dict.
             setting_list += [
                 'use_ssh_tunnel',
             ]
-        if extra_text:
+        if extra_text is not None:
             self.settings_extra_text(setting_list, extra_text)
         for s_name in setting_list:
             if 'requires' in core.config_settings[pd + s_name]:

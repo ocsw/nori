@@ -140,7 +140,7 @@ class MySQL(DBMS):
     # startup and config file processing
     #####################################
 
-    def create_settings(self, heading='', extra_text='', ignore=None,
+    def create_settings(self, heading=None, extra_text=None, ignore=None,
                         extra_requires=[],
                         tunnel=True if 'ssh' in core.available_features
                                     else False):
@@ -209,7 +209,7 @@ See the {0} documentation for more information.
                 break
 
         # fix up descriptions we replaced
-        if extra_text:
+        if extra_text is not None:
             setting_list = []
             if tunnel:
                 setting_list += ['use_ssh_tunnel']

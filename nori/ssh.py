@@ -178,7 +178,7 @@ class SSH(object):
     # startup and config file processing
     #####################################
 
-    def create_settings(self, heading='', extra_text='', ignore=None,
+    def create_settings(self, heading=None, extra_text=None, ignore=None,
                         extra_requires=[], tunnel=False,
                         default_local_port=None, default_remote_port=None):
 
@@ -195,9 +195,9 @@ class SSH(object):
         and validate_config() in sync with the config settings.
 
         Parameters:
-            heading: if not blank, a heading entry with this value will
+            heading: if not None, a heading entry with this value will
                      be added to the config settings
-            extra_text: if not blank, this value is added to each
+            extra_text: if not None, this value is added to each
                         setting description (prepended with a blank
                         line; does not include the heading)
                         this is mainly intended to be used for things
@@ -235,7 +235,7 @@ class SSH(object):
         self._tunnel_config = tunnel
         self._ignore = ignore
 
-        if heading:
+        if heading is not None:
             core.config_settings[pd + 'heading'] = dict(
                 heading=heading,
             )
@@ -386,7 +386,7 @@ one second).
                 'local_host', 'local_port', 'remote_host',  'remote_port',
                 'tun_timeout',
             ]
-        if extra_text:
+        if extra_text is not None:
             for s_name in setting_list:
                 if 'descr' in core.config_settings[pd + s_name]:
                     core.config_settings[pd + s_name]['descr'] += (
