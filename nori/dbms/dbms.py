@@ -505,7 +505,7 @@ class DBMS(object):
             ignore: if not None, a function; when this function is true,
                     don't bother validating the settings
             extra_requires: a list of features to be added to the
-                            settings' requires attributes
+                            settings' 'requires' attributes
             tunnel: if true, add SSH-tunnel settings
 
         Dependencies:
