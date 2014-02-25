@@ -2,8 +2,8 @@
 
 
 """
-This is the collections submodule for the nori library; see __main__.py
-for license and usage information.
+This is the collectionsplus submodule for the nori library; see
+__main__.py for license and usage information.
 
 
 DOCSTRING CONTENTS:
@@ -71,14 +71,14 @@ from pprint import pprint as pp  # for debugging
 #                           DEFERRED IMPORTS
 ########################################################################
 
-import collections as _collections  # OrderedDict requires 2.7/3.1
+import collections  # OrderedDict requires 2.7/3.1
 
 
 ########################################################################
 #                               CLASSES
 ########################################################################
 
-class OrderedDict(_collections.OrderedDict):
+class OrderedDict(collections.OrderedDict):
 
     """Adds more insertion functionality to OrderedDict."""
 
