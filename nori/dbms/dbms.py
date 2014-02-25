@@ -97,9 +97,6 @@ DOCSTRING CONTENTS:
         create_settings()
             Add a block of DBMS config settings to the script.
 
-        settings_extra_text()
-            Add extra text to config setting descriptions.
-
         validate_config()
             Validate DBMS config settings.
 
@@ -512,8 +509,8 @@ class DBMS(object):
             class vars: DBMS_NAME, REQUIRES, DEFAULT_REMOTE_PORT,
                         DEFAULT_LOCAL_PORT
             instance vars: _prefix, _delim, _tunnel_config, _ignore, ssh
-            methods: _ignore_ssh_settings, settings_extra_text(),
-                     validate_config(), populate_conn_args()
+            methods: _ignore_ssh_settings, validate_config(),
+                     populate_conn_args()
             config settings: [_prefix+_delim+:] (heading),
                              use_ssh_tunnel, protocol, host, port,
                              socket_file, user, password, pw_file,
@@ -719,17 +716,13 @@ Options must be supplied as a dict.
             setting_list += [
                 'use_ssh_tunnel',
             ]
-        if extra_text is not None:
-            self.settings_extra_text(setting_list, extra_text)
-        for s_name in setting_list:
-            if 'requires' in core.config_settings[pd + s_name]:
-                core.config_settings[pd + s_name]['requires'] += (
-                    self.REQUIRES + extra_requires
-                )
-            else:
-                core.config_settings[pd + s_name]['requires'] = (
-                    self.REQUIRES + extra_requires
-                )
+        core.settings_extra_text(
+            [pd + s_name for s_name in setting_list], extra_text
+        )
+        core.settings_extra_requires(
+            [pd + s_name for s_name in setting_list],
+            self.REQUIRES + extra_requires
+        )
 
         core.validate_config_hooks.append(self.validate_config)
         core.process_config_hooks.append(self.populate_conn_args)
@@ -749,34 +742,6 @@ Options must be supplied as a dict.
         if callable(self._ignore) and self._ignore():
             return True
         return not core.cfg[pd + 'use_ssh_tunnel']
-
-
-    def settings_extra_text(self, setting_list, extra_text):
-        """
-        Add extra text to config setting descriptions.
-        Pulled out for use by subclasses that replace descriptions.
-        Parameters:
-            setting_list: a list of settings to modify
-            extra_text: if not blank, added to the descriptions of the
-                        settings in setting_list (preceded by a blank
-                        line)
-                        this is mainly intended to be used for things
-                        like 'Ignored if [some setting] is False.'
-        Dependencies:
-            instance vars: _prefix, _delim
-            modules: core
-        """
-        pd = self._prefix + self._delim
-        if extra_text:
-            for s_name in setting_list:
-                if 'descr' in core.config_settings[pd + s_name]:
-                    core.config_settings[pd + s_name]['descr'] += (
-                        '\n' + extra_text
-                    )
-                else:
-                    core.config_settings[pd + s_name]['descr'] = (
-                        extra_text
-                    )
 
 
     def validate_config(self):

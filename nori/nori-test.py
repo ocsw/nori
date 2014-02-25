@@ -1094,6 +1094,9 @@ nori.run_mode_hooks.append(run_mode_hook)
 #print(s._delim)
 #s.create_settings(heading='foo ssh', extra_text='asdfadf', tunnel=True,
 #                  default_local_port=1111, default_remote_port=11111)
+#s.create_settings(heading='foo ssh', extra_text='asdfadf',
+#                  extra_requires=['rrrrrr'], tunnel=True,
+#                  default_local_port=1111, default_remote_port=11111)
 #s.create_settings(extra_text='asdfadf', tunnel=True,
 #                  default_local_port=1111, default_remote_port=11111)
 #s.create_settings(tunnel=False,

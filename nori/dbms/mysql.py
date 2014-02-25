@@ -154,8 +154,7 @@ class MySQL(DBMS):
         Dependencies:
             class vars: DEFAULT_REMOTE_PORT, SOCKET_SEARCH_PATH
             instance vars: _prefix, _delim
-            methods: settings_extra_text(),
-                     apply_config_defaults_extra()
+            methods: apply_config_defaults_extra()
             config settings: [_prefix+_delim+:] use_ssh_tunnel, port,
                              socket_file
             modules: core, dbms.DBMS
@@ -213,7 +212,9 @@ See the {0} documentation for more information.
             setting_list = []
             if tunnel:
                 setting_list += ['use_ssh_tunnel']
-            self.settings_extra_text(setting_list, extra_text)
+            core.settings_extra_text(
+                [pd + s_name for s_name in setting_list], extra_text
+            )
 
         core.apply_config_defaults_hooks.append(
             self.apply_config_defaults_extra

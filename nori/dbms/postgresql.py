@@ -159,8 +159,7 @@ class PostgreSQL(DBMS):
         Dependencies:
             class vars: DBMS_NAME, DEFAULT_REMOTE_PORT
             instance vars: _prefix, _delim
-            methods: settings_extra_text(),
-                     apply_config_defaults_extra()
+            methods: apply_config_defaults_extra()
             config settings: [_prefix+_delim+:] use_ssh_tunnel,
                              protocol, host, port, socket_file,
                              connect_db
@@ -254,7 +253,9 @@ don't use any (such as getting the list of databases).
             setting_list = ['host', 'port', 'connect_db']
             if tunnel:
                 setting_list += ['use_ssh_tunnel']
-            self.settings_extra_text(setting_list, extra_text)
+            core.settings_extra_text(
+                [pd + s_name for s_name in setting_list], extra_text
+            )
 
         core.apply_config_defaults_hooks.append(
             self.apply_config_defaults_extra

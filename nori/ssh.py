@@ -386,25 +386,13 @@ one second).
                 'local_host', 'local_port', 'remote_host',  'remote_port',
                 'tun_timeout',
             ]
-        if extra_text is not None:
-            for s_name in setting_list:
-                if 'descr' in core.config_settings[pd + s_name]:
-                    core.config_settings[pd + s_name]['descr'] += (
-                        '\n' + extra_text
-                    )
-                else:
-                    core.config_settings[pd + s_name]['descr'] = (
-                        extra_text
-                    )
-        for s_name in setting_list:
-            if 'requires' in core.config_settings[pd + s_name]:
-                core.config_settings[pd + s_name]['requires'] += (
-                    ['ssh'] + extra_requires
-                )
-            else:
-                core.config_settings[pd + s_name]['requires'] = (
-                    ['ssh'] + extra_requires
-                )
+        core.settings_extra_text(
+            [pd + s_name for s_name in setting_list], extra_text
+        )
+        core.settings_extra_requires(
+            [pd + s_name for s_name in setting_list],
+            ['ssh'] + extra_requires
+        )
 
         core.validate_config_hooks.append(self.validate_config)
 

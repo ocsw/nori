@@ -1697,7 +1697,7 @@ will default to '/var/run/{0}.lock.alert'
         heading='Alerts and Logging',
     )
 
-    create_email_settings('alert', 'alert/error', extra_requires=['asdf'])
+    create_email_settings('alert', 'alert/error')
     config_settings['send_alert_emails']['descr'] = (
 '''
 Send email for alerts/errors?  (True/False)
