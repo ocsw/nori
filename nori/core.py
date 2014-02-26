@@ -1421,7 +1421,7 @@ and [hostname] is the local hostname)
     config_settings[name_str + '_emails_subject'] = dict(
         descr=(
 '''
-The subject line of {0} emails.
+The subject line of the {0} emails.
 
 Ignored if send_{1}_emails is False.
 ''' .
