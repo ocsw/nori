@@ -1932,7 +1932,7 @@ Ignored if output_log is None or output_log_layout is not 'date'.
     config_settings['output_log_num'] = dict(
         descr=(
 '''
-Number of output logs to keep, including the current one.
+The number of output logs to keep, including the current one.
 
 A value of 0 means no number limit (but there may still be a date limit;
 see output_log_days).
@@ -1959,7 +1959,7 @@ Logs this many days old or older are removed.
 
 (Specifically, 1 day = a full 24 hours; if you run the script once a day,
 and set output_log_days to 1, the log from the previous run will be newer
-than 24 hours by however long the script took to run, and it will be saved.)
+than 24 hours by however long the script took to run, and will be saved.)
 
 Note: this applies to both 'number' and 'date' values of output_log_layout.
 
