@@ -1101,7 +1101,7 @@ nori.run_mode_hooks.append(run_mode_hook)
 #nori.config_settings['log_cmds']['no_print'] = False
 
 #nori.create_email_settings('report', 'report')
-#nori.create_email_settings('report', 'report', notify_logger='alert')
+#nori.create_email_settings('report', 'report', notify_logger=None)
 
 #s = nori.SSH('foo')
 #s = nori.SSH('foo', ':')

@@ -1322,7 +1322,7 @@ config_settings = collectionsplus.OrderedDict()
 def create_email_settings(name_str, descr_str, heading=None,
                           extra_text=None, ignore=None, extra_requires=[],
                           parent_str=__name__ + '.status', propagate=False,
-                          notify_logger=None):
+                          notify_logger='status'):
 
     """
     Create a block of email-related settings.
@@ -3293,7 +3293,7 @@ class SMTPDiagHandler(logging.handlers.SMTPHandler):
 
     """Override SMTPHandler to add diagnostics to the email."""
 
-    def __init__(self, name_str, descr_str, notify_logger=None):
+    def __init__(self, name_str, descr_str, notify_logger='status'):
         """
         Set up instance variables here and in the superclass.
         Parameters:
@@ -3395,7 +3395,7 @@ def logging_init_syslog():
 
 
 def logging_init_email(name_str, descr_str, parent_str=__name__ + '.status',
-                       propagate=False, notify_logger=None):
+                       propagate=False, notify_logger='status'):
 
     """
     Initialize email logging (built-in alerts, or secondary).
