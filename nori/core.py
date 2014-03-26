@@ -1327,6 +1327,9 @@ def create_email_settings(name_str, descr_str, heading=None,
         * config_settings[name_str + '_emails_subject']['default']
         * config_settings[name_str + '_emails_subject']['default_descr']
 
+    Note: do not use a name_str of 'alert'; this is used internally by
+    nori.
+
     When modifying, remember to keep the setting_list at the bottom
     and validate_email_config() in sync with the config settings.
 
@@ -2065,7 +2068,7 @@ run_mode_hooks = []
 ############
 
 #
-# These are listed here just for centralization purposes;
+# Most of these are listed here just for centralization purposes;
 # they are intended to be constant once initialized.
 #
 
@@ -3451,7 +3454,7 @@ def logging_stop_syslog():
     Turn off syslog in the loggers.
     Useful when you need to log something sensitive; remember that
     syslog frequently goes to a world-readable file!
-    Call logging_start_stdouterr() when done.
+    Call logging_start_syslog() to reverse.
     Dependencies:
         config settings: use syslog
         globals: cfg, _base_logger, _syslog_handler
@@ -3464,7 +3467,7 @@ def logging_stop_syslog():
 def logging_start_syslog():
     """
     Turn on syslog in the loggers.
-    See logging_stop_syslog().
+    Call logging_stop_syslog() to reverse.
     Dependencies:
         config settings: use syslog
         globals: cfg, _base_logger, _syslog_handler
@@ -3479,7 +3482,7 @@ def logging_stop_stdouterr():
     Turn off stdout/stderr printing in the loggers.
     Useful when you need to log something that doesn't need to be
     printed.
-    Call logging_start_stdouterr() when done.
+    Call logging_start_stdouterr() to reverse.
     Dependencies:
         config settings: quiet
         globals: cfg, status_logger, alert_logger, _stdout_handler,
@@ -3494,7 +3497,7 @@ def logging_stop_stdouterr():
 def logging_start_stdouterr():
     """
     Turn on stdout/stderr printing in the loggers.
-    See logging_stop_stdouterr().
+    Call logging_stop_stdouterr() to reverse.
     Dependencies:
         config settings: quiet
         globals: cfg, status_logger, alert_logger, _stdout_handler,
