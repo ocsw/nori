@@ -283,6 +283,9 @@ DOCSTRING CONTENTS:
     logging_init_syslog()
         Set up a syslog handler and return it.
 
+    logging_init_email()
+        Initialize email logging (built-in alerts, or secondary).
+
     logging_init_main()
         Initialize most of the logging.
 
@@ -1317,7 +1320,9 @@ config_settings = collectionsplus.OrderedDict()
 
 
 def create_email_settings(name_str, descr_str, heading=None,
-                          extra_text=None, ignore=None, extra_requires=[]):
+                          extra_text=None, ignore=None, extra_requires=[],
+                          parent_str=__name__ + '.status', propagate=False,
+                          notify_logger=None):
 
     """
     Create a block of email-related settings.
@@ -1349,17 +1354,17 @@ def create_email_settings(name_str, descr_str, heading=None,
                 don't bother validating the settings
         extra_requires: a list of features to be added to the settings'
                         requires attributes
+        see logging_init_email() for the rest
 
     Dependencies:
         globals: running_as_email, script_shortname,
-                 _ignore_email_config, validate_config_hooks
+                 _ignore_email_config, validate_config_hooks,
+                 process_config_hooks
         functions: str_to_bool(), settings_extra_text(),
                    settings_extra_requires(), validate_email_config()
         modules: socket
 
     """
-
-    global validate_config_hooks
 
     _ignore_email_config[name_str] = ignore
 
@@ -1498,6 +1503,10 @@ Ignored if send_{0}_emails is False.
     settings_extra_requires(setting_list, extra_requires)
 
     validate_config_hooks.append(lambda: validate_email_config(name_str))
+    process_config_hooks.append(
+        lambda: logging_init_email(name_str, descr_str, parent_str,
+                                   propagate, notify_logger)
+    )
 
 
 def _create_config_settings():
@@ -1700,7 +1709,9 @@ will default to '/var/run/{0}.lock.alert'
         heading='Alerts and Logging',
     )
 
-    create_email_settings('alert', 'alert/error')
+    create_email_settings('alert', 'alert/error',
+                          parent_str=__name__ + '.alert',
+                          propagate=True, notify_logger='alert')
     config_settings['send_alert_emails']['descr'] = (
 '''
 Send email for alerts/errors?  (True/False)
@@ -2076,6 +2087,7 @@ run_mode_hooks = []
 status_logger = None
 alert_logger = None
 email_logger = None
+email_loggers = {}  # an exception to the note above
 output_logger = None
 output_log_fo = None
 
@@ -3281,13 +3293,51 @@ class SMTPDiagHandler(logging.handlers.SMTPHandler):
 
     """Override SMTPHandler to add diagnostics to the email."""
 
+    def __init__(self, name_str, descr_str, notify_logger=None):
+        """
+        Set up instance variables here and in the superclass.
+        Parameters:
+            name_str: a string to use in setting names, e.g. 'alert'
+            descr_str: a string to use in setting descriptions, e.g.
+                       'alert/error', for use in phrases like
+                       'alert/error email'
+            notify_logger: the logger object to use for notification
+                           that an email has been sent, or:
+                               * 'status' for status_logger
+                               * 'alert' for alert_logger
+                               * None for no notifications
+        Dependencies:
+            config settings: [where * = name_str]: *_emails_host,
+                             *_emails_from, *_emails_to,
+                             *_emails_subject, *_emails_cred,
+                             *_emails_sec
+            globals: cfg, status_logger, alert_logger
+            Python: 2.7/3.2, for the 'secure' parameter to SMTPHandler()
+        """
+        self.name_str = name_str
+        self.descr_str = descr_str
+        if notify_logger == 'status':
+            self.notify_logger = status_logger
+        elif notify_logger == 'alert':
+            self.notify_logger = alert_logger
+        else:
+            self.notify_logger = notify_logger
+        super(SMTPDiagHandler, self).__init__(
+            cfg[name_str + '_emails_host'],
+            cfg[name_str + '_emails_from'],
+            cfg[name_str + '_emails_to'],
+            cfg[name_str + '_emails_subject'],
+            cfg[name_str + '_emails_cred'],
+            cfg[name_str + '_emails_sec'],
+        )
+
     def emit(self, record):
         """
         Add diagnostics to the message, and log that an email was sent.
         Dependencies:
-            config settings: alert_emails_to
-            globals: cfg, alert_logger
-            functions: email_diagnostics()
+            config settings: [where * = name_str]: *_emails_to
+            globals: cfg, (contents of self.notify_logger)
+            functions: pps(), email_diagnostics()
             modules: copy
         """
         # use a copy so the parent loggers won't see the changed message
@@ -3296,8 +3346,11 @@ class SMTPDiagHandler(logging.handlers.SMTPHandler):
             r.msg += '\n'
         r.msg += email_diagnostics()
         super(SMTPDiagHandler, self).emit(r)
-        alert_logger.info('Alert email sent to {0}.' .
-                          format(cfg['alert_emails_to']))
+        if self.notify_logger:
+            notify_msg = ('{0} email sent to {1}.' .
+                          format(self.descr_str.capitalize(),
+                                 pps(cfg[self.name_str + '_emails_to'])))
+            self.notify_logger.info(notify_msg)
 
 
 def logging_init_syslog():
@@ -3341,44 +3394,93 @@ def logging_init_syslog():
     return slh
 
 
+def logging_init_email(name_str, descr_str, parent_str=__name__ + '.status',
+                       propagate=False, notify_logger=None):
+
+    """
+    Initialize email logging (built-in alerts, or secondary).
+
+    The email_loggers[name_str] object sends an email, including
+    additional diagnostics.  Whether the original message is then handed
+    off to the parent logger depends on the 'propagate' parameter.  If
+    name_str is 'alert', an alias called email_logger is set up (for the
+    built-in alert/error emails).
+
+    See logging_start_email_logging() and logging_stop_email_logging()
+    for ways to change the logging methods.
+
+    Parameters:
+        name_str: a string to use in setting names, e.g. 'alert'
+        descr_str: a string to use in setting descriptions, e.g.
+                   'alert/error', for use in phrases like 'alert/error
+                   email'
+        parent_str: a string naming the parent logger object to use
+        propagate: if True, messages are handed off to the parent logger
+                   by default
+        see SMTPDiagHandler.__init__() for the rest
+
+    Dependencies:
+        config settings: [where * = name_str]: send_*_email
+        globals: cfg, email_logger, email_loggers, _null_handler
+        classes: SMTPDiagHandler
+        modules: logging
+
+    """
+
+    global email_logger
+
+    email_loggers[name_str] = logging.getLogger(
+        parent_str + '.email-' + name_str
+    )
+
+    # special case: the logger for most alerts/errors gets an alias
+    if name_str == 'alert':
+        email_logger = email_loggers[name_str]
+
+    email_loggers[name_str].propagate = propagate
+
+    if cfg['send_' + name_str + '_emails']:
+        email_handler = SMTPDiagHandler(name_str, descr_str, notify_logger)
+        email_loggers[name_str].addHandler(email_handler)
+    else:
+        # if we turn off propagation temporarily (see
+        # logging_stop_email_logging()), we will get errors unless
+        # there's a handler
+        email_loggers[name_str].addHandler(_null_handler)
+
+
 def logging_init_main():
 
     """
     Initialize most of the logging.
 
-    Includes email, stdout/err, syslog, and/or status log.  See
-    logging_init_output() for the output log.
+    Includes stdout/err, syslog, and/or status log.  For email, see
+    logging_init_email().  For the output log, see
+    logging_init_output().
 
-    status_logger and alert_logger both log to the status log (with a
-    prefix including the date and process ID) and to syslog.
-    status_logger also outputs to stdout, and alert_logger to stderr.
-    email_logger sends an email including additional diagnostics and
-    hands off the message to alert_logger.
+    The status_logger and alert_logger objects both log to the status
+    log (with a prefix including the date and process ID) and to syslog.
+    The status_logger object also outputs to stdout, and alert_logger to
+    stderr.
 
-    See logging_stop_stdouterr(), logging_start_stdouterr(),
-    logging_stop_email_logging(), and logging_start_email_logging() for
-    ways to temporarily change the logging methods.
+    See logging_stop_stdouterr() and logging_start_stdouterr() for ways
+    to change the logging methods.
 
     Note: syslog may turn control characters into octal, including
     whitespace (e.g., newline -> #012).
 
     Dependencies:
-        config settings: debug, send_alert_emails, alert_emails_from,
-                         alert_emails_to, alert_emails_subject,
-                         alert_emails_host, alert_emails_cred,
-                         alert_emails_sec, quiet, use_syslog, status_log
-        globals: cfg, status_logger, alert_logger, email_logger,
-                 _base_logger, _null_handler, _syslog_handler,
+        config settings: debug, quiet, use_syslog, status_log
+        globals: cfg, status_logger, alert_logger, _base_logger,
+                 _null_handler, _syslog_handler,
                  _stdout_handler, _stderr_handler, FULL_DATE_FORMAT,
                  exitvals['startup']
-        functions: fix_path(), logging_init_syslog(), err_exit()
-        classes: SMTPDiagHandler
-        modules: logging, logging.handlers, sys
-        Python: 2.7+/3.x, for SMTPHandler(secure)
+        functions: fix_path(), pps(), logging_init_syslog(), err_exit()
+        modules: logging, sys
 
     """
 
-    global status_logger, alert_logger, email_logger, _base_logger
+    global status_logger, alert_logger, _base_logger
     global _null_handler, _syslog_handler, _stdout_handler, _stderr_handler
 
     # common to status messages and alerts/errors
@@ -3406,9 +3508,10 @@ def logging_init_main():
                      'exiting.\nDetails: [Errno {1}] {2}' .
                      format(pps(cfg['status_log']), e.errno, e.strerror),
                      exitvals['startup']['num'])
-        status_log_formatter = (
-        logging.Formatter('%(asctime)s [%(process)d]: %(message)s',
-                          FULL_DATE_FORMAT))
+        status_log_formatter = logging.Formatter(
+            '%(asctime)s [%(process)d]: %(message)s',
+            FULL_DATE_FORMAT
+        )
         # (syslog uses %e instead of %d, but it's less portable)
         status_log_handler.setFormatter(status_log_formatter)
         _base_logger.addHandler(status_log_handler)
@@ -3431,22 +3534,6 @@ def logging_init_main():
     if not cfg['quiet']:
         _stderr_handler = logging.StreamHandler(sys.stderr)
         alert_logger.addHandler(_stderr_handler)
-
-    # email; use this for most alerts/errors
-    email_logger = logging.getLogger(__name__ + '.alert.email')
-    if cfg['send_alert_emails']:
-        email_handler = SMTPDiagHandler(cfg['alert_emails_host'],
-                                        cfg['alert_emails_from'],
-                                        cfg['alert_emails_to'],
-                                        cfg['alert_emails_subject'],
-                                        cfg['alert_emails_cred'],
-                                        cfg['alert_emails_sec'])
-        email_logger.addHandler(email_handler)
-    else:
-        # if we turn off propagation temporarily (see
-        # logging_stop_email_logging()), we will get errors unless
-        # there's a handler
-        email_logger.addHandler(_null_handler)
 
 
 def logging_stop_syslog():
@@ -3509,30 +3596,34 @@ def logging_start_stdouterr():
         alert_logger.addHandler(_stderr_handler)
 
 
-def logging_stop_email_logging():
+def logging_stop_email_logging(name_str='alert'):
     """
-    Turn off propagation in the email logger (i.e., no actual logging).
+    Turn off propagation in an email logger (i.e., no actual logging).
     Useful if you need to send an email with the same settings but
     without logging or printing.
-    Call logging_start_email_logging() when done.
-    WARNING: the current implementation is not thread-safe.
+    Call logging_start_email_logging() to reverse.
+    Parameters:
+        name_str: a string containing the name of the logger, from the
+                  setting names
     Dependencies:
-        globals: email_logger
+        globals: email_loggers
         modules: logging
     """
-    email_logger.propagate = False
+    email_loggers[name_str].propagate = False
 
 
-def logging_start_email_logging():
+def logging_start_email_logging(name_str='alert'):
     """
-    Turn on propagation in the email logger (i.e., actual logging).
-    See logging_stop_email_logging().
-    WARNING: the current implementation is not thread-safe.
+    Turn on propagation in an email logger (i.e., actual logging).
+    Call logging_stop_email_logging() to reverse.
+    Parameters:
+        name_str: a string containing the name of the logger, from the
+                  setting names
     Dependencies:
-        globals: email_logger
+        globals: email_loggers
         modules: logging
     """
-    email_logger.propagate = True
+    email_loggers[name_str].propagate = True
 
 
 def logging_init_output():

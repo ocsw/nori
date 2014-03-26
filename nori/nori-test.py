@@ -12,6 +12,7 @@ import shlex
 import subprocess
 import time
 import socket
+import logging
 
 #sys.path.insert(0, os.path.dirname(__file__) + os.path.sep + '..')
 import nori
@@ -361,6 +362,16 @@ def run_mode_hook():
 
     #nori.err_exit('adsfasdafg\nwhgsfhg', 47)
 
+    #print(nori.core.email_loggers)
+    #l = logging.getLogger('nori.core.status.email-report')
+    #if l is nori.core.email_loggers['report']:
+    #    print('foo')
+    #nori.core.email_loggers['report'].error('asdf5a')
+    #nori.logging_stop_email_logging('report')
+    #nori.core.email_loggers['report'].error('asdf5b')
+    #nori.logging_start_email_logging('report')
+    #nori.core.email_loggers['report'].error('asdf5c')
+
     #nori.logging_stop_syslog()
     #nori.logging_stop_stdouterr()
     #nori.core.status_logger.info('asdf1')
@@ -373,6 +384,7 @@ def run_mode_hook():
     #nori.logging_stop_email_logging()
     #nori.core.email_logger.error('asdf5b')
     #nori.logging_start_email_logging()
+    #nori.core.email_logger.error('asdf5c')
     #nori.core.output_logger.info('asdf6')
     #nori.core.output_log_fo.write('asdf7\n')
     #nori.core.output_log_fo.flush()
@@ -1087,6 +1099,9 @@ nori.run_mode_hooks.append(run_mode_hook)
 #nori.config_settings_no_print_output_log(False)
 #nori.config_settings['exec_path']['no_print'] = False
 #nori.config_settings['log_cmds']['no_print'] = False
+
+#nori.create_email_settings('report', 'report')
+#nori.create_email_settings('report', 'report', notify_logger='alert')
 
 #s = nori.SSH('foo')
 #s = nori.SSH('foo', ':')
