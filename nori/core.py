@@ -3338,13 +3338,13 @@ def logging_init_syslog():
     return slh
 
 
-def init_logging_main():
+def logging_init_main():
 
     """
     Initialize most of the logging.
 
     Includes email, stdout/err, syslog, and/or status log.  See
-    init_logging_output() for the output log.
+    logging_init_output() for the output log.
 
     status_logger and alert_logger both log to the status log (with a
     prefix including the date and process ID) and to syslog.
@@ -3410,7 +3410,7 @@ def init_logging_main():
         status_log_handler.setFormatter(status_log_formatter)
         _base_logger.addHandler(status_log_handler)
 
-    #syslog
+    # syslog
     if cfg['use_syslog']:
         _syslog_handler = logging_init_syslog()
         _base_logger.addHandler(_syslog_handler)
