@@ -280,10 +280,10 @@ DOCSTRING CONTENTS:
     email_diagnostics()
       Return a diagnostic string suitable for alert/error emails.
 
-    init_syslog()
+    logging_init_syslog()
         Set up a syslog handler and return it.
 
-    init_logging_main()
+    logging_init_main()
         Initialize most of the logging.
 
     logging_stop_syslog()
@@ -298,18 +298,18 @@ DOCSTRING CONTENTS:
     logging_start_stdouterr()
         Turn on stdout/stderr printing in the loggers.
 
-    logging_email_stop_logging()
+    logging_stop_email_logging()
         Turn off propagation in the email logger (i.e., no actual
         logging).
 
-    logging_email_start_logging()
+    logging_start_email_logging()
         Turn on propagation in the email logger (i.e., actual logging).
 
-    init_logging_output()
+    logging_init_output()
         Initialize output logging, including both logger and file
         objects.
 
-    end_logging_output()
+    logging_end_output()
         Close the output log file object.
 
     render_generic_exception()
@@ -3297,12 +3297,12 @@ class SMTPDiagHandler(logging.handlers.SMTPHandler):
                           format(cfg['alert_emails_to']))
 
 
-def init_syslog():
+def logging_init_syslog():
 
     """
     Set up a syslog handler and return it.
 
-    This is a helper function for init_logging().
+    This is a helper function for logging_init_main().
 
     Dependencies:
         config settings: syslog_addr, syslog_sock_type, syslog_fac,
@@ -3353,7 +3353,7 @@ def init_logging_main():
     hands off the message to alert_logger.
 
     See logging_stop_stdouterr(), logging_start_stdouterr(),
-    logging_email_stop_logging(), and logging_email_start_logging() for
+    logging_stop_email_logging(), and logging_start_email_logging() for
     ways to temporarily change the logging methods.
 
     Note: syslog may turn control characters into octal, including
@@ -3368,7 +3368,7 @@ def init_logging_main():
                  _base_logger, _null_handler, _syslog_handler,
                  _stdout_handler, _stderr_handler, FULL_DATE_FORMAT,
                  exitvals['startup']
-        functions: fix_path(), init_syslog(), err_exit()
+        functions: fix_path(), logging_init_syslog(), err_exit()
         classes: SMTPDiagHandler
         modules: logging, logging.handlers, sys
         Python: 2.7+/3.x, for SMTPHandler(secure)
@@ -3412,7 +3412,7 @@ def init_logging_main():
 
     #syslog
     if cfg['use_syslog']:
-        _syslog_handler = init_syslog()
+        _syslog_handler = logging_init_syslog()
         _base_logger.addHandler(_syslog_handler)
 
     # specific to status messages
@@ -3441,7 +3441,7 @@ def init_logging_main():
         email_logger.addHandler(email_handler)
     else:
         # if we turn off propagation temporarily (see
-        # logging_email_stop_logging()), we will get errors unless
+        # logging_stop_email_logging()), we will get errors unless
         # there's a handler
         email_logger.addHandler(_null_handler)
 
@@ -3506,12 +3506,12 @@ def logging_start_stdouterr():
         alert_logger.addHandler(_stderr_handler)
 
 
-def logging_email_stop_logging():
+def logging_stop_email_logging():
     """
     Turn off propagation in the email logger (i.e., no actual logging).
     Useful if you need to send an email with the same settings but
     without logging or printing.
-    Call logging_email_start_logging() when done.
+    Call logging_start_email_logging() when done.
     WARNING: the current implementation is not thread-safe.
     Dependencies:
         globals: email_logger
@@ -3520,10 +3520,10 @@ def logging_email_stop_logging():
     email_logger.propagate = False
 
 
-def logging_email_start_logging():
+def logging_start_email_logging():
     """
     Turn on propagation in the email logger (i.e., actual logging).
-    See logging_email_stop_logging().
+    See logging_stop_email_logging().
     WARNING: the current implementation is not thread-safe.
     Dependencies:
         globals: email_logger
@@ -3532,13 +3532,13 @@ def logging_email_start_logging():
     email_logger.propagate = True
 
 
-def init_logging_output():
+def logging_init_output():
 
     """
     Initialize output logging, including both logger and file objects.
 
     The output log is for output from external programs; see, e.g.,
-    run_with_logging().  See init_logging_main() for the rest of the
+    run_with_logging().  See logging_init_main() for the rest of the
     logging.
 
     output_logger logs to the output log and stdout.  output_log_fo is a
@@ -3553,7 +3553,7 @@ def init_logging_output():
                  _null_handler, _stdout_handler, start_time,
                  exitvals['startup']
         functions: fix_path(), rotate_prune_output_logs(), pps(),
-                   end_logging_output
+                   logging_end_output
         modules: logging, sys, os, time, atexit
 
     """
@@ -3630,10 +3630,10 @@ def init_logging_output():
 
     # automatically close on exit
     # (should be done anyway, but we'll be thorough)
-    atexit.register(end_logging_output)
+    atexit.register(logging_end_output)
 
 
-def end_logging_output():
+def logging_end_output():
     """
     Close the output log file object.
     Ignore errors; we're probably exiting anyway.
@@ -5409,8 +5409,8 @@ def check_status():
                  exitvals['startup'], exitvals['lockfile'],
                  LF_ALERTS_SILENCED, SCRIPT_DISABLED
         functions: fix_path(), file_newer_than(),
-                   logging_email_stop_logging(),
-                   logging_email_start_logging(), pps(),
+                   logging_stop_email_logging(),
+                   logging_start_email_logging(), pps(),
                    lockfile_cleanup()
         modules: sys, atexit, os, errno
 
@@ -5490,7 +5490,7 @@ def check_status():
                            # don't exit yet, we're already about to exit
 
                 # send the email and exit
-                logging_email_stop_logging()
+                logging_stop_email_logging()
                 if os.path.exists(fix_path(os.path.join(cfg['lockfile'],
                                                         SCRIPT_DISABLED))):
                     email_logger.error('{0} have been manually disabled; '
@@ -5503,7 +5503,7 @@ def check_status():
                         'exiting.' .
                         format(task_name)
                     )
-                logging_email_start_logging()
+                logging_start_email_logging()
                 sys.exit(exitvals['lockfile']['num'])
 
             # but what about subsequent emails?
@@ -5549,7 +5549,7 @@ def check_status():
 
             # send another alert email
             # (email only; we already logged it)
-            logging_email_stop_logging()
+            logging_stop_email_logging()
             if os.path.exists(fix_path(os.path.join(cfg['lockfile'],
                                                     SCRIPT_DISABLED))):
                 email_logger.error('{0} have been manually disabled; '
@@ -5561,7 +5561,7 @@ def check_status():
                     '(previous {0} still running or failed?); exiting.' .
                     format(task_name)
                 )
-            logging_email_start_logging
+            logging_start_email_logging
             sys.exit(exitvals['lockfile']['num'])
 
     # ok, got the lock
@@ -6332,7 +6332,7 @@ def process_config(arg_ns):
                  process_config_hooks, exitvals['startup']
         functions: import_config_by_name(), check_bogus_config(),
                    apply_config_defaults(), validate_config(),
-                   init_logging_main(), init_logging_output(), pps(),
+                   logging_init_main(), logging_init_output(), pps(),
                    err_exit()
         modules: argparse, os
         Python: 2.7/3.2, for argparse; 2.0/3.2, for callable()
@@ -6393,7 +6393,7 @@ def process_config(arg_ns):
 
     # now that the settings are complete, initialize things
     # based on them
-    init_logging_main()
+    logging_init_main()
     if 'exec_path' in cfg:
         os.environ['PATH'] = cfg['exec_path']
     if 'umask' in cfg:
@@ -6757,7 +6757,7 @@ def run_mode():
                  run_mode_hooks, task_name, FULL_DATE_FORMAT,
                  exitvals['startup']
         functions: log_cl_config(), check_status(),
-                   init_logging_output(), touch_file()
+                   logging_init_output(), touch_file()
         modules: time
         Python: 2.0/3.2, for callable()
 
@@ -6778,7 +6778,7 @@ def run_mode():
     start_time = time.time()
 
     # set up the output logger in case we need it, and rotate the logs
-    init_logging_output()
+    logging_init_output()
 
     # log that we're starting the task
     status_logger.info('Starting {0}.'.format(task_name))

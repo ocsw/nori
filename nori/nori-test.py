@@ -370,14 +370,14 @@ def run_mode_hook():
     #nori.core.alert_logger.error('asdf3')
     #nori.core.alert_logger.debug('asdf4')
     #nori.core.email_logger.error('asdf5a')
-    #nori.logging_email_stop_logging()
+    #nori.logging_stop_email_logging()
     #nori.core.email_logger.error('asdf5b')
-    #nori.logging_email_start_logging()
+    #nori.logging_start_email_logging()
     #nori.core.output_logger.info('asdf6')
     #nori.core.output_log_fo.write('asdf7\n')
     #nori.core.output_log_fo.flush()
 
-    #nori.end_logging_output()
+    #nori.logging_end_output()
     #nori.core.output_log_fo.write('asdf7\n')
 
     #nori.generic_error_handler(ValueError('foo\nbar'), 'broken')
