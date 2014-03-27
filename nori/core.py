@@ -648,7 +648,7 @@ except ImportError:
 # this package
 ###############
 
-from  . import collectionsplus
+from . import collectionsplus
 
 
 ### see also deferred imports, after the version check ###
@@ -859,7 +859,7 @@ if sys.hexversion < 0x03000000:
     if sys.hexversion < 0x02070000:
         STRINGISH_TYPES = STRING_TYPES + (bytearray, buffer)
     else:
-        STRINGISH_TYPES =  STRING_TYPES + (bytearray, buffer, memoryview)
+        STRINGISH_TYPES = STRING_TYPES + (bytearray, buffer, memoryview)
 
     # a more complete list of sequences
     SEQUENCE_TYPES = MAIN_SEQUENCE_TYPES + (xrange, set, frozenset,
@@ -868,7 +868,7 @@ if sys.hexversion < 0x03000000:
 else:
     INTEGER_TYPES = (int, )  # tuple so we can add to it
     STRING_TYPES = (str, )  # tuple so we can add to it
-    STRINGISH_TYPES =  STRING_TYPES + (bytes, bytearray, memoryview)
+    STRINGISH_TYPES = STRING_TYPES + (bytes, bytearray, memoryview)
     # a more complete list of sequences
     SEQUENCE_TYPES = MAIN_SEQUENCE_TYPES + (range, set, frozenset,
                      collections.abc.ItemsView, collections.abc.KeysView,
