@@ -245,6 +245,9 @@ DOCSTRING CONTENTS:
     touch_file()
         Update a file's timestamp, or create it if it doesn't exist.
 
+    mkdir_p()
+        Create a directory, recursively if necessary.
+
     rm_rf()
         Remove a file or directory, recursively if necessary.
 
@@ -2874,6 +2877,31 @@ def touch_file(file_path, file_label, times=None, use_logger=False,
             os.close(f)
         except (OSError, IOError) as e:
             pass
+
+
+def mkdir_p(mkdir_path, file_label, use_logger=False, warn_only=False,
+            exit_val=exitvals['startup']['num']):
+    """
+    Create a directory, recursively if necessary.
+    Parameters:
+        mkdir_path: the directory path to create
+        see file_error_handler() for the rest
+    Dependencies:
+        globals: exitvals['startup']
+        functions: fix_path(), file_error_handler()
+        modules: os, errno
+    """
+    try:
+        # os.path.realpath() removes any '..'s, which may confuse
+        # os.makedirs(), according to the documentation
+        os.makedirs(os.path.realpath(fix_path(mkdir_path)))
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir(fix_path(mkdir_path)):
+            return
+        else:
+            # must_exist=True
+            file_error_handler(e, 'create', file_label, mkdir_path, True,
+                               use_logger, warn_only, exit_val)
 
 
 def rm_rf(rm_path, file_label, must_exist=False, use_logger=False,

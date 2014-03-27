@@ -348,6 +348,8 @@ def run_mode_hook():
     #print(nori.touch_file('/tmp/foo/bar', 'tmpfoobar'))
     #print(nori.get_file_metadata('/tmp/foo'))
     #print(nori.get_file_metadata('/tmp/foo/bar'))
+    #print(nori.mkdir_p('/tmp/foo', 'tmpfoo'))
+    #print(nori.mkdir_p('/tmp/foo/../bar', 'tmpbar'))
     #print(nori.rm_rf('/tmp/foo', 'tmpfoo'))
     #print(nori.rm_rf('/tmp/foo', 'tmpfoo'))
     #print(nori.rm_rf('/tmp/foo', 'tmpfoo', must_exist=True))
