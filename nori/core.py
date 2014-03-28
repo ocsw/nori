@@ -3208,13 +3208,13 @@ def prune_files(layout, dir_path, prefix, sep, suffix, num_f, days_f,
         globals: exitvals['startup']
         functions: prune_num_files(), prune_days_files()
     """
-    if layout == 'single' or layout == 'singledir' or layout == 'append':
+    if layout in ['single', 'singledir', 'append', 'appenddir']:
         # not generally called for these, but here for future use / FTR
         pass  # nothing to do
-    elif layout == 'number' or layout == 'numberdir':
+    elif layout in ['number', 'numberdir']:
         prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
                         exit_val)
-    elif layout == 'date' or layout == 'datedir':
+    elif layout in ['date', 'datedir']:
         prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
                          exit_val)
 
