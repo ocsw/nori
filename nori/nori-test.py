@@ -354,10 +354,10 @@ def run_mode_hook():
     #print(nori.rm_rf('/tmp/foo', 'tmpfoo'))
     #print(nori.rm_rf('/tmp/foo', 'tmpfoo', must_exist=True))
 
-    #nori.rotate_num_files('/root', 'asdf', '=', 'a')
+    #nori.rotate_num_files('/root/asdf', '=', 'a')
     # test with .gz, in cwd, in other dir
 
-    #nori.prune_num_files('/root', 'asdf', '=', 'a', 1, 1)
+    #nori.prune_num_files('/root/asdf', '=', 'a', 1, 1)
     # test with .gz, in cwd, in other dir
 
     #print(nori.pps('adsf'))

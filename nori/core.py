@@ -2934,7 +2934,7 @@ def rm_rf(rm_path, file_label, must_exist=False, use_logger=False,
 # file rotation and pruning
 ############################
 
-def rotate_num_files(dir_path, prefix, sep, suffix,
+def rotate_num_files(path_prefix, sep, suffix,
                      exit_val=exitvals['startup']['num']):
 
     """
@@ -2944,22 +2944,24 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
     ZIP_SUFFIXES following the suffix parameter.
 
     Parameters:
-        dir_path: the directory containing the files/directories to
-                  rotate
-        prefix: file/directory name up to the number, not including any
-                trailing separator
-        sep: separator before the number (not in prefix because the most
-             recent file won't have a separator or a number)
-        suffix: suffix after the number, including any leading
+        path_prefix: the full file/directory path up to the number, not
+                     including any trailing separator
+        sep: the separator before the number (not in path_prefix because
+             the most recent file won't have a separator or a number)
+        suffix: the suffix after the number, including any leading
                 separator; cannot begin with a number
-        exit_val: value to exit the script with on error
+        exit_val: the value to exit the script with on error
 
     Dependencies:
         globals: email_logger, exitvals['startup'], ZIP_SUFFIXES
-        functions: fix_path(), pps()
+        functions: parentdir(), fix_path(), pps()
         modules: re, os, operator, sys
 
     """
+
+    # pull apart the path prefix
+    dir_path = parentdir(path_prefix)
+    prefix = os.path.basename(path_prefix)
 
     # get a list of matching files in dir_path, along with their
     # file numbers, sorted in reverse numerical order
@@ -3027,7 +3029,7 @@ def rotate_num_files(dir_path, prefix, sep, suffix,
             sys.exit(exit_val)
 
 
-def prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
+def prune_num_files(path_prefix, sep, suffix, num_f, days_f,
                     exit_val=exitvals['startup']['num']):
 
     """
@@ -3038,22 +3040,21 @@ def prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
     following the suffix parameter.
 
     Parameters:
-        dir_path: the directory containing the files/directories to
-                  rotate
-        prefix: file/directory name up to the number, not including any
-                trailing separator
-        sep: separator before the number (not in prefix because the most
-             recent file won't have a separator or a number)
-        suffix: suffix after the number, including any leading
+        path_prefix: the full file/directory path up to the number, not
+                     including any trailing separator
+        sep: the separator before the number (not in path_prefix because
+             the most recent file won't have a separator or a number)
+        suffix: the suffix after the number, including any leading
                 separator; cannot begin with a number
-        num_f: number of files to keep, including the current
+        num_f: the number of files to keep, including the current
                (un-numbered) one; 0 = unlimited
-        days_f: number of days worth of files to keep; 0 = unlimited
-        exit_val: value to exit the script with on error
+        days_f: the number of days worth of files to keep; 0 = unlimited
+        exit_val: the value to exit the script with on error
 
     Dependencies:
         globals: email_logger, exitvals['startup'], ZIP_SUFFIXES
-        functions: fix_path(), pps(), file_newer_than(), rm_rf()
+        functions: parentdir(), fix_path(), pps(), file_newer_than(),
+                   rm_rf()
         modules: re, os, sys
 
     """
@@ -3061,6 +3062,10 @@ def prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
     # anything to do?
     if not num_f and not days_f:
         return
+
+    # pull apart the path prefix
+    dir_path = parentdir(path_prefix)
+    prefix = os.path.basename(path_prefix)
 
     # get a list of matching files in dir_path, along with their
     # file numbers
@@ -3110,7 +3115,7 @@ def prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
                       exit_val=exit_val)
 
 
-def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
+def prune_date_files(path_prefix, sep, suffix, num_f, days_f,
                      exit_val=exitvals['startup']['num']):
 
     """
@@ -3129,20 +3134,19 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
     except for the desired ones.
 
     Parameters:
-        dir_path: the directory containing the files/directories to
-                  rotate
-        prefix: file/directory name up to the date, not including any
-                trailing separator
-        sep: separator before the date
-        suffix: suffix after the date, including any leading separator
-        num_f: number of files to keep, including the current one;
+        path_prefix: the full file/directory path up to the date, not
+                     including any trailing separator
+        sep: the separator before the date
+        suffix: the suffix after the date, including any leading
+                separator
+        num_f: the number of files to keep, including the current one;
                0 = unlimited
-        days_f: number of days worth of files to keep; 0 = unlimited
-        exit_val: value to exit the script with on error
+        days_f: the number of days worth of files to keep; 0 = unlimited
+        exit_val: the value to exit the script with on error
 
     Dependencies:
         globals: email_logger, exitvals['startup'], ZIP_SUFFIXES
-        functions: fix_path(), pps(), rm_rf()
+        functions: parentdir(), fix_path(), pps(), rm_rf()
         modules: re, os, time, operator, sys
 
     """
@@ -3150,6 +3154,10 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
     # anything to do?
     if not num_f and not days_f:
         return
+
+    # pull apart the path prefix
+    dir_path = parentdir(path_prefix)
+    prefix = os.path.basename(path_prefix)
 
     # get a list of matching files in dir_path
     f_list = []
@@ -3195,7 +3203,7 @@ def prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
                     exit_val=exit_val)
 
 
-def prune_files(layout, dir_path, prefix, sep, suffix, num_f, days_f,
+def prune_files(layout, path_prefix, sep, suffix, num_f, days_f,
                 exit_val=exitvals['startup']['num']):
     """
     Wrapper: prune numbered or dated files/dirs by number and date.
@@ -3212,11 +3220,9 @@ def prune_files(layout, dir_path, prefix, sep, suffix, num_f, days_f,
         # not generally called for these, but here for future use / FTR
         pass  # nothing to do
     elif layout in ['number', 'numberdir']:
-        prune_num_files(dir_path, prefix, sep, suffix, num_f, days_f,
-                        exit_val)
+        prune_num_files(path_prefix, sep, suffix, num_f, days_f, exit_val)
     elif layout in ['date', 'datedir']:
-        prune_date_files(dir_path, prefix, sep, suffix, num_f, days_f,
-                         exit_val)
+        prune_date_files(path_prefix, sep, suffix, num_f, days_f, exit_val)
 
 
 def rotate_prune_output_logs():
@@ -3231,9 +3237,7 @@ def rotate_prune_output_logs():
         config settings: output_log, output_log_layout, output_log_sep,
                          output_log_num, output_log_days
         globals: cfg, status_logger, exitvals['startup']
-        functions: rotate_num_files, prune_files(), fix_path(),
-                   parentdir()
-        modules: os
+        functions: rotate_num_files, prune_files()
 
     """
 
@@ -3248,22 +3252,19 @@ def rotate_prune_output_logs():
                            'file; not rotating logs.')
         return
 
-    status_logger.info('Rotating logs.')
+    status_logger.info('Rotating/pruning logs...')
 
     # rotate
     if cfg['output_log_layout'] == 'number':
-        rotate_num_files(parentdir(fix_path(cfg['output_log'])),
-                         os.path.basename(cfg['output_log']),
-                         cfg['output_log_sep'], '',
+        rotate_num_files(cfg['output_log'], cfg['output_log_sep'], '',
                          exitvals['startup']['num'])
 
     # prune
-    prune_files(cfg['output_log_layout'],
-                parentdir(fix_path(cfg['output_log'])),
-                os.path.basename(cfg['output_log']),
-                cfg['output_log_sep'], '',
-                cfg['output_log_num'], cfg['output_log_days'],
-                exitvals['startup']['num'])
+    prune_files(cfg['output_log_layout'], cfg['output_log'],
+                cfg['output_log_sep'], '', cfg['output_log_num'],
+                cfg['output_log_days'], exitvals['startup']['num'])
+
+    status_logger.info('Log rotation/pruning complete.')
 
 
 ########################################################################
