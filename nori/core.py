@@ -3879,6 +3879,26 @@ def command_error_handler(e, cmd_descr, use_logger=False, warn_only=False,
                                  use_logger, warn_only, exit_val)
 
 
+def render_unix_exit_status(status):
+    """
+    Turn a Unix/POSIX error status value into an informative string.
+    Parameters:
+        status: the exit status to render
+    Dependencies:
+        modules: os
+        Python: 2.3, for os.WCOREDUMP()
+    """
+    status_str = ''
+    if os.WIFEXITED(status):
+        status_str = str(os.WEXITSTATUS(status))
+    elif os.WIFSIGNALED(status):
+        status_str = 'killed by signal ' + str(os.WTERMSIG(status))
+    # probably only possible with a signal, but just in case...
+    if os.WCOREDUMP(status):
+        status_str += '; core dumped'
+    return status_str
+
+
 def multi_fan_out(stream_tuples):
 
     """
