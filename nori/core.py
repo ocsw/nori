@@ -4284,9 +4284,10 @@ def kill_bg_command(p_obj, kill_timeout=10, wait_timeout=None):
 
 def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
                      bg=False, atexit_reg=True, daemon=True,
-                     use_logger=False, warn_only=False,
-                     exit_val=exitvals['startup']['num'], env_add=None,
-                     **kwargs):
+                     print_output=True, output_logger='default',
+                     output_log_fo='default', use_logger=False,
+                     warn_only=False, exit_val=exitvals['startup']['num'],
+                     env_add=None, **kwargs):
 
     """
     Run a command and log its output to the output log and stdout.
@@ -4299,6 +4300,14 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
         log_stdout, log_stderr: if true, log the respective stream;
                                 if both are true, the streams will be
                                 combined
+        print_output: if true, the command's output is sent to stdout as
+                      well as output_log_fo
+        output_logger: a logger object to use in place of the default
+                       output logger, 'default' to use the default
+                       (output_logger), or None
+        output_log_fo: a file object to use in place of the default
+                       output log file object, or 'default' to use the
+                       default (output_log_fo); may _not_ be None
         see run_command() and command_error_handler() for the rest
 
     Dependencies:
@@ -4310,11 +4319,19 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
 
     """
 
+    # handle defaults; we can't set these in the definition because at
+    # the time it's processed, they haven't been set yet
+    if output_logger == 'default':
+        output_logger = globals()['output_logger']
+    if output_log_fo == 'default':
+        output_log_fo = globals()['output_log_fo']
+
     # log the starting time
-    output_logger.info('Starting {0} {1}.' .
-                       format(cmd_descr,
-                              time.strftime(FULL_DATE_FORMAT,
-                                            time.localtime())))
+    if output_logger:
+        output_logger.info('Starting {0} {1}.' .
+                           format(cmd_descr,
+                                  time.strftime(FULL_DATE_FORMAT,
+                                                time.localtime())))
 
     # print the command
     if cfg['log_cmds']:
@@ -4332,7 +4349,10 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
     # get the streams sorted out
     stderr = 'devnull'
     if log_stdout:
-        stdout = [output_log_fo, sys.stdout]
+        if print_output:
+            stdout = [output_log_fo, sys.stdout]
+        else:
+            stdout = output_log_fo
         if log_stderr:
             # redirect stderr so we get everything in the same order as
             # we would on the command line
@@ -4340,7 +4360,10 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
     else:
         stdout = 'devnull'
         if log_stderr:
-            stderr = [output_log_fo, sys.stdout]
+            if print_output:
+                stderr = [output_log_fo, sys.stdout]
+            else:
+                stderr = output_log_fo
 
     # run the command
     ret = run_command(cmd_descr, cmd, None, stdout, stderr, bg, atexit_reg,
@@ -4356,10 +4379,11 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
         return ret
 
     # log the ending time
-    output_logger.info('{0} finished {1}.' .
-                       format(cmd_descr.capitalize(),
-                              time.strftime(FULL_DATE_FORMAT,
-                                            time.localtime())))
+    if output_logger:
+        output_logger.info('{0} finished {1}.' .
+                           format(cmd_descr.capitalize(),
+                                  time.strftime(FULL_DATE_FORMAT,
+                                                time.localtime())))
 
     # return the command's exit value
     return ret
