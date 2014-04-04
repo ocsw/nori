@@ -4002,9 +4002,13 @@ def run_command(cmd_descr, cmd, stdin=None, stdout=None, stderr=None,
     Run an external command, with flexible input/output targeting.
 
     If the command fails, returns None.  Otherwise, if bg is false,
-    returns the command's exit value.  If bg is true, returns the Popen
-    object for the process; the caller must ensure that its wait()
-    method is eventually called.
+    returns the command's exit value.  If bg is true, returns a tuple
+    of (popen, thread).  The popen element is the Popen object for the
+    process; the caller must ensure that its wait() method is eventually
+    called.  The thread element is the Thread object for the I/O copier
+    thread associated with the process (see multi_fan_out()); if there
+    is no thread (because there is at most one target each for stdout
+    and stderr), the thread element is None.
 
     Parameters:
         cmd_descr: a string describing the command, used in messages
@@ -4176,7 +4180,9 @@ Exiting.''' .
                     _atexit_kill_bg_commands_registered = True
 
     # return something
-    return p.wait() if not bg else p
+    if not bg:
+        return p.wait()
+    return (p, t if stream_tuples else None)
 
 
 def kill_bg_commands():
@@ -4285,10 +4291,7 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
     """
     Run a command and log its output to the output log and stdout.
 
-    If the command fails, returns None.  Otherwise, if bg is false,
-    returns the command's exit value.  If bg is true, returns the Popen
-    object for the process; the caller must ensure that its wait()
-    method is eventually called.
+    See run_command() for the possible return values.
 
     Parameters:
         cmd_descr: a string describing the command, used in messages
@@ -4348,7 +4351,7 @@ def run_with_logging(cmd_descr, cmd, log_stdout=True, log_stderr=True,
     if ret is None:
         return ret
 
-    # backgrounded?  return the Popen object
+    # backgrounded?  return the Popen and Thread objects
     if bg:
         return ret
 

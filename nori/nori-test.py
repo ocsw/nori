@@ -499,33 +499,35 @@ def run_mode_hook():
     #    stdout=[sys.stdout, sys.stderr], stderr=[sys.stdout, sys.stderr],
     #    bg=False, atexit_reg=True, env_add={'ZZZ':'4'}, env={'Z':'5'}
     #))
-    #p1 = nori.run_command(
+    #p1, t = nori.run_command(
     #    'listing', shlex.split('ls -la /varadsf'), stdin=None,
     #    stdout=[sys.stdout, sys.stderr], stderr=[sys.stdout, sys.stderr],
     #    bg=True, atexit_reg=False, env_add={'ZZZ':'4'}
     #)
-    #p2 = nori.run_command(
+    #p2, t = nori.run_command(
     #    'env', shlex.split('env'), stdin=None,
     #    stdout=[sys.stdout, sys.stderr], stderr=[sys.stdout, sys.stderr],
     #    bg=True, atexit_reg=True, env_add={'ZZZ':'4'}, env={'Z':'5'}
     #)
     #p1.wait()
     #time.sleep(30)
-    #p = nori.run_command(
+    #p, t = nori.run_command(
     #    'sleep', shlex.split('/bin/sleep 60'), stdin=None,
     #    stdout=[sys.stdout, sys.stderr], stderr=[sys.stdout, sys.stderr],
     #    bg=True, atexit_reg=True, env_add={'ZZZ':'4'}, env={'Z':'5'}
     #)
-    #p = nori.run_command(
+    #p, t = nori.run_command(
     #    'listing', shlex.split('ls /var'), stdin=None,
     #    stdout=[sys.stdout, sys.stderr], stderr=[sys.stdout, sys.stderr],
     #    bg=True, atexit_reg=True, env_add={'ZZZ':'4'}, env={'Z':'5'}
     #)
-    #p = nori.run_command(
+    #p, t = nori.run_command(
     #    'listing', shlex.split('find /var'), stdin=None,
     #    stdout=[sys.stdout, sys.stderr], stderr=[sys.stdout, sys.stderr],
     #    bg=True, atexit_reg=True, daemon=False, env_add={'ZZZ':'4'}
     #)
+    #print(p)
+    #print(t)
     #time.sleep(3)
     #print(nori.kill_bg_command(p, 10))
 
