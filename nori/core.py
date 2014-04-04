@@ -3236,20 +3236,25 @@ def rotate_prune_output_logs():
     Dependencies:
         config settings: output_log, output_log_layout, output_log_sep,
                          output_log_num, output_log_days
-        globals: cfg, status_logger, exitvals['startup']
+        globals: cfg, config_settings, status_logger,
+                 exitvals['startup']
         functions: rotate_num_files, prune_files()
 
     """
 
     # no logs?
     if not cfg['output_log']:
-        status_logger.info('Output logging is off; not rotating logs.')
+        if ('no_print' not in config_settings['output_log'] or
+              not config_settings['output_log']['no_print']):
+            status_logger.info('Output logging is off; not rotating logs.')
         return
 
     # appending to one log?
     if cfg['output_log_layout'] == 'append':
-        status_logger.info('Output logs are being appended to a single '
-                           'file; not rotating logs.')
+        if ('no_print' not in config_settings['output_log'] or
+              not config_settings['output_log']['no_print']):
+            status_logger.info('Output logs are being appended to a single '
+                               'file; not rotating logs.')
         return
 
     status_logger.info('Rotating/pruning logs...')
