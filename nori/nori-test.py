@@ -14,7 +14,7 @@ import time
 import socket
 import logging
 
-#sys.path.insert(0, os.path.dirname(__file__) + os.path.sep + '..')
+#sys.path.insert(0, os.path.dirname(__file__) + os.sep + '..')
 import nori
 
 

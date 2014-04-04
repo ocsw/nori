@@ -892,7 +892,7 @@ SCRIPT_DISABLED = 'script_disabled'
 
 # all path-separator characters, to account for, e.g., Windows accepting
 # both '/' and '\'; see, e.g., validate_config()
-PATH_SEP = os.sep + ('/' if os.name == 'nt' else '')
+PATH_SEP = os.sep + (os.altsep if os.altsep else '')
 
 
 ##################
