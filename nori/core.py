@@ -1360,11 +1360,12 @@ def create_email_settings(name_str, descr_str, heading=None,
         see logging_init_email() for the rest
 
     Dependencies:
-        globals: running_as_email, script_shortname,
+        globals: config_settings, running_as_email, script_shortname,
                  _ignore_email_config, validate_config_hooks,
                  process_config_hooks
         functions: str_to_bool(), settings_extra_text(),
-                   settings_extra_requires(), validate_email_config()
+                   settings_extra_requires(), validate_email_config(),
+                   logging_init_email()
         modules: socket
 
     """
@@ -2940,7 +2941,7 @@ def rotate_num_files(path_prefix, sep, suffix,
     """
     Rotate numbered files or directories.
 
-    Files/directories can optionally have any of the suffixes in
+    File/directory names can optionally have any of the suffixes in
     ZIP_SUFFIXES following the suffix parameter.
 
     Parameters:
@@ -3035,9 +3036,8 @@ def prune_num_files(path_prefix, sep, suffix, num_f, days_f,
     """
     Prune numbered files or directories by number and date.
 
-    Files/directories can optionally have any of the suffixes in
-    ZIP_SUFFIXES
-    following the suffix parameter.
+    File/directory names can optionally have any of the suffixes in
+    ZIP_SUFFIXES following the suffix parameter.
 
     Parameters:
         path_prefix: the full file/directory path up to the number, not
@@ -3121,7 +3121,7 @@ def prune_date_files(path_prefix, sep, suffix, num_f, days_f,
     """
     Prune dated files or directories by number and date.
 
-    Files/directories can optionally have any of the suffixes in
+    File/directory names can optionally have any of the suffixes in
     ZIP_SUFFIXES following the suffix parameter.
 
     Note: the 'current' file must exist before calling this function, so
@@ -3207,7 +3207,7 @@ def prune_files(layout, path_prefix, sep, suffix, num_f, days_f,
                 exit_val=exitvals['startup']['num']):
     """
     Wrapper: prune numbered or dated files/dirs by number and date.
-    Files/directories can optionally have any of the suffixes in
+    File/directory names can optionally have any of the suffixes in
     ZIP_SUFFIXES following the suffix parameter.
     Parameters:
         layout: the layout type (see below)
@@ -3437,8 +3437,8 @@ def logging_init_email(name_str, descr_str, parent_str=__name__ + '.status',
     The email_loggers[name_str] object sends an email, including
     additional diagnostics.  Whether the original message is then handed
     off to the parent logger depends on the 'propagate' parameter.  If
-    name_str is 'alert', an alias called email_logger is set up (for the
-    built-in alert/error emails).
+    name_str is 'alert', an alias called email_logger is created (for
+    the built-in alert/error emails).
 
     See logging_start_email_logging() and logging_stop_email_logging()
     for ways to change the logging methods.
@@ -3450,7 +3450,8 @@ def logging_init_email(name_str, descr_str, parent_str=__name__ + '.status',
                    email'
         parent_str: a string naming the parent logger object to use
         propagate: if True, messages are handed off to the parent logger
-                   by default
+                   (by default; see logging_start_email_logging() and
+                   logging_stop_email_logging())
         see SMTPDiagHandler.__init__() for the rest
 
     Dependencies:
@@ -3579,7 +3580,7 @@ def logging_stop_syslog():
     Dependencies:
         config settings: use syslog
         globals: cfg, _base_logger, _syslog_handler
-        modules: logging
+        modules: (logging)
     """
     if cfg['use_syslog']:
         _base_logger.removeHandler(_syslog_handler)
@@ -3592,7 +3593,7 @@ def logging_start_syslog():
     Dependencies:
         config settings: use syslog
         globals: cfg, _base_logger, _syslog_handler
-        modules: logging
+        modules: (logging)
     """
     if cfg['use_syslog']:
         _base_logger.addHandler(_syslog_handler)
@@ -3608,7 +3609,7 @@ def logging_stop_stdouterr():
         config settings: quiet
         globals: cfg, status_logger, alert_logger, _stdout_handler,
                  _stderr_handler
-        modules: logging
+        modules: (logging)
     """
     if not cfg['quiet']:
         status_logger.removeHandler(_stdout_handler)
@@ -3623,7 +3624,7 @@ def logging_start_stdouterr():
         config settings: quiet
         globals: cfg, status_logger, alert_logger, _stdout_handler,
                  _stderr_handler
-        modules: logging
+        modules: (logging)
     """
     if not cfg['quiet']:
         status_logger.addHandler(_stdout_handler)
@@ -3641,7 +3642,7 @@ def logging_stop_email_logging(name_str='alert'):
                   setting names
     Dependencies:
         globals: email_loggers
-        modules: logging
+        modules: (logging)
     """
     email_loggers[name_str].propagate = False
 
@@ -3655,7 +3656,7 @@ def logging_start_email_logging(name_str='alert'):
                   setting names
     Dependencies:
         globals: email_loggers
-        modules: logging
+        modules: (logging)
     """
     email_loggers[name_str].propagate = True
 
