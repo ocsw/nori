@@ -4529,7 +4529,6 @@ def settings_extra_requires(setting_list=[], extra_requires=None):
     Dependencies:
         globals: config_settings
     """
-    global config_settings
     if extra_requires:
         for s_name in setting_list:
             # note: initializing with '= extra_requires' doesn't work
