@@ -161,8 +161,15 @@ DOCSTRING CONTENTS:
     output_logger
         Logger objects.
 
+    email_loggers
+    file_loggers
+        Dicts of logger objects.
+
     output_log_fo
         Output-file object.
+
+    logfile_objs
+        Dict of logfile objects.
 
 
 2) API FUNCTIONS:
@@ -267,8 +274,12 @@ DOCSTRING CONTENTS:
     prune_files()
         Wrapper: prune numbered or dated files/dirs by number and date.
 
-    rotate_prune_output_logs()
-        Rotate and prune the output logs.
+    rotate_prune_files()
+        Wrapper: rotate and prune numbered or dated files or
+        directories.
+
+    rotate_prune_logfiles()
+        Rotate and prune a set of logfiles.
 
 
     Logging and Alerts:
@@ -292,6 +303,16 @@ DOCSTRING CONTENTS:
     logging_init_main()
         Initialize most of the logging.
 
+    logging_init_logfile()
+        Initialize logfile logging, including both logger and file
+        objects.
+
+    logging_close_logfile()
+        Close a logfile's file object.
+
+    logging_close_logfiles()
+        Close all logfile file objects.
+
     logging_stop_syslog()
         Turn off syslog in the loggers.
 
@@ -311,12 +332,11 @@ DOCSTRING CONTENTS:
     logging_start_email_logging()
         Turn on propagation in the email logger (i.e., actual logging).
 
-    logging_init_output()
-        Initialize output logging, including both logger and file
-        objects.
+    logging_stop_logfile_prop()
+        Turn off propagation in a logfile logger object.
 
-    logging_end_output()
-        Close the output log file object.
+    logging_start_logfile_prop()
+        Turn on propagation in a logfile logger object.
 
     render_generic_exception()
         Return a formatted string for a generic exception.
@@ -365,14 +385,20 @@ DOCSTRING CONTENTS:
     create_email_settings()
         Create a block of email-related settings.
 
+    create_logfile_settings()
+        Create a block of logfile-related settings.
+
     settings_extra_text()
         Add extra text to config setting descriptions.
 
     settings_extra_requires()
         Add extra feature requirements to config settings.
 
-    config_settings_no_print_output_log()
-        Turn self-documentation of the output log feature on or off.
+    settings_no_print()
+        Turn self-documentation of a list of settings on or off.
+
+    settings_no_print_logfile()
+        Turn self-documentation of a logfile feature on or off.
 
     setting_walk()
         Get the configuration (sub-)object indicated by setting_name.
@@ -525,6 +551,9 @@ DOCSTRING CONTENTS:
 
     validate_email_config()
         Validate email configuration settings.
+
+    validate_logfile_config()
+        Validate logfile configuration settings.
 
     process_config()
         Process the config file and the settings supplied on the
@@ -1188,6 +1217,12 @@ start_time = None
 # internal; see create_email_settings() and validate_email_config()
 _ignore_email_config = {}
 
+# internal; see create_logfile_settings(), validate_logfile_config(),
+# logging_init_logfile(), etc.
+_ignore_logfile_config = {}
+_logfile_descrs = {}
+_atexit_close_logfiles_registered = False
+
 # internal; see command-running functions
 _atexit_kill_bg_commands_registered = False
 _running_bg_commands = []  # contains process objects
@@ -1289,8 +1324,8 @@ config_defaults_multiple = dict(
 #               to a particular script, but need to be left in the code
 #               so as not to break anything (for example, this is often
 #               the case with output_log*, so those settings have this
-#               set by default; see also
-#               config_settings_no_print_output_log())
+#               set by default; see also settings_no_print() and
+#               settings_no_print_logfile())
 #
 #     heading: if this is present, the element represents a section
 #              heading for render_config() and
@@ -1513,6 +1548,209 @@ Ignored if send_{0}_emails is False.
     )
 
 
+def create_logfile_settings(name_str, descr_str, long_descr_str='',
+                            heading=None, extra_text=None, ignore=None,
+                            extra_requires=[], parent_str=__name__,
+                            propagate=False):
+
+    """
+    Create a block of logfile-related settings.
+
+    You may want to manually adjust a few details, particularly:
+        * config_settings[name_str + '_log']['default']
+
+    Note: do not use a name_str of 'output'; this is used internally by
+    nori.
+
+    When modifying, remember to keep the setting_list at the bottom,
+    validate_logfile_config(), and settings_no_print_logfile() in sync
+    with the config settings.
+
+    Parameters:
+        name_str: a string to use in setting names, e.g. 'output'
+        descr_str: a string to use in setting descriptions, e.g.
+                   'output', for use in phrases like 'output logs'
+        long_descr_str: a more complete description, inserted as a
+                        paragraph into the description of the
+                        name_str + '_log' setting; may be blank
+        heading: if not None, a heading entry with this value will be
+                 added to the config settings
+        extra_text: if not None, this value is added to each setting
+                    description (prepended with a blank line; does not
+                    include the heading)
+                    this is mainly intended to be used for things like
+                    'Ignored if [some setting] is not True.'
+        ignore: if not None, a function; when this function is true,
+                don't bother validating the settings
+        extra_requires: a list of features to be added to the settings'
+                        requires attributes
+        see logging_init_logfile() for the rest
+
+    Dependencies:
+        globals: config_settings, script_shortname,
+                 _ignore_logfile_config, _logfile_descrs,
+                 validate_config_hooks, process_config_hooks
+        functions: settings_extra_text(), settings_extra_requires(),
+                   validate_logfile_config(), logging_init_logfile()
+
+    """
+
+    # save some info
+    _ignore_logfile_config[name_str] = ignore
+    _logfile_descrs[name_str] = descr_str
+
+    if heading is not None:
+        config_settings[name_str + '_log_heading'] = dict(
+            heading=heading,
+        )
+
+    config_settings[name_str + '_log'] = dict(
+        descr=(
+'''
+The path to the {0} logfile.
+
+{1}If {2}_log_layout is 'date', the filename will have {2}_log_sep and
+a date string appended to it (see {2}_log_sep and {2}_log_date).
+
+{3} logs may be compressed in place by any utility that uses any of
+the following suffixes, without disrupting the script:
+    {4}
+
+If set to None, no {0} log will be used.
+''' .
+            format(descr_str,
+                   (long_descr_str + '\n\n') if long_descr_str else '',
+                   name_str, descr_str.capitalize(), ZIP_SUFFIXES)
+        ),
+        default=('/var/log/' + script_shortname + '-' + name_str + '.log'),
+        cl_coercer=str,
+    )
+
+    config_settings[name_str + '_log_layout'] = dict(
+        descr=(
+'''
+The file layout to use for the {0} logs.
+
+Available options:
+    'append': append to a single file, with no rotation
+    'number': log to numbered files (lower number = more recent, most
+              recent has no number)
+    'date': log to date-suffixed files (all suffixed, including the most
+            recent; see {1}_log_date)
+
+For example, if {1}_log is '{2}.log', {1}_log_layout
+is 'number', and {1}_log_sep is '.', the second-most-recent file will be
+named '{2}.log.1'.
+
+Ignored if {1}_log is None.
+''' .
+            format(descr_str, name_str, script_name)
+        ),
+        default='number',
+        cl_coercer=str,
+    )
+
+    config_settings[name_str + '_log_sep'] = dict(
+        descr=(
+'''
+The separator to use before number/date suffixes in {0} logfile names.
+
+This may not include path-separator characters ('{2}'; all directories
+in the path must be in the {1}_log setting).  However, it may be more
+than one character, or blank.
+
+Ignored if {1}_log is None or {1}_log_layout is 'append'.
+''' .
+            format(descr_str, name_str, PATH_SEP)
+        ),
+        default='.',
+        cl_coercer=str,
+    )
+
+    config_settings[name_str + '_log_date'] = dict(
+        descr=(
+'''
+The date format string for {0} logfile names.
+
+Recommended value: '%Y%m%d', or '%Y%m%d%H' if {2} are run
+more than once a day.
+
+(See http://docs.python.org/2/library/time.html#time.strftime
+for the format of this value.)
+
+Dates refer to when the script starts; all files created during a given
+run of the script will have the same date suffix.
+
+This may not include path-separator characters ('{3}'; all directories
+in the path must be in the {1}_log setting).  However, it may be blank.
+
+Ignored if {1}_log is None or {1}_log_layout is not 'date'.
+''' .
+            format(descr_str, name_str, tasks_name, PATH_SEP)
+        ),
+        default='%Y%m%d',
+        cl_coercer=str,
+    )
+
+    config_settings[name_str + '_log_num'] = dict(
+        descr=(
+'''
+The number of {0} logfiles to keep, including the current one.
+
+A value of 0 means no number limit (but there may still be a date limit;
+see {1}_log_days).
+
+Note: this applies to both 'number' and 'date' values of
+{1}_log_layout.
+
+Ignored if {1}_log is None or {1}_log_layout is 'append'.
+''' .
+            format(descr_str, name_str)
+        ),
+        default=0,
+        cl_coercer=int,
+    )
+
+    config_settings[name_str + '_log_days'] = dict(
+        descr=(
+'''
+Days worth of {0} logfiles to keep.
+
+A value of 0 means no days limit (but there may still be a number limit;
+see {1}_log_num).
+
+Logs this many days old or older are removed.
+
+(Specifically, 1 day = a full 24 hours; if you run the script once a day,
+and set {1}_log_days to 1, the log from the previous run will be
+newer than 24 hours by however long the script took to run, and will be
+saved.)
+
+Note: this applies to both 'number' and 'date' values of
+{1}_log_layout.
+
+Ignored if {1}_log is None or {1}_log_layout is 'append'.
+''' .
+            format(descr_str, name_str)
+        ),
+        default=14,
+        cl_coercer=int,
+    )
+
+    setting_list = [
+        name_str + '_log', name_str + '_log_layout', name_str + '_log_sep',
+        name_str + '_log_date', name_str + '_log_num',
+        name_str + '_log_days',
+    ]
+    settings_extra_text(setting_list, extra_text)
+    settings_extra_requires(setting_list, extra_requires)
+
+    validate_config_hooks.append(lambda: validate_logfile_config(name_str))
+    process_config_hooks.append(
+        lambda: logging_init_logfile(name_str, parent_str, propagate)
+    )
+
+
 def _create_config_settings():
 
     """
@@ -1523,7 +1761,9 @@ def _create_config_settings():
     Dependencies:
         globals: config_settings, task_article, task_name, tasks_name,
                  script_shortname, script_name, ZIP_SUFFIXES, PATH_SEP
-        functions: str_to_bool(), create_email_settings()
+        functions: str_to_bool(), create_email_settings(),
+                   create_logfile_settings(),
+                   settings_no_print_logfile()
         modules: os, stat, socket, errno, logging.handlers
 
     """
@@ -1854,140 +2094,8 @@ If set to None, no status log will be used.
         cl_coercer=str,
     )
 
-    config_settings['output_log'] = dict(
-        descr=(
-'''
-The path to the output log.
-
-Depending on the script, this log gets a copy of the output of various
-external commands, plus a few timestamps and diagnostics.
-
-If output_log_layout is 'date', the filename will have output_log_sep and
-a date string appended to it (see output_log_sep and output_log_date).
-
-Output logs may be compressed in place by any utility that uses any of
-the following suffixes, without disrupting the script:
-{0}
-
-If set to None, no output log will be used.
-''' .
-            format(ZIP_SUFFIXES)
-        ),
-        default=('/var/log/' + script_shortname + '-output.log'),
-        cl_coercer=str,
-        no_print=True,
-    )
-
-    config_settings['output_log_layout'] = dict(
-        descr=(
-'''
-The file layout to use for the output logs.
-
-Available options:
-    'append': append to a single file, with no rotation
-    'number': log to numbered files (lower number = more recent, most
-              recent has no number)
-    'date': log to date-suffixed files (all suffixed, including the most
-            recent; see output_log_date)
-
-For example, if output_log is '{0}.log', output_log_layout
-is 'number', and output_log_sep is '.', the second-most-recent file will be
-named '{0}.log.1'.
-
-Ignored if output_log is None.
-''' .
-            format(script_name)
-        ),
-        default='number',
-        cl_coercer=str,
-        no_print=True,
-    )
-
-    config_settings['output_log_sep'] = dict(
-        descr=(
-'''
-The separator to use before number/date suffixes in output log names.
-
-This may not include path-separator characters ('{0}'; all directories
-in the path must be in the output_log setting).  However, it may be more
-than one character, or blank.
-
-Ignored if output_log is None or output_log_layout is 'append'.
-''' .
-            format(PATH_SEP)
-        ),
-        default='.',
-        cl_coercer=str,
-        no_print=True,
-    )
-
-    config_settings['output_log_date'] = dict(
-        descr=(
-'''
-The date format string for output log names.
-
-Recommended value: '%Y%m%d', or '%Y%m%d%H' if {0} are run
-more than once a day.
-
-(See http://docs.python.org/2/library/time.html#time.strftime
-for the format of this value.)
-
-Dates refer to when the script starts; all files created during a given
-run of the script will have the same date suffix.
-
-This may not include path-separator characters ('{1}'; all directories
-in the path must be in the output_log setting).  However, it may be blank.
-
-Ignored if output_log is None or output_log_layout is not 'date'.
-''' .
-            format(tasks_name, PATH_SEP)
-        ),
-        default='%Y%m%d',
-        cl_coercer=str,
-        no_print=True,
-    )
-
-    config_settings['output_log_num'] = dict(
-        descr=(
-'''
-The number of output logs to keep, including the current one.
-
-A value of 0 means no number limit (but there may still be a date limit;
-see output_log_days).
-
-Note: this applies to both 'number' and 'date' values of output_log_layout.
-
-Ignored if output_log is None or output_log_layout is 'append'.
-'''
-        ),
-        default=0,
-        cl_coercer=int,
-        no_print=True,
-    )
-
-    config_settings['output_log_days'] = dict(
-        descr=(
-'''
-Days worth of output logs to keep.
-
-A value of 0 means no days limit (but there may still be a number limit;
-see output_log_num).
-
-Logs this many days old or older are removed.
-
-(Specifically, 1 day = a full 24 hours; if you run the script once a day,
-and set output_log_days to 1, the log from the previous run will be newer
-than 24 hours by however long the script took to run, and will be saved.)
-
-Note: this applies to both 'number' and 'date' values of output_log_layout.
-
-Ignored if output_log is None or output_log_layout is 'append'.
-'''
-        ),
-        default=14,
-        cl_coercer=int,
-        no_print=True,
-    )
+    create_logfile_settings('output', 'output')
+    settings_no_print_logfile('output', True)
 
     #
     # extra stuff:
@@ -2093,7 +2201,9 @@ alert_logger = None
 email_logger = None
 email_loggers = {}  # an exception to the note above
 output_logger = None
+file_loggers = {}  # an exception to the note above
 output_log_fo = None
+logfile_objs = {}  # an exception to the note above
 
 # internal, see logging functions
 _base_logger = None
@@ -3225,49 +3335,70 @@ def prune_files(layout, path_prefix, sep, suffix, num_f, days_f,
         prune_date_files(path_prefix, sep, suffix, num_f, days_f, exit_val)
 
 
-def rotate_prune_output_logs():
+def rotate_prune_files(layout, path_prefix, sep, suffix, num_f, days_f,
+                       exit_val=exitvals['startup']['num']):
 
     """
-    Rotate and prune the output logs.
+    Wrapper: rotate and prune numbered or dated files or directories.
 
-    Files can optionally have any of the suffixes in ZIP_SUFFIXES
-    following the suffix parameter.
+    File/directory names can optionally have any of the suffixes in
+    ZIP_SUFFIXES following the suffix parameter.
 
     Dependencies:
-        config settings: output_log, output_log_layout, output_log_sep,
-                         output_log_num, output_log_days
+        functions: rotate_num_files(), prune_files()
+
+    """
+    # rotate
+    if layout == 'number':
+        rotate_num_files(path_prefix, sep, suffix, exit_val)
+
+    # prune
+    prune_files(layout, path_prefix, sep, suffix, num_f, days_f, exit_val)
+
+
+def rotate_prune_logfiles(name_str, exit_val=exitvals['startup']['num']):
+
+    """
+    Rotate and prune a set of logfiles.
+
+    Filenames can optionally have any of the suffixes in ZIP_SUFFIXES
+    following the suffix parameter.
+
+    Parameters:
+        name_str: a string to use in setting names, e.g. 'output'
+
+    Dependencies:
+        config settings: [where * = name_str]: *_log, *_log_layout,
+                         *_log_sep, *_log_num, *_log_days
         globals: cfg, config_settings, status_logger,
                  exitvals['startup']
-        functions: rotate_num_files, prune_files()
+        functions: rotate_prune_files()
 
     """
 
     # no logs?
-    if not cfg['output_log']:
-        if ('no_print' not in config_settings['output_log'] or
-              not config_settings['output_log']['no_print']):
+    if not cfg[name_str + '_log']:
+        if ('no_print' not in config_settings[name_str + '_log'] or
+              not config_settings[name_str + '_log']['no_print']):
             status_logger.info('Output logging is off; not rotating logs.')
         return
 
     # appending to one log?
-    if cfg['output_log_layout'] == 'append':
-        if ('no_print' not in config_settings['output_log'] or
-              not config_settings['output_log']['no_print']):
+    if cfg[name_str + '_log_layout'] == 'append':
+        if ('no_print' not in config_settings[name_str + '_log'] or
+              not config_settings[name_str + '_log']['no_print']):
             status_logger.info('Output logs are being appended to a single '
                                'file; not rotating logs.')
         return
 
     status_logger.info('Rotating/pruning logs...')
 
-    # rotate
-    if cfg['output_log_layout'] == 'number':
-        rotate_num_files(cfg['output_log'], cfg['output_log_sep'], '',
-                         exitvals['startup']['num'])
-
-    # prune
-    prune_files(cfg['output_log_layout'], cfg['output_log'],
-                cfg['output_log_sep'], '', cfg['output_log_num'],
-                cfg['output_log_days'], exitvals['startup']['num'])
+    # rotate and prune
+    rotate_prune_files(
+        cfg[name_str + '_log_layout'], cfg[name_str + '_log'],
+        cfg[name_str + '_log_sep'], '', cfg[name_str + '_log_num'],
+        cfg[name_str + '_log_days'], exit_val
+    )
 
     status_logger.info('Log rotation/pruning complete.')
 
@@ -3491,7 +3622,7 @@ def logging_init_main():
 
     Includes stdout/err, syslog, and/or status log.  For email, see
     logging_init_email().  For the output log, see
-    logging_init_output().
+    logging_init_logfile().
 
     The status_logger and alert_logger objects both log to the status
     log (with a prefix including the date and process ID) and to syslog.
@@ -3569,6 +3700,178 @@ def logging_init_main():
     if not cfg['quiet']:
         _stderr_handler = logging.StreamHandler(sys.stderr)
         alert_logger.addHandler(_stderr_handler)
+
+
+def logging_init_logfile(name_str, parent_str=__name__, propagate=False):
+
+    """
+    Initialize logfile logging, including both logger and file objects.
+
+    The file_loggers[name_str] object logs to the logfile and stdout (if
+    the 'quiet' setting is False).  Whether the message is then handed
+    off to the parent logger depends on the 'propagate' parameter.  (But
+    see logging_start_logfile_prop() and logging_stop_logfile_prop().)
+
+    Direct access to the logfile is available via the
+    logfile_objs[name_str] file object.
+
+    If name_str is 'output', aliases called output_logger and
+    output_log_fo are created (for the built-in output logging; see
+    run_with_logging()).
+
+    If the name_str + '_log' setting is None, the objects are still
+    created.  The logger only prints to stdout (subject to the 'quiet'
+    setting) and propagates to the parent logger (subject to the
+    'propagate' argument).  The file object points to /dev/null or its
+    equivalent.
+
+    Parameters:
+        name_str: a string to use in setting names, e.g. 'output'
+        parent_str: a string naming the parent logger object to use
+        propagate: if True, messages are handed off to the parent logger
+
+    Dependencies:
+        config settings: [where * = name_str]: quiet, *_log,
+                         *_log_layout, *_log_sep, *_log_date,
+                         (*_log_num), (*_log_days)
+        globals: cfg, _logfile_descrs, file_loggers, logfile_objs,
+                 output_logger, output_log_fo, email_logger,
+                 _null_handler, _stdout_handler, start_time,
+                 _atexit_close_logfiles_registered, exitvals['startup']
+        functions: touch_file(), fix_path(), rotate_prune_logfiles(),
+                   pps(), logging_close_logfiles()
+        modules: logging, sys, os, time, atexit
+
+    """
+
+    global output_logger, output_log_fo, _atexit_close_logfiles_registered
+
+    # assemble the complete path, including datestring if applicable
+    if cfg[name_str + '_log']:
+        logfile_path = cfg[name_str + '_log']
+        if cfg[name_str + '_log_layout'] == 'date':
+            logfile_path += (cfg[name_str + '_log_sep'] +
+                                time.strftime(cfg[name_str + '_log_date'],
+                                              time.localtime(start_time)))
+            # needed for prune_date_files(), for pruning by number
+            touch_file(logfile_path,
+                       'the {0} logfile'.format(_logfile_descrs[name_str]),
+                       None, use_logger=True, warn_only=False,
+                       exit_val=exitvals['startup']['num'])
+
+    # rotate and prune logfiles
+    # (also tests in case there is no logfile, and prints status
+    # accordingly)
+    rotate_prune_logfiles(name_str)
+
+    # logger object
+    # (in the case of the built-in output logs, the actual output will
+    # be sent with the file object (below); this is for adding things
+    # like pre- and post-run status messages)
+    file_loggers[name_str] = logging.getLogger(
+        parent_str + '.logfile-' + name_str
+    )
+    file_loggers[name_str].propagate = propagate
+    if not cfg['quiet']:
+        file_loggers[name_str].addHandler(_stdout_handler)
+    if cfg[name_str + '_log']:
+        try:
+            # appending is always safe / the right thing to do, because
+            # either the file won't exist, or it will have been moved out of
+            # the way by the rotation - except in one case:
+            # if we're using a date layout, and the script has been run more
+            # recently than the datestring allows for, we should append so
+            # as not to lose information
+            logfile_handler = (
+                logging.FileHandler(fix_path(logfile_path), 'a')
+            )
+        except IOError as e:
+            email_logger.error('Error: could not open the {0} logfile '
+                               '({1}); exiting.\nDetails: [Errno {2}] {3}' .
+                               format(_logfile_descrs[name_str],
+                                      pps(logfile_path), e.errno,
+                                      e.strerror))
+            sys.exit(exitvals['startup']['num'])
+        file_loggers[name_str].addHandler(logfile_handler)
+    # every logger must have at least one handler, so we have to account
+    # for the case in which everything is turned off
+    if cfg['quiet'] and not cfg[name_str + '_log']:
+        file_loggers[name_str].addHandler(_null_handler)
+
+    # log file object
+    # (in the case of the built-in output logs, used by (e.g.)
+    # run_with_logging())
+    try:
+        # appending is always safe / the right thing to do, because
+        # either the file won't exist, or it will have been moved out of
+        # the way by the rotation - except in one case:
+        # if we're using a date layout, and the script has been run more
+        # recently than the datestring allows for, we should append so
+        # as not to lose information
+        logfile_objs[name_str] = open(
+            fix_path(logfile_path) if cfg[name_str + '_log']
+                                   else os.devnull,
+            'a'
+        )
+    except IOError as e:
+        email_logger.error('Error: could not open the {0} logfile ({1}); '
+                           'exiting.\nDetails: [Errno {2}] {3}' .
+                           format(_logfile_descrs[name_str],
+                                  pps(logfile_path
+                                          if cfg[name_str + '_log']
+                                          else os.devnull),
+                                  e.errno, e.strerror))
+        sys.exit(exitvals['startup']['num'])
+
+    # automatically close on exit
+    # (should be done anyway, but we'll be thorough)
+    if not _atexit_close_logfiles_registered:
+        atexit.register(logging_close_logfiles)
+        _atexit_close_logfiles_registered = True
+
+    # special case: the objects for the built-in output logs get aliases
+    if name_str == 'output':
+        output_logger = file_loggers[name_str]
+        output_log_fo = logfile_objs[name_str]
+
+
+def logging_close_logfile(name_str):
+    """
+    Close a logfile's file object.
+    Does not affect the logger object.
+    Parameters:
+        name_str: a string to use in setting names, e.g. 'output'
+    Dependencies:
+        globals: logfile_objs, _logfile_descrs, email_logger
+        functions: pps()
+    """
+    try:
+        logfile_objs[name_str].close()
+    except IOError as e:
+        email_logger.error(
+            'Warning: could not close the {0} logfile ({1});\ncontinuing.\n'
+            'Details: [Errno {2}] {3}' .
+            format(_logfile_descrs[name_str], pps(name_str), e.errno,
+                   e.strerror)
+        )
+    del(logfile_objs[name_str])
+
+
+def logging_close_logfiles():
+    """
+    Close all logfile file objects.
+    Does not affect the logger objects.
+    Dependencies:
+        globals: logfile_objs
+        functions: logging_close_logfile()
+    """
+    # make a copy because we can't change the dict while looping over it
+    names = logfile_objs.keys()
+    for name_str in names:
+        logging_close_logfile(name_str)
+
+
+### see also run_with_logging() ###
 
 
 def logging_stop_syslog():
@@ -3661,118 +3964,32 @@ def logging_start_email_logging(name_str='alert'):
     email_loggers[name_str].propagate = True
 
 
-def logging_init_output():
-
+def logging_stop_logfile_prop(name_str):
     """
-    Initialize output logging, including both logger and file objects.
-
-    The output log is for output from external programs; see, e.g.,
-    run_with_logging().  See logging_init_main() for the rest of the
-    logging.
-
-    output_logger logs to the output log and stdout.  output_log_fo is a
-    file object attached to the output log, and is used by (e.g.)
-    run_with_logging().
-
+    Turn off propagation in a logfile logger object.
+    Call logging_start_logfile_prop() to reverse.
+    Parameters:
+        name_str: a string containing the name of the logger, from the
+                  setting names
     Dependencies:
-        config settings: quiet, output_log, output_log_layout,
-                         output_log_sep, output_log_date,
-                         (output_log_num), (output_log_days)
-        globals: cfg, output_logger, output_log_fo, email_logger,
-                 _null_handler, _stdout_handler, start_time,
-                 exitvals['startup']
-        functions: fix_path(), rotate_prune_output_logs(), pps(),
-                   logging_end_output
-        modules: logging, sys, os, time, atexit
-
+        globals: file_loggers
+        modules: (logging)
     """
-
-    global output_logger, output_log_fo
-
-    # assemble the complete path, including datestring if applicable
-    if cfg['output_log']:
-        output_log_path = cfg['output_log']
-        if cfg['output_log_layout'] == 'date':
-            output_log_path += (cfg['output_log_sep'] +
-                                time.strftime(cfg['output_log_date'],
-                                              time.localtime(start_time)))
-            # needed for prune_date_files(), for pruning by number
-            touch_file(output_log_path, 'the output log', None,
-                       use_logger=True, warn_only=False,
-                       exit_val=exitvals['startup']['num'])
-
-    # rotate and prune output logs
-    # (also tests in case there is no output log, and prints status
-    # accordingly)
-    rotate_prune_output_logs()
-
-    # output logger object
-    # the actual output will be sent with the file object (below);
-    # this is for adding things like pre- and post-run status messages
-    output_logger = logging.getLogger(__name__ + '.output')
-    output_logger.propagate = False
-    if not cfg['quiet']:
-        output_logger.addHandler(_stdout_handler)
-    if cfg['output_log']:
-        try:
-            # appending is always safe / the right thing to do, because
-            # either the file won't exist, or it will have been moved out of
-            # the way by the rotation - except in one case:
-            # if we're using a date layout, and the script has been run more
-            # recently than the datestring allows for, we should append so
-            # as not to lose information
-            output_handler = (
-                logging.FileHandler(fix_path(output_log_path), 'a')
-            )
-        except IOError as e:
-            email_logger.error('Error: could not open the output log '
-                               '({0}); exiting.\nDetails: [Errno {1}] {2}' .
-                               format(pps(output_log_path), e.errno,
-                                      e.strerror))
-            sys.exit(exitvals['startup']['num'])
-        output_logger.addHandler(output_handler)
-    # every logger must have at least one handler, so we have to account
-    # for the case in which everything is turned off
-    if cfg['quiet'] and not cfg['output_log']:
-        output_logger.addHandler(_null_handler)
-
-    # output log file object, for use by (e.g.) run_with_logging()
-    try:
-        # appending is always safe / the right thing to do, because
-        # either the file won't exist, or it will have been moved out of
-        # the way by the rotation - except in one case:
-        # if we're using a date layout, and the script has been run more
-        # recently than the datestring allows for, we should append so
-        # as not to lose information
-        output_log_fo = open(fix_path(output_log_path)
-                                 if cfg['output_log']
-                                 else os.devnull,
-                             'a')
-    except IOError as e:
-        email_logger.error('Error: could not open the output log ({0}); '
-                           'exiting.\nDetails: [Errno {1}] {2}' .
-                           format(pps(output_log_path
-                                          if cfg['output_log']
-                                          else os.devnull),
-                                  e.errno, e.strerror))
-        sys.exit(exitvals['startup']['num'])
-
-    # automatically close on exit
-    # (should be done anyway, but we'll be thorough)
-    atexit.register(logging_end_output)
+    file_loggers[name_str].propagate = False
 
 
-def logging_end_output():
+def logging_start_logfile_prop(name_str):
     """
-    Close the output log file object.
-    Ignore errors; we're probably exiting anyway.
+    Turn on propagation in a logfile logger object.
+    Call logging_stop_logfile_prop() to reverse.
+    Parameters:
+        name_str: a string containing the name of the logger, from the
+                  setting names
     Dependencies:
-        globals: output_log_fo
+        globals: file_loggers
+        modules: (logging)
     """
-    output_log_fo.close()
-
-
-### see also run_with_logging() and rotate_prune_output_logs() ###
+    file_loggers[name_str].propagate = True
 
 
 def render_generic_exception(e):
@@ -4539,22 +4756,38 @@ def settings_extra_requires(setting_list=[], extra_requires=None):
             config_settings[s_name]['requires'] += extra_requires
 
 
-def config_settings_no_print_output_log(no_print):
+def settings_no_print(setting_list=[], no_print=True):
     """
-    Turn self-documentation of the output log feature on or off.
+    Turn self-documentation of a list of settings on or off.
     Parameters:
+        setting_list: a list of settings to modify.
         no_print: desired value of the no_print attribute of the
-                  output_log* settings (see notes on config_settings,
+                  settings (see notes on config_settings, above)
+    Dependencies:
+        globals: config_settings[(setting_list elements)]
+    """
+    for s_name in setting_list:
+        config_settings[s_name]['no_print'] = no_print
+
+
+def settings_no_print_logfile(name_str, no_print=True):
+    """
+    Turn self-documentation of a logfile feature on or off.
+    (Mainly intended for the built-in output log.)
+    Parameters:
+        name_str: a string to use in setting names, e.g. 'output'
+        no_print: desired value of the no_print attribute of the
+                  *_log* settings (see notes on config_settings,
                   above)
     Dependencies:
-        globals: config_settings['output_log*']
+        globals: config_settings[(*_log*)]
     """
-    config_settings['output_log']['no_print'] = no_print
-    config_settings['output_log_layout']['no_print'] = no_print
-    config_settings['output_log_sep']['no_print'] = no_print
-    config_settings['output_log_date']['no_print'] = no_print
-    config_settings['output_log_num']['no_print'] = no_print
-    config_settings['output_log_days']['no_print'] = no_print
+    setting_list = [
+        name_str + '_log', name_str + '_log_layout', name_str + '_log_sep',
+        name_str + '_log_date', name_str + '_log_num',
+        name_str + '_log_days',
+    ]
+    settings_no_print(setting_list, no_print)
 
 
 #
@@ -6349,18 +6582,18 @@ def validate_config():
     To add to the validations, add a function to validate_config_hooks.
     The function must take no arguments.
 
+    See also validate_email_config(), validate_logfile_config().
+
     Dependencies:
-        config settings: (all except *_emails_*)
-        globals: cfg, validate_config_hooks, NONE_TYPE, STRING_TYPES,
-                 PATH_SEP
+        config settings: (all except *_emails_*, *_log*)
+        globals: cfg, validate_config_hooks, NONE_TYPE, STRING_TYPES
         functions: setting_check_type(), setting_check_integer(),
                    setting_check_number(),
                    setting_check_filedir_create(),
                    setting_check_not_blank(), setting_check_length(),
                    setting_check_file_type(),
-                   setting_check_file_access(), setting_check_list(),
-                   setting_check_no_char()
-        modules: socket
+                   setting_check_file_access(), setting_check_list()
+        modules: socket, logging.handlers
         Python: 2.0/3.2, for callable()
 
     """
@@ -6423,17 +6656,6 @@ def validate_config():
     setting_check_type('status_log', STRING_TYPES + (NONE_TYPE, ))
     if cfg['status_log']:
         setting_check_filedir_create('status_log', 'f')
-    setting_check_type('output_log', STRING_TYPES + (NONE_TYPE, ))
-    if cfg['output_log']:
-        setting_check_filedir_create('output_log', 'f', need_rotation=True)
-        setting_check_list('output_log_layout',
-                           ['append', 'number', 'date'])
-        setting_check_no_char('output_log_sep', PATH_SEP)
-        setting_check_not_blank('output_log_date')
-        setting_check_no_char('output_log_date', PATH_SEP)
-        if cfg['output_log_layout'] != 'append':
-            setting_check_integer('output_log_num', 0)
-            setting_check_number('output_log_days', 0)
 
     # hooks for adding more validations
     for hook in validate_config_hooks:
@@ -6487,6 +6709,43 @@ def validate_email_config(name_str):
                 setting_check_file_read((name_str + '_emails_sec', i))
 
 
+def validate_logfile_config(name_str):
+    """
+    Validate logfile configuration settings.
+    Add to validate_config_hooks with a lamba, e.g.:
+        validate_config_hooks.append(
+            lambda: validate_logfile_config('THE_NAME')
+        )
+    Parameters:
+        name_str: a string to use in setting names, e.g. 'output'
+    Dependencies:
+        config settings: *_log*
+        globals: cfg, NONE_TYPE, STRING_TYPES, PATH_SEP,
+                 _ignore_logfile_config
+        functions: setting_check_type(), setting_check_not_blank(),
+                   setting_check_no_char(), setting_check_list(),
+                   setting_check_integer(), setting_check_number(),
+                   setting_check_filedir_create()
+        Python: 2.0/3.2, for callable()
+    """
+    if (name_str in _ignore_logfile_config and
+          callable(_ignore_logfile_config[name_str]) and
+          _ignore_logfile_config[name_str]()):
+        return
+    setting_check_type(name_str + '_log', STRING_TYPES + (NONE_TYPE, ))
+    if cfg[name_str + '_log']:
+        setting_check_filedir_create(name_str + '_log', 'f',
+                                     need_rotation=True)
+        setting_check_list(name_str + '_log_layout',
+                           ['append', 'number', 'date'])
+        setting_check_no_char(name_str + '_log_sep', PATH_SEP)
+        setting_check_not_blank(name_str + '_log_date')
+        setting_check_no_char(name_str + '_log_date', PATH_SEP)
+        if cfg[name_str + '_log_layout'] != 'append':
+            setting_check_integer(name_str + '_log_num', 0)
+            setting_check_number(name_str + '_log_days', 0)
+
+
 def process_config(arg_ns):
 
     """
@@ -6507,8 +6766,7 @@ def process_config(arg_ns):
                  process_config_hooks, exitvals['startup']
         functions: import_config_by_name(), check_bogus_config(),
                    apply_config_defaults(), validate_config(),
-                   logging_init_main(), logging_init_output(), pps(),
-                   err_exit()
+                   logging_init_main(), pps(), err_exit()
         modules: argparse, os
         Python: 2.7/3.2, for argparse; 2.0/3.2, for callable()
 
@@ -6931,8 +7189,7 @@ def run_mode():
         globals: status_logger, output_logger, start_time, cfg,
                  run_mode_hooks, task_name, FULL_DATE_FORMAT,
                  exitvals['startup']
-        functions: log_cl_config(), check_status(),
-                   logging_init_output(), touch_file()
+        functions: log_cl_config(), check_status(), touch_file()
         modules: time
         Python: 2.0/3.2, for callable()
 
@@ -6951,9 +7208,6 @@ def run_mode():
     # get the starting timestamp; can be used for comparisons and
     # filenames, including the output logs
     start_time = time.time()
-
-    # set up the output logger in case we need it, and rotate the logs
-    logging_init_output()
 
     # log that we're starting the task
     status_logger.info('Starting {0}.'.format(task_name))

@@ -185,11 +185,11 @@ class SSH(object):
         """
         Add a block of SSH config settings to the script.
 
-        Makes the output log settings visible; to reverse this:
-            # make output log settings invisible
-            core.config_settings_no_print_output_log(True)
-            core.config_settings['exec_path']['no_print'] = True
-            core.config_settings['log_cmds']['no_print'] = True
+        Makes the output log (and related) settings visible; to reverse
+        this:
+            # make output log (and related) settings invisible
+            core.settings_no_print_logfile('output', True)
+            core.settings_no_print(['exec_path', 'log_cmds'], True)
 
         When modifying, remember to keep the setting_list at the bottom
         and validate_config() in sync with the config settings.
@@ -226,10 +226,9 @@ class SSH(object):
 
         """
 
-        # make output log settings visible
-        core.config_settings_no_print_output_log(False)
-        core.config_settings['exec_path']['no_print'] = False
-        core.config_settings['log_cmds']['no_print'] = False
+        # make output log (and related) settings visible
+        core.settings_no_print_logfile('output', False)
+        core.settings_no_print(['exec_path', 'log_cmds'], False)
 
         pd = self._prefix + self._delim
         self._tunnel_config = tunnel

@@ -391,7 +391,7 @@ def run_mode_hook():
     #nori.core.output_log_fo.write('asdf7\n')
     #nori.core.output_log_fo.flush()
 
-    #nori.logging_end_output()
+    #nori.logging_end_logfile('output')
     #nori.core.output_log_fo.write('asdf7\n')
 
     #nori.generic_error_handler(ValueError('foo\nbar'), 'broken')
@@ -1066,7 +1066,27 @@ def run_mode_hook():
     #email_logger.debug('email debug')
     #email_logger.info('email info')
 
-    #print(render_config())
+    ########
+
+    #print(nori.core._atexit_close_logfiles_registered)
+    #print(nori.core._ignore_logfile_config)
+    #print(nori.core._logfile_descrs)
+    #print(nori.core.file_loggers)
+    #print(nori.core.logfile_objs)
+    #print(nori.core.output_logger)
+    #print(nori.core.output_log_fo)
+
+    #nori.core.file_loggers['report'].info('testing123')
+    #nori.core.logfile_objs['report'].write('testing456\n')
+    #nori.core.logfile_objs['report'].flush()
+
+    #nori.logging_stop_email_logging('alert')
+    #nori.logging_start_logfile_prop('report')
+    #nori.core.file_loggers['report'].info('testing2')
+    #nori.logging_stop_logfile_prop('report')
+    #nori.core.file_loggers['report'].info('testing3')
+
+    #print(nori.render_config())
 
     pass
 
@@ -1100,12 +1120,29 @@ nori.core.tasks_name = 'tests'
 
 nori.run_mode_hooks.append(run_mode_hook)
 
-#nori.config_settings_no_print_output_log(False)
-#nori.config_settings['exec_path']['no_print'] = False
-#nori.config_settings['log_cmds']['no_print'] = False
+nori.settings_no_print_logfile('output', False)
+nori.settings_no_print(['exec_path', 'log_cmds'], False)
 
 #nori.create_email_settings('report', 'report')
 #nori.create_email_settings('report', 'report', notify_logger=None)
+
+#print(nori.core._atexit_close_logfiles_registered)
+#nori.create_logfile_settings('report', 'reportage')
+#nori.create_logfile_settings('report', 'reportage', 'Srsly, reportage.',
+#                             heading='Reporttttt', extra_text='foo',
+#                             ignore=lambda: True)
+#nori.create_logfile_settings('report', 'reportage', 'Srsly, reportage.',
+#                             heading='Reporttttt', extra_text='foo',
+#                             ignore=lambda: False)
+#nori.create_logfile_settings('report', 'reportage', 'Srsly, reportage.',
+#                             heading='Reporttttt', extra_text='foo',
+#                             extra_requires=['asdfdasf'])
+#nori.create_logfile_settings('report', 'reportage',
+#                             parent_str='nori.core.alert.email-alert')
+#nori.create_logfile_settings('report', 'reportage',
+#                             parent_str='nori.core.alert.email-alert',
+#                             propagate=True)
+#print(nori.core.config_settings)
 
 #s = nori.SSH('foo')
 #s = nori.SSH('foo', ':')
@@ -1136,7 +1173,6 @@ nori.run_mode_hooks.append(run_mode_hook)
 #m.create_settings(heading='mysql stuff', ignore=lambda: True)
 #m.create_settings(heading='mysql stuff')
 #pp(nori.config_settings)
-
 
 #p = nori.PostgreSQL('postgresstuff')
 #p.create_settings()
