@@ -1143,6 +1143,7 @@ nori.settings_no_print(['exec_path', 'log_cmds'], False)
 #                             parent_str='nori.core.alert.email-alert',
 #                             propagate=True)
 #print(nori.core.config_settings)
+#nori.settings_no_print_logfile('report', True)
 
 #s = nori.SSH('foo')
 #s = nori.SSH('foo', ':')

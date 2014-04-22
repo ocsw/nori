@@ -4787,6 +4787,8 @@ def settings_no_print_logfile(name_str, no_print=True):
         name_str + '_log_date', name_str + '_log_num',
         name_str + '_log_days',
     ]
+    if name_str + '_log_heading' in config_settings:
+        setting_list = [name_str + '_log_heading'] + setting_list
     settings_no_print(setting_list, no_print)
 
 
