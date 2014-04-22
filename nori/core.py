@@ -1219,8 +1219,7 @@ _ignore_email_config = {}
 
 # internal; see create_logfile_settings(), validate_logfile_config(),
 # logging_init_logfile(), etc.
-_ignore_logfile_config = {}
-_logfile_descrs = {}
+_logfile_info = {}
 _atexit_close_logfiles_registered = False
 
 # internal; see command-running functions
@@ -1550,8 +1549,8 @@ Ignored if send_{0}_emails is False.
 
 def create_logfile_settings(name_str, descr_str, long_descr_str='',
                             heading=None, extra_text=None, ignore=None,
-                            extra_requires=[], parent_str=__name__,
-                            propagate=False):
+                            extra_requires=[], auto_init=True,
+                            parent_str=__name__, propagate=False):
 
     """
     Create a block of logfile-related settings.
@@ -1584,20 +1583,26 @@ def create_logfile_settings(name_str, descr_str, long_descr_str='',
                 don't bother validating the settings
         extra_requires: a list of features to be added to the settings'
                         requires attributes
+        auto_init: if True, logging_init_logfile() will be run for this
+                   logfile during run_mode()
         see logging_init_logfile() for the rest
 
     Dependencies:
         globals: config_settings, script_shortname,
-                 _ignore_logfile_config, _logfile_descrs,
-                 validate_config_hooks, process_config_hooks
+                 _logfile_info, validate_config_hooks
         functions: settings_extra_text(), settings_extra_requires(),
-                   validate_logfile_config(), logging_init_logfile()
+                   validate_logfile_config()
 
     """
 
     # save some info
-    _ignore_logfile_config[name_str] = ignore
-    _logfile_descrs[name_str] = descr_str
+    if name_str not in _logfile_info:
+        _logfile_info[name_str] = {}
+    _logfile_info[name_str]['descr_str'] = descr_str
+    _logfile_info[name_str]['ignore'] = ignore
+    _logfile_info[name_str]['auto_init'] = auto_init
+    _logfile_info[name_str]['parent_str'] = parent_str
+    _logfile_info[name_str]['propagate'] = propagate
 
     if heading is not None:
         config_settings[name_str + '_log_heading'] = dict(
@@ -1746,9 +1751,6 @@ Ignored if {1}_log is None or {1}_log_layout is 'append'.
     settings_extra_requires(setting_list, extra_requires)
 
     validate_config_hooks.append(lambda: validate_logfile_config(name_str))
-    process_config_hooks.append(
-        lambda: logging_init_logfile(name_str, parent_str, propagate)
-    )
 
 
 def _create_config_settings():
@@ -3370,7 +3372,7 @@ def rotate_prune_logfiles(name_str, exit_val=exitvals['startup']['num']):
     Dependencies:
         config settings: [where * = name_str]: *_log, *_log_layout,
                          *_log_sep, *_log_num, *_log_days
-        globals: cfg, config_settings, status_logger,
+        globals: cfg, config_settings, status_logger, _logfile_info,
                  exitvals['startup']
         functions: rotate_prune_files()
 
@@ -3380,18 +3382,25 @@ def rotate_prune_logfiles(name_str, exit_val=exitvals['startup']['num']):
     if not cfg[name_str + '_log']:
         if ('no_print' not in config_settings[name_str + '_log'] or
               not config_settings[name_str + '_log']['no_print']):
-            status_logger.info('Output logging is off; not rotating logs.')
+            status_logger.info(
+                '{0} logging is off; not rotating logs.' .
+                format(_logfile_info[name_str]['descr_str'].capitalize())
+            )
         return
 
     # appending to one log?
     if cfg[name_str + '_log_layout'] == 'append':
         if ('no_print' not in config_settings[name_str + '_log'] or
               not config_settings[name_str + '_log']['no_print']):
-            status_logger.info('Output logs are being appended to a single '
-                               'file; not rotating logs.')
+            status_logger.info(
+                '{0} logs are being appended to a single file; '
+                'not rotating logs.' .
+                format(_logfile_info[name_str]['descr_str'].capitalize())
+            )
         return
 
-    status_logger.info('Rotating/pruning logs...')
+    status_logger.info('Rotating/pruning {0} logs...' .
+                       format(_logfile_info[name_str]['descr_str']))
 
     # rotate and prune
     rotate_prune_files(
@@ -3400,7 +3409,10 @@ def rotate_prune_logfiles(name_str, exit_val=exitvals['startup']['num']):
         cfg[name_str + '_log_days'], exit_val
     )
 
-    status_logger.info('Log rotation/pruning complete.')
+    status_logger.info(
+        '{0} log rotation/pruning complete.' .
+        format(_logfile_info[name_str]['descr_str'].capitalize())
+    )
 
 
 ########################################################################
@@ -3621,7 +3633,7 @@ def logging_init_main():
     Initialize most of the logging.
 
     Includes stdout/err, syslog, and/or status log.  For email, see
-    logging_init_email().  For the output log, see
+    logging_init_email().  For the output log and other logfiles, see
     logging_init_logfile().
 
     The status_logger and alert_logger objects both log to the status
@@ -3702,7 +3714,7 @@ def logging_init_main():
         alert_logger.addHandler(_stderr_handler)
 
 
-def logging_init_logfile(name_str, parent_str=__name__, propagate=False):
+def logging_init_logfile(name_str, parent_str=None, propagate=None):
 
     """
     Initialize logfile logging, including both logger and file objects.
@@ -3727,14 +3739,18 @@ def logging_init_logfile(name_str, parent_str=__name__, propagate=False):
 
     Parameters:
         name_str: a string to use in setting names, e.g. 'output'
-        parent_str: a string naming the parent logger object to use
+        parent_str: a string naming the parent logger object to use;
+                    if None, the value from the original
+                    create_logfile_settings() call is used
         propagate: if True, messages are handed off to the parent logger
+                   if None, the value from the original
+                   create_logfile_settings() call is used
 
     Dependencies:
         config settings: [where * = name_str]: quiet, *_log,
                          *_log_layout, *_log_sep, *_log_date,
                          (*_log_num), (*_log_days)
-        globals: cfg, _logfile_descrs, file_loggers, logfile_objs,
+        globals: cfg, _logfile_info, file_loggers, logfile_objs,
                  output_logger, output_log_fo, email_logger,
                  _null_handler, _stdout_handler, start_time,
                  _atexit_close_logfiles_registered, exitvals['startup']
@@ -3755,9 +3771,20 @@ def logging_init_logfile(name_str, parent_str=__name__, propagate=False):
                                               time.localtime(start_time)))
             # needed for prune_date_files(), for pruning by number
             touch_file(logfile_path,
-                       'the {0} logfile'.format(_logfile_descrs[name_str]),
+                       'the {0} logfile' .
+                           format(_logfile_info[name_str]['descr_str']),
                        None, use_logger=True, warn_only=False,
                        exit_val=exitvals['startup']['num'])
+
+    # handle parent_str/propagate defaults
+    if parent_str is not None:
+        real_parent_str = parent_str
+    else:
+        real_parent_str = _logfile_info[name_str]['parent_str']
+    if propagate is not None:
+        real_propagate = propagate
+    else:
+        real_propagate = _logfile_info[name_str]['propagate']
 
     # rotate and prune logfiles
     # (also tests in case there is no logfile, and prints status
@@ -3769,9 +3796,9 @@ def logging_init_logfile(name_str, parent_str=__name__, propagate=False):
     # be sent with the file object (below); this is for adding things
     # like pre- and post-run status messages)
     file_loggers[name_str] = logging.getLogger(
-        parent_str + '.logfile-' + name_str
+        real_parent_str + '.logfile-' + name_str
     )
-    file_loggers[name_str].propagate = propagate
+    file_loggers[name_str].propagate = real_propagate
     if not cfg['quiet']:
         file_loggers[name_str].addHandler(_stdout_handler)
     if cfg[name_str + '_log']:
@@ -3788,7 +3815,7 @@ def logging_init_logfile(name_str, parent_str=__name__, propagate=False):
         except IOError as e:
             email_logger.error('Error: could not open the {0} logfile '
                                '({1}); exiting.\nDetails: [Errno {2}] {3}' .
-                               format(_logfile_descrs[name_str],
+                               format(_logfile_info[name_str]['descr_str'],
                                       pps(logfile_path), e.errno,
                                       e.strerror))
             sys.exit(exitvals['startup']['num'])
@@ -3816,7 +3843,7 @@ def logging_init_logfile(name_str, parent_str=__name__, propagate=False):
     except IOError as e:
         email_logger.error('Error: could not open the {0} logfile ({1}); '
                            'exiting.\nDetails: [Errno {2}] {3}' .
-                           format(_logfile_descrs[name_str],
+                           format(_logfile_info[name_str]['descr_str'],
                                   pps(logfile_path
                                           if cfg[name_str + '_log']
                                           else os.devnull),
@@ -3842,17 +3869,17 @@ def logging_close_logfile(name_str):
     Parameters:
         name_str: a string to use in setting names, e.g. 'output'
     Dependencies:
-        globals: logfile_objs, _logfile_descrs, email_logger
+        globals: logfile_objs, _logfile_infg, email_logger
         functions: pps()
     """
     try:
         logfile_objs[name_str].close()
     except IOError as e:
         email_logger.error(
-            'Warning: could not close the {0} logfile ({1});\ncontinuing.\n'
+            'Warning: could not close the {0} logfile ({1}); continuing.\n'
             'Details: [Errno {2}] {3}' .
-            format(_logfile_descrs[name_str], pps(name_str), e.errno,
-                   e.strerror)
+            format(_logfile_info[name_str]['descr_str'],
+                   pps(logfile_objs[name_str].name), e.errno, e.strerror)
         )
     del(logfile_objs[name_str])
 
@@ -6722,17 +6749,15 @@ def validate_logfile_config(name_str):
         name_str: a string to use in setting names, e.g. 'output'
     Dependencies:
         config settings: *_log*
-        globals: cfg, NONE_TYPE, STRING_TYPES, PATH_SEP,
-                 _ignore_logfile_config
+        globals: cfg, NONE_TYPE, STRING_TYPES, PATH_SEP, _logfile_info
         functions: setting_check_type(), setting_check_not_blank(),
                    setting_check_no_char(), setting_check_list(),
                    setting_check_integer(), setting_check_number(),
                    setting_check_filedir_create()
         Python: 2.0/3.2, for callable()
     """
-    if (name_str in _ignore_logfile_config and
-          callable(_ignore_logfile_config[name_str]) and
-          _ignore_logfile_config[name_str]()):
+    if (callable(_logfile_info[name_str]['ignore']) and
+          _logfile_info[name_str]['ignore']()):
         return
     setting_check_type(name_str + '_log', STRING_TYPES + (NONE_TYPE, ))
     if cfg[name_str + '_log']:
@@ -6753,7 +6778,7 @@ def process_config(arg_ns):
     """
     Process the config file and settings supplied on the command line.
     Includes applying defaults, checking requirements, validating
-    values, and initializing loggers (main and output).
+    values, and initializing settings and loggers.
 
     To add initializations, add a function to process_config_hooks.  The
     function must take no arguments.
@@ -7189,9 +7214,10 @@ def run_mode():
     Dependencies:
         config settings: last_started_file
         globals: status_logger, output_logger, start_time, cfg,
-                 run_mode_hooks, task_name, FULL_DATE_FORMAT,
-                 exitvals['startup']
-        functions: log_cl_config(), check_status(), touch_file()
+                 _logfile_info, run_mode_hooks, task_name,
+                 FULL_DATE_FORMAT, exitvals['startup']
+        functions: log_cl_config(), check_status(),
+                   logging_init_logfile(), touch_file()
         modules: time
         Python: 2.0/3.2, for callable()
 
@@ -7210,6 +7236,11 @@ def run_mode():
     # get the starting timestamp; can be used for comparisons and
     # filenames, including the output logs
     start_time = time.time()
+
+    # set up the logfiles, including rotation
+    for name_str in _logfile_info:
+        if _logfile_info[name_str]['auto_init']:
+            logging_init_logfile(name_str)
 
     # log that we're starting the task
     status_logger.info('Starting {0}.'.format(task_name))

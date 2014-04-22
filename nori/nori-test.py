@@ -1069,12 +1069,18 @@ def run_mode_hook():
     ########
 
     #print(nori.core._atexit_close_logfiles_registered)
-    #print(nori.core._ignore_logfile_config)
-    #print(nori.core._logfile_descrs)
+    #print(nori.core._logfile_info)
     #print(nori.core.file_loggers)
     #print(nori.core.logfile_objs)
     #print(nori.core.output_logger)
     #print(nori.core.output_log_fo)
+
+    #nori.logging_init_logfile('report')
+    #nori.logging_init_logfile('report',
+    #                          parent_str='nori.core.alert.email-alert',
+    #                          propagate=True)
+    #nori.logging_init_logfile('report',
+    #                          parent_str='nori.core.alert.email-alert')
 
     #nori.core.file_loggers['report'].info('testing123')
     #nori.core.logfile_objs['report'].write('testing456\n')
@@ -1128,6 +1134,7 @@ nori.settings_no_print(['exec_path', 'log_cmds'], False)
 
 #print(nori.core._atexit_close_logfiles_registered)
 #nori.create_logfile_settings('report', 'reportage')
+#nori.create_logfile_settings('report', 'reportage', auto_init=False)
 #nori.create_logfile_settings('report', 'reportage', 'Srsly, reportage.',
 #                             heading='Reporttttt', extra_text='foo',
 #                             ignore=lambda: True)
@@ -1142,6 +1149,9 @@ nori.settings_no_print(['exec_path', 'log_cmds'], False)
 #nori.create_logfile_settings('report', 'reportage',
 #                             parent_str='nori.core.alert.email-alert',
 #                             propagate=True)
+#nori.create_logfile_settings('report', 'reportage',
+#                             parent_str='nori.core.alert.email-alert',
+#                             propagate=True, auto_init=False)
 #print(nori.core.config_settings)
 #nori.settings_no_print_logfile('report', True)
 
