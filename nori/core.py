@@ -1219,7 +1219,7 @@ _ignore_email_config = {}
 
 # internal; see create_logfile_settings(), validate_logfile_config(),
 # logging_init_logfile(), etc.
-_logfile_info = {}
+_logfile_info = collectionsplus.OrderedDict()
 _atexit_close_logfiles_registered = False
 
 # internal; see command-running functions
@@ -2205,7 +2205,8 @@ email_loggers = {}  # an exception to the note above
 output_logger = None
 file_loggers = {}  # an exception to the note above
 output_log_fo = None
-logfile_objs = {}  # an exception to the note above
+logfile_objs = collectionsplus.OrderedDict()  # an exception to the note
+
 
 # internal, see logging functions
 _base_logger = None
@@ -3892,8 +3893,10 @@ def logging_close_logfiles():
         globals: logfile_objs
         functions: logging_close_logfile()
     """
-    # make a copy because we can't change the dict while looping over it
-    names = logfile_objs.keys()
+    # make a copy because we can't change the dict while looping over it;
+    # list() call is for Python 3
+    names = list(logfile_objs.keys())
+    names.reverse()
     for name_str in names:
         logging_close_logfile(name_str)
 
