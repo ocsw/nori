@@ -38,8 +38,8 @@ setup(
         'A library for wrapping scripts, especially ones run from cron.'
     ),
     long_description=read('README'),
-    author='Daniel Malament',
-    author_email='daniel.j.malament@gmail.com',
+    author='Danielle Malament',
+    author_email='danielle.malament@gmail.com',
     url='http://www.obsessivecompulsivesoftware.com/',
     #download_url='',
     classifiers=[

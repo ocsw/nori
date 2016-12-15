@@ -22,7 +22,7 @@ DOCSTRING CONTENTS:
     in other cases.)
 
     It was originally factored out of the Aeolus backup script, then
-    ported to Python; the original and the port are by Daniel Malament.
+    ported to Python; the original and the port are by Danielle Malament.
 
     The library requires Python 2.7/3.2, and will exit the script upon
     import (with an error message) if this requirement is not met.
